@@ -41,6 +41,26 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../web-dashboard/index.html'));
 });
 
+// API info endpoint
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: 'Parental Control API Server',
+    version: '1.0.0',
+    endpoints: {
+      'GET /health': 'Health check',
+      'GET /api': 'API information',
+      'POST /api/register': 'Parent registration',
+      'POST /api/login': 'Parent login',
+      'POST /api/device/register': 'Register child device',
+      'POST /api/activity': 'Log device activity',
+      'GET /api/activities/:deviceId': 'Get device activities',
+      'GET /api/devices': 'Get parent devices',
+      'GET /api/stats/:deviceId': 'Get device statistics'
+    },
+    dashboard: 'Access web dashboard at root URL (/)'
+  });
+});
+
 // Authentication middleware
 const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
