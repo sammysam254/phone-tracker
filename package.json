@@ -1,0 +1,41 @@
+{
+  "name": "parental-control-platform",
+  "version": "1.0.0",
+  "description": "Comprehensive parental control platform with real-time monitoring",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "build": "echo 'Build completed'",
+    "test": "echo 'No tests specified'",
+    "postinstall": "cd backend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "@supabase/supabase-js": "^2.39.0",
+    "express-rate-limit": "^6.7.0",
+    "helmet": "^6.1.5",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "keywords": [
+    "parental-control",
+    "monitoring",
+    "android",
+    "supabase",
+    "real-time"
+  ],
+  "author": "Parental Control Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/parental-control-platform.git"
+  }
+}

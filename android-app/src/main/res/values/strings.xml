@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Parental Control</string>
+    <string name="consent_title">Parental Control Consent</string>
+    <string name="monitoring_service_title">Parental Monitoring Active</string>
+    <string name="monitoring_service_text">Monitoring device activities with consent</string>
+    <string name="permission_required">Permissions Required</string>
+    <string name="permission_message">This app requires special permissions to monitor device activities. Please grant all requested permissions.</string>
+    <string name="consent_granted">Consent Granted</string>
+    <string name="consent_declined">Consent Declined</string>
+    <string name="monitoring_started">Monitoring Started</string>
+    <string name="monitoring_stopped">Monitoring Stopped</string>
+    <string name="device_not_registered">Device not registered with parent account</string>
+    <string name="network_error">Network error. Please check your internet connection.</string>
+    <string name="accessibility_service_description">Parental Control Accessibility Service - Monitors screen interactions for parental supervision with explicit consent.</string>
+</resources>
