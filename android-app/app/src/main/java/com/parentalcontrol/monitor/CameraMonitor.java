@@ -98,7 +98,7 @@ public class CameraMonitor {
                     // If we can't open the camera, it might be in use
                     // Note: This is not a perfect method and may have false positives
                     return checkAppOpsForCamera();
-                } catch (CameraAccessException e) {
+                } catch (Exception e) {
                     // Camera might be in use by another app
                     return true;
                 }

@@ -4,13 +4,7 @@ plugins {
     id 'com.android.library' version '8.2.0' apply false
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://jitpack.io' }
-    }
-}
+// Repositories are now configured in settings.gradle
 
 task clean(type: Delete) {
     delete rootProject.buildDir

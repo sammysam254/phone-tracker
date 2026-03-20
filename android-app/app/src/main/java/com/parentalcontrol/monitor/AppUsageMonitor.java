@@ -71,7 +71,7 @@ public class AppUsageMonitor {
             long startTime = calendar.getTimeInMillis();
             
             List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(
-                UsageStatsManager.INTERVAL_HOURLY, 
+                UsageStatsManager.INTERVAL_DAILY, 
                 startTime, 
                 endTime
             );

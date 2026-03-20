@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test APK Downloads</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>🧪 APK Download Test Page</h1>
+    
+    <div class="test-section">
+        <h3>📱 Direct APK Downloads</h3>
+        <p>Test direct download links:</p>
+        <a href="web-dashboard/apk/app-release.apk" class="btn" download="ParentalControl-Release.apk">
+            Download Release APK (2.6 MB)
+        </a>
+        <a href="web-dashboard/apk/app-debug.apk" class="btn" download="ParentalControl-Debug.apk">
+            Download Debug APK (8.4 MB)
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h3>🌐 Web Pages</h3>
+        <p>Test web page access:</p>
+        <a href="web-dashboard/download.html" class="btn">Download Page</a>
+        <a href="web-dashboard/index.html" class="btn">Dashboard</a>
+        <a href="web-dashboard/login.html" class="btn">Login Page</a>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 File Information</h3>
+        <div id="fileInfo">
+            <p class="info">Checking APK files...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔗 Server API Test</h3>
+        <button class="btn" onclick="testAPI()">Test API Endpoints</button>
+        <div id="apiResults"></div>
+    </div>
+
+    <script>
+        // Check if files exist
+        async function checkFiles() {
+            const files = [
+                { name: 'Release APK', path: 'web-dashboard/apk/app-release.apk' },
+                { name: 'Debug APK', path: 'web-dashboard/apk/app-debug.apk' },
+                { name: 'Download Page', path: 'web-dashboard/download.html' }
+            ];
+
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = '';
+
+            for (const file of files) {
+                try {
+                    const response = await fetch(file.path, { method: 'HEAD' });
+                    const size = response.headers.get('content-length');
+                    const sizeText = size ? ` (${(size / 1024 / 1024).toFixed(1)} MB)` : '';
+                    
+                    if (response.ok) {
+                        fileInfo.innerHTML += `<p class="success">✅ ${file.name}: Available${sizeText}</p>`;
+                    } else {
+                        fileInfo.innerHTML += `<p class="error">❌ ${file.name}: Not found (${response.status})</p>`;
+                    }
+                } catch (error) {
+                    fileInfo.innerHTML += `<p class="error">❌ ${file.name}: Error - ${error.message}</p>`;
+                }
+            }
+        }
+
+        // Test API endpoints
+        async function testAPI() {
+            const apiResults = document.getElementById('apiResults');
+            apiResults.innerHTML = '<p class="info">Testing API endpoints...</p>';
+
+            const endpoints = [
+                { name: 'Health Check', url: '/health' },
+                { name: 'API Info', url: '/api' },
+                { name: 'Release APK', url: '/apk/app-release.apk' },
+                { name: 'Debug APK', url: '/apk/app-debug.apk' }
+            ];
+
+            let results = '';
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url, { method: 'HEAD' });
+                    if (response.ok) {
+                        results += `<p class="success">✅ ${endpoint.name}: OK (${response.status})</p>`;
+                    } else {
+                        results += `<p class="error">❌ ${endpoint.name}: Failed (${response.status})</p>`;
+                    }
+                } catch (error) {
+                    results += `<p class="error">❌ ${endpoint.name}: Error - ${error.message}</p>`;
+                }
+            }
+
+            apiResults.innerHTML = results;
+        }
+
+        // Initialize tests
+        document.addEventListener('DOMContentLoaded', function() {
+            checkFiles();
+        });
+    </script>
+</body>
+</html>

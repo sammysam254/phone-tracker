@@ -168,7 +168,7 @@ public class PermissionSetupActivity extends AppCompatActivity {
     }
     
     private boolean hasNotificationAccess() {
-        ComponentName cn = new ComponentName(this, NotificationListenerService.class);
+        ComponentName cn = new ComponentName(this, ParentalNotificationListenerService.class);
         String flat = Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
         return flat != null && flat.contains(cn.flattenToString());
     }

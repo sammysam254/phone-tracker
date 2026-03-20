@@ -458,6 +458,9 @@
         <div class="header">
             <h1>🛡️ Parental Control Dashboard</h1>
             <div class="user-info">
+                <a href="download.html" class="btn" style="background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); margin-right: 15px;">
+                    📱 Download Our App
+                </a>
                 <span id="userEmail"></span>
                 <button class="btn btn-secondary" id="logoutBtn">Logout</button>
             </div>
@@ -486,10 +489,27 @@
 
         <!-- Dashboard Section -->
         <div id="dashboardSection" class="dashboard-section">
+            <!-- App Download Promotion -->
+            <div class="pairing-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <h3>📱 Get Started with Our Mobile App</h3>
+                <p style="margin: 15px 0; opacity: 0.9;">Install the Parental Control app on your child's device to begin monitoring their digital activities safely and securely.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 25px 0;">
+                    <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+                        📱 Download APK (2.6 MB)
+                    </a>
+                    <a href="download.html#installation" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+                        📋 Installation Guide
+                    </a>
+                </div>
+                <p style="font-size: 0.9em; opacity: 0.8;">
+                    ✅ Works on Android 7.0+  •  ✅ Secure & Encrypted  •  ✅ Easy Setup
+                </p>
+            </div>
+
             <!-- Device Pairing -->
             <div class="pairing-section">
                 <h3>📱 Device Pairing</h3>
-                <p>Enter the 6-digit code from your child's device:</p>
+                <p>After installing the app, enter the 6-digit code from your child's device:</p>
                 <div class="pairing-code-input">
                     <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 0)">
                     <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 1)">

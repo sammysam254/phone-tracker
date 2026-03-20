@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Browser;
 import android.util.Log;
 import org.json.JSONObject;
 import java.util.HashSet;
@@ -116,12 +115,16 @@ public class WebActivityMonitor {
     
     private void checkDefaultBrowserHistory() {
         try {
+            // Note: Browser.BOOKMARKS_URI is deprecated and may not work on newer Android versions
+            // This is kept for compatibility with older devices
+            Uri bookmarksUri = Uri.parse("content://browser/bookmarks");
+            
             Cursor cursor = context.getContentResolver().query(
-                Browser.BOOKMARKS_URI,
-                new String[]{Browser.BookmarkColumns.URL, Browser.BookmarkColumns.TITLE, Browser.BookmarkColumns.DATE},
-                Browser.BookmarkColumns.DATE + " > ?",
+                bookmarksUri,
+                new String[]{"url", "title", "date"},
+                "date > ?",
                 new String[]{String.valueOf(lastCheckTime)},
-                Browser.BookmarkColumns.DATE + " DESC"
+                "date DESC"
             );
             
             if (cursor != null) {

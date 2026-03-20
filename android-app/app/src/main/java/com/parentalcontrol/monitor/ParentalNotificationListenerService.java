@@ -8,7 +8,7 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import org.json.JSONObject;
 
-public class NotificationListenerService extends NotificationListenerService {
+public class ParentalNotificationListenerService extends NotificationListenerService {
     
     private static final String TAG = "NotificationListener";
     private SupabaseClient supabaseClient;

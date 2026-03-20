@@ -47,32 +47,26 @@ public class CallReceiver extends BroadcastReceiver {
             callData.put("timestamp", System.currentTimeMillis());
             callData.put("call_type", "incoming");
             
-            switch (state) {
-                case TelephonyManager.EXTRA_STATE_RINGING:
-                    callData.put("event", "call_ringing");
-                    Log.i(TAG, "Incoming call ringing: " + phoneNumber);
-                    break;
-                    
-                case TelephonyManager.EXTRA_STATE_OFFHOOK:
-                    callData.put("event", "call_answered");
-                    Log.i(TAG, "Call answered: " + phoneNumber);
-                    
-                    // Start call recording if enabled
-                    SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
-                    boolean recordCalls = prefs.getBoolean("record_calls", false);
-                    
-                    if (recordCalls) {
-                        startCallRecording(context, phoneNumber);
-                    }
-                    break;
-                    
-                case TelephonyManager.EXTRA_STATE_IDLE:
-                    callData.put("event", "call_ended");
-                    Log.i(TAG, "Call ended: " + phoneNumber);
-                    
-                    // Stop call recording
-                    stopCallRecording(context);
-                    break;
+            if (TelephonyManager.EXTRA_STATE_RINGING.equals(state)) {
+                callData.put("event", "call_ringing");
+                Log.i(TAG, "Incoming call ringing: " + phoneNumber);
+            } else if (TelephonyManager.EXTRA_STATE_OFFHOOK.equals(state)) {
+                callData.put("event", "call_answered");
+                Log.i(TAG, "Call answered: " + phoneNumber);
+                
+                // Start call recording if enabled
+                SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
+                boolean recordCalls = prefs.getBoolean("record_calls", false);
+                
+                if (recordCalls) {
+                    startCallRecording(context, phoneNumber);
+                }
+            } else if (TelephonyManager.EXTRA_STATE_IDLE.equals(state)) {
+                callData.put("event", "call_ended");
+                Log.i(TAG, "Call ended: " + phoneNumber);
+                
+                // Stop call recording
+                stopCallRecording(context);
             }
             
             // Log call event

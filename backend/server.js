@@ -20,6 +20,31 @@ app.use(express.json({ limit: '10mb' }));
 // Serve static files from web-dashboard directory
 app.use(express.static(path.join(__dirname, '../web-dashboard')));
 
+// Specific route for APK downloads with proper headers
+app.get('/apk/:filename', (req, res) => {
+  const filename = req.params.filename;
+  
+  // Security check - only allow APK files
+  if (!filename.endsWith('.apk')) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+  
+  const filePath = path.join(__dirname, '../web-dashboard/apk', filename);
+  
+  // Set proper headers for APK download
+  res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Cache-Control', 'no-cache');
+  
+  // Send file
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('APK download error:', err);
+      res.status(404).json({ error: 'APK file not found' });
+    }
+  });
+});
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -55,9 +80,16 @@ app.get('/api', (req, res) => {
       'POST /api/activity': 'Log device activity',
       'GET /api/activities/:deviceId': 'Get device activities',
       'GET /api/devices': 'Get parent devices',
-      'GET /api/stats/:deviceId': 'Get device statistics'
+      'GET /api/stats/:deviceId': 'Get device statistics',
+      'GET /apk/:filename': 'Download APK files',
+      'GET /download': 'Download page'
     },
-    dashboard: 'Access web dashboard at root URL (/)'
+    dashboard: 'Access web dashboard at root URL (/)',
+    downloads: {
+      'Release APK': '/apk/app-release.apk',
+      'Debug APK': '/apk/app-debug.apk',
+      'Download Page': '/download'
+    }
   });
 });
 
@@ -347,6 +379,10 @@ app.get('*', (req, res) => {
   
   if (req.path === '/register.html' || req.path === '/register') {
     return res.sendFile(path.join(__dirname, '../web-dashboard/register.html'));
+  }
+  
+  if (req.path === '/download.html' || req.path === '/download') {
+    return res.sendFile(path.join(__dirname, '../web-dashboard/download.html'));
   }
   
   // Serve the main dashboard for root and other paths
