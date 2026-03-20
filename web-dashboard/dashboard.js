@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Authentication state management
 async function checkAuthState() {
+    // First check Supabase session
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {
@@ -56,9 +57,40 @@ async function checkAuthState() {
         showDashboard();
         loadDevices();
         startAutoRefresh();
-    } else {
-        showAuth();
+        return;
     }
+    
+    // Check for stored auth token (backend authentication)
+    const authToken = localStorage.getItem('authToken');
+    if (authToken) {
+        try {
+            // Verify token with backend
+            const response = await fetch('/api/verify-token', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                currentUser = result.user;
+                showDashboard();
+                loadDevices();
+                startAutoRefresh();
+                return;
+            } else {
+                // Token is invalid, remove it
+                localStorage.removeItem('authToken');
+            }
+        } catch (error) {
+            console.log('Token verification failed:', error);
+            localStorage.removeItem('authToken');
+        }
+    }
+    
+    // No valid authentication found
+    showAuth();
 }
 
 function setupEventListeners() {
@@ -99,11 +131,48 @@ async function login() {
         });
         
         if (error) {
-            showError(error.message);
+            // If Supabase login fails, try backend API
+            console.log('Supabase login failed, trying backend API:', error.message);
+            await loginViaBackend(email, password);
             return;
         }
         
         currentUser = data.user;
+        showSuccess('Login successful!');
+        showDashboard();
+        loadDevices();
+        startAutoRefresh();
+    } catch (error) {
+        console.log('Login error, trying backend API:', error.message);
+        await loginViaBackend(email, password);
+    }
+}
+
+// Fallback login via backend API
+async function loginViaBackend(email, password) {
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email,
+                password
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            showError(result.error || 'Login failed');
+            return;
+        }
+        
+        // Store the token and user info
+        localStorage.setItem('authToken', result.token);
+        currentUser = result.user;
+        
         showSuccess('Login successful!');
         showDashboard();
         loadDevices();
@@ -114,9 +183,11 @@ async function login() {
 }
 
 async function register() {
-    const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value;
+    
+    console.log('Registration attempt for:', email);
     
     if (!name || !email || !password) {
         showError('Please fill in all fields');
@@ -128,7 +199,17 @@ async function register() {
         return;
     }
     
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showError('Please enter a valid email address');
+        return;
+    }
+    
     try {
+        console.log('Trying Supabase registration...');
+        
+        // Try direct Supabase registration first
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -139,20 +220,122 @@ async function register() {
             }
         });
         
+        console.log('Supabase registration response:', { data, error });
+        
         if (error) {
-            showError(error.message);
+            console.log('Supabase registration failed:', error.message);
+            // Try backend API as fallback
+            await registerViaBackend(name, email, password);
             return;
         }
         
-        showSuccess('Registration successful! Please check your email to verify your account.');
+        // Check if user was created successfully
+        if (data.user) {
+            if (data.session) {
+                // User is automatically logged in
+                console.log('User registered and logged in automatically');
+                currentUser = data.user;
+                showSuccess('Registration successful! Welcome to the dashboard.');
+                showDashboard();
+                loadDevices();
+                startAutoRefresh();
+            } else {
+                // User created but not logged in - try to sign in
+                console.log('User created, attempting automatic login...');
+                try {
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+                    
+                    if (signInError) {
+                        console.log('Auto-login failed:', signInError.message);
+                        showSuccess('Registration successful! Please login with your credentials.');
+                        
+                        // Auto-fill login form
+                        document.getElementById('loginEmail').value = email;
+                        document.getElementById('loginPassword').value = password;
+                        
+                        showLogin();
+                    } else {
+                        console.log('Auto-login successful');
+                        currentUser = signInData.user;
+                        showSuccess('Registration and login successful!');
+                        showDashboard();
+                        loadDevices();
+                        startAutoRefresh();
+                    }
+                } catch (loginError) {
+                    console.log('Auto-login error:', loginError);
+                    showSuccess('Registration successful! Please login with your credentials.');
+                    
+                    // Auto-fill login form
+                    document.getElementById('loginEmail').value = email;
+                    document.getElementById('loginPassword').value = password;
+                    
+                    showLogin();
+                }
+            }
+        } else {
+            console.log('No user data returned from Supabase');
+            await registerViaBackend(name, email, password);
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        await registerViaBackend(name, email, password);
+    }
+}
+
+// Fallback registration via backend API
+async function registerViaBackend(name, email, password) {
+    try {
+        console.log('Attempting backend registration for:', email);
+        
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name,
+                email,
+                password
+            })
+        });
+        
+        const result = await response.json();
+        console.log('Backend registration response:', result);
+        
+        if (!response.ok) {
+            showError(result.error || 'Registration failed');
+            return;
+        }
+        
+        showSuccess('Registration successful! Please login with your credentials.');
+        
+        // Clear registration form
+        document.getElementById('registerName').value = '';
+        document.getElementById('registerEmail').value = '';
+        document.getElementById('registerPassword').value = '';
+        
+        // Auto-fill login form
+        document.getElementById('loginEmail').value = email;
+        document.getElementById('loginPassword').value = password;
+        
         showLogin();
     } catch (error) {
+        console.error('Backend registration error:', error);
         showError('Registration failed: ' + error.message);
     }
 }
 
 async function logout() {
+    // Sign out from Supabase
     await supabase.auth.signOut();
+    
+    // Remove backend auth token
+    localStorage.removeItem('authToken');
+    
     currentUser = null;
     selectedDevice = null;
     stopAutoRefresh();

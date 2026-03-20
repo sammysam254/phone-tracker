@@ -134,6 +134,27 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+app.get('/api/verify-token', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    
+    res.json({ user: user });
+  } catch (error) {
+    res.status(403).json({ error: 'Token verification failed' });
+  }
+});
+
 app.post('/api/device/register', authenticateUser, async (req, res) => {
   try {
     const { deviceId, deviceName, consentGranted } = req.body;
