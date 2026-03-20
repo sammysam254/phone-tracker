@@ -76,7 +76,9 @@ app.get('/api', (req, res) => {
       'GET /api': 'API information',
       'POST /api/register': 'Parent registration',
       'POST /api/login': 'Parent login',
+      'POST /api/verify-token': 'Verify authentication token',
       'POST /api/device/register': 'Register child device',
+      'POST /api/pair-device': 'Pair device with parent account',
       'POST /api/activity': 'Log device activity',
       'GET /api/activities/:deviceId': 'Get device activities',
       'GET /api/devices': 'Get parent devices',
@@ -301,8 +303,105 @@ app.get('/api/activities/:deviceId', authenticateUser, async (req, res) => {
   }
 });
 
+app.post('/api/pair-device', authenticateUser, async (req, res) => {
+  try {
+    const { pairingCode, parentId } = req.body;
+    
+    if (!pairingCode || pairingCode.length !== 6) {
+      return res.status(400).json({ error: 'Invalid pairing code. Please enter a 6-digit code.' });
+    }
+    
+    // Look for pending pairing request in device_pairing table
+    const { data: pairingRequest, error: pairingError } = await supabase
+      .from('device_pairing')
+      .select('*')
+      .eq('pairing_code', pairingCode)
+      .eq('status', 'pending')
+      .single();
+    
+    if (pairingError || !pairingRequest) {
+      return res.status(404).json({ error: 'Invalid or expired pairing code. Please check the code on your child\'s device.' });
+    }
+    
+    // Check if device is already paired with another parent
+    const { data: existingPairing, error: existingError } = await supabase
+      .from('device_pairing')
+      .select('*')
+      .eq('device_id', pairingRequest.device_id)
+      .eq('status', 'paired')
+      .neq('parent_id', req.user.id);
+    
+    if (!existingError && existingPairing && existingPairing.length > 0) {
+      return res.status(409).json({ error: 'This device is already paired with another parent account.' });
+    }
+    
+    // Update pairing status
+    const { data: updatedPairing, error: updateError } = await supabase
+      .from('device_pairing')
+      .update({
+        parent_id: req.user.id,
+        status: 'paired',
+        paired_at: new Date().toISOString()
+      })
+      .eq('id', pairingRequest.id)
+      .select()
+      .single();
+    
+    if (updateError) {
+      return res.status(500).json({ error: 'Failed to complete pairing. Please try again.' });
+    }
+    
+    // Also create/update entry in devices table for compatibility
+    const { error: deviceError } = await supabase
+      .from('devices')
+      .upsert({
+        device_id: pairingRequest.device_id,
+        parent_id: req.user.id,
+        device_name: pairingRequest.device_name || 'Child Device',
+        consent_granted: false, // Will be updated when child grants consent
+        last_active: new Date().toISOString()
+      });
+    
+    if (deviceError) {
+      console.warn('Failed to update devices table:', deviceError);
+    }
+    
+    res.json({ 
+      message: 'Device paired successfully',
+      deviceId: pairingRequest.device_id,
+      deviceName: pairingRequest.device_name || 'Child Device'
+    });
+  } catch (error) {
+    console.error('Pairing error:', error);
+    res.status(500).json({ error: 'Internal server error during pairing' });
+  }
+});
+
 app.get('/api/devices', authenticateUser, async (req, res) => {
   try {
+    // Try to get devices from device_pairing table first (newer approach)
+    const { data: pairedDevices, error: pairingError } = await supabase
+      .from('device_pairing')
+      .select('*')
+      .eq('parent_id', req.user.id)
+      .eq('status', 'paired');
+    
+    if (!pairingError && pairedDevices && pairedDevices.length > 0) {
+      // Transform pairing data to match expected device format
+      const devices = pairedDevices.map(pairing => ({
+        id: pairing.id,
+        device_id: pairing.device_id,
+        device_name: pairing.device_name || 'Child Device',
+        parent_id: pairing.parent_id,
+        consent_granted: pairing.consent_granted || false,
+        last_active: pairing.last_active || pairing.paired_at,
+        paired_at: pairing.paired_at
+      }));
+      
+      return res.json(devices);
+    }
+    
+    // Fallback to devices table
     const { data: devices, error } = await supabase
       .from('devices')
       .select('*')
@@ -312,7 +411,7 @@ app.get('/api/devices', authenticateUser, async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
     
-    res.json(devices);
+    res.json(devices || []);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
