@@ -102,9 +102,11 @@ android-app/gradle/
 android-app/gradlew
 android-app/gradlew.bat
 
-# APK files
+# APK files (except web-dashboard downloads)
 *.apk
 *.aab
+# Allow APK files in web-dashboard for downloads
+!web-dashboard/apk/*.apk
 
 # Keystore files
 *.jks
