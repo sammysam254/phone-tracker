@@ -459,7 +459,7 @@
             <h1>🛡️ Parental Control Dashboard</h1>
             <div class="user-info">
                 <span id="userEmail"></span>
-                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                <button class="btn btn-secondary" id="logoutBtn">Logout</button>
             </div>
         </div>
 
@@ -475,8 +475,8 @@
                     <label for="loginPassword">Password:</label>
                     <input type="password" id="loginPassword" required>
                 </div>
-                <button class="btn" onclick="login()">Login</button>
-                <button class="btn btn-secondary" onclick="showRegister()">Register</button>
+                <button class="btn" id="loginBtn">Login</button>
+                <button class="btn btn-secondary" id="showRegisterBtn">Register</button>
             </div>
 
             <div id="registerForm" class="hidden">
@@ -493,8 +493,8 @@
                     <label for="registerPassword">Password:</label>
                     <input type="password" id="registerPassword" required>
                 </div>
-                <button class="btn" onclick="register()">Register</button>
-                <button class="btn btn-secondary" onclick="showLogin()">Back to Login</button>
+                <button class="btn" id="registerBtn">Register</button>
+                <button class="btn btn-secondary" id="showLoginBtn">Back to Login</button>
             </div>
         </div>
 
@@ -512,7 +512,7 @@
                     <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 4)">
                     <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 5)">
                 </div>
-                <button class="btn" onclick="pairDevice()">Pair Device</button>
+                <button class="btn" id="pairDeviceBtn">Pair Device</button>
             </div>
 
             <!-- Device Selector -->
@@ -526,16 +526,16 @@
             <!-- Navigation Tabs -->
             <div class="nav-tabs">
                 <ul>
-                    <li><button class="active" onclick="showTab('overview')">📊 Overview</button></li>
-                    <li><button onclick="showTab('calls')">📞 Calls</button></li>
-                    <li><button onclick="showTab('messages')">💬 Messages</button></li>
-                    <li><button onclick="showTab('apps')">📱 Apps</button></li>
-                    <li><button onclick="showTab('web')">🌐 Web</button></li>
-                    <li><button onclick="showTab('location')">📍 Location</button></li>
-                    <li><button onclick="showTab('keyboard')">⌨️ Keyboard</button></li>
-                    <li><button onclick="showTab('media')">📷 Media</button></li>
-                    <li><button onclick="showTab('notifications')">🔔 Notifications</button></li>
-                    <li><button onclick="showTab('remote')">🎛️ Remote Control</button></li>
+                    <li><button class="active" onclick="showTab('overview', this)">📊 Overview</button></li>
+                    <li><button onclick="showTab('calls', this)">📞 Calls</button></li>
+                    <li><button onclick="showTab('messages', this)">💬 Messages</button></li>
+                    <li><button onclick="showTab('apps', this)">📱 Apps</button></li>
+                    <li><button onclick="showTab('web', this)">🌐 Web</button></li>
+                    <li><button onclick="showTab('location', this)">📍 Location</button></li>
+                    <li><button onclick="showTab('keyboard', this)">⌨️ Keyboard</button></li>
+                    <li><button onclick="showTab('media', this)">📷 Media</button></li>
+                    <li><button onclick="showTab('notifications', this)">🔔 Notifications</button></li>
+                    <li><button onclick="showTab('remote', this)">🎛️ Remote Control</button></li>
                 </ul>
             </div>
 

@@ -2,13 +2,27 @@
 const SUPABASE_URL = 'https://gejzprqznycnbfzeaxza.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlanpwcnF6bnljbmJmemVheHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTM2MTQsImV4cCI6MjA4OTU2OTYxNH0.zl9tfulUKL3aDbz4NjQOgOTk5JdMd8_Pf1YvHHN0SOQ';
 
-// Import Supabase client
-import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Load Supabase from CDN
+let supabase = null;
 let currentUser = null;
 let selectedDevice = null;
 let refreshInterval = null;
+
+// Initialize Supabase when script loads
+async function initializeSupabase() {
+    try {
+        // Load Supabase from CDN
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        script.onload = () => {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase initialized');
+        };
+        document.head.appendChild(script);
+    } catch (error) {
+        console.error('Failed to initialize Supabase:', error);
+    }
+}
 
 // Activity type icons and labels
 const ACTIVITY_ICONS = {
@@ -43,21 +57,90 @@ const ACTIVITY_LABELS = {
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    checkAuthState();
+    initializeSupabase();
     setupEventListeners();
+    
+    // Wait a bit for Supabase to load, then check auth
+    setTimeout(() => {
+        checkAuthState();
+    }, 1000);
 });
+
+function setupEventListeners() {
+    // Authentication buttons
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
+    const showLoginBtn = document.getElementById('showLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const pairDeviceBtn = document.getElementById('pairDeviceBtn');
+    
+    if (loginBtn) loginBtn.addEventListener('click', login);
+    if (registerBtn) registerBtn.addEventListener('click', register);
+    if (showRegisterBtn) showRegisterBtn.addEventListener('click', showRegister);
+    if (showLoginBtn) showLoginBtn.addEventListener('click', showLogin);
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    if (pairDeviceBtn) pairDeviceBtn.addEventListener('click', pairDevice);
+    
+    // Enter key listeners for forms
+    const loginPassword = document.getElementById('loginPassword');
+    const registerPassword = document.getElementById('registerPassword');
+    
+    if (loginPassword) {
+        loginPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    }
+    
+    if (registerPassword) {
+        registerPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+    }
+    
+    // Code input navigation
+    const codeInputs = document.querySelectorAll('.code-digit');
+    codeInputs.forEach((input, index) => {
+        input.addEventListener('input', function() {
+            moveToNext(this, index);
+        });
+        
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && !this.value && index > 0) {
+                codeInputs[index - 1].focus();
+            }
+        });
+    });
+    
+    // Device selector
+    const deviceSelect = document.getElementById('deviceSelect');
+    if (deviceSelect) {
+        deviceSelect.addEventListener('change', switchDevice);
+    }
+}
 
 // Authentication state management
 async function checkAuthState() {
-    // First check Supabase session
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session) {
-        currentUser = session.user;
-        showDashboard();
-        loadDevices();
-        startAutoRefresh();
+    // Check if Supabase is loaded
+    if (!supabase) {
+        console.log('Supabase not loaded yet, showing auth form');
+        showAuth();
         return;
+    }
+    
+    try {
+        // First check Supabase session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            currentUser = session.user;
+            showDashboard();
+            loadDevices();
+            startAutoRefresh();
+            return;
+        }
+    } catch (error) {
+        console.log('Supabase session check failed:', error);
     }
     
     // Check for stored auth token (backend authentication)
@@ -365,18 +448,27 @@ function showRegister() {
 }
 
 // Tab navigation
-function showTab(tabName) {
+function showTab(tabName, buttonElement) {
+    // If no button element provided, find it
+    if (!buttonElement) {
+        buttonElement = event.target;
+    }
+    
     // Update active tab button
     document.querySelectorAll('.nav-tabs button').forEach(btn => {
         btn.classList.remove('active');
     });
-    event.target.classList.add('active');
+    buttonElement.classList.add('active');
     
     // Show corresponding tab pane
     document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.remove('active');
     });
-    document.getElementById(tabName).classList.add('active');
+    
+    const tabPane = document.getElementById(tabName);
+    if (tabPane) {
+        tabPane.classList.add('active');
+    }
     
     // Load tab-specific data
     loadTabData(tabName);
@@ -1129,7 +1221,7 @@ function showSuccess(message) {
     setTimeout(() => successDiv.remove(), 5000);
 }
 
-// Export functions for global access
+// Make functions globally available
 window.login = login;
 window.register = register;
 window.logout = logout;
