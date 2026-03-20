@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Small screen dimensions (320dp and up) -->
+    <dimen name="activity_padding">12dp</dimen>
+    <dimen name="card_padding">12dp</dimen>
+    <dimen name="section_margin">12dp</dimen>
+    <dimen name="card_margin">8dp</dimen>
+    <dimen name="text_margin">6dp</dimen>
+    <dimen name="icon_margin">8dp</dimen>
+    <dimen name="button_spacing">4dp</dimen>
+    <dimen name="grid_spacing">3dp</dimen>
+    <dimen name="grid_item_padding">8dp</dimen>
+    
+    <!-- Text sizes for small screens -->
+    <dimen name="header_text_size">18sp</dimen>
+    <dimen name="section_title_size">16sp</dimen>
+    <dimen name="body_text_size">13sp</dimen>
+    <dimen name="button_text_size">13sp</dimen>
+    <dimen name="small_text_size">11sp</dimen>
+    <dimen name="pairing_code_size">36sp</dimen>
+    
+    <!-- Icon sizes for small screens -->
+    <dimen name="header_icon_size">32dp</dimen>
+    <dimen name="small_icon_size">20dp</dimen>
+</resources>

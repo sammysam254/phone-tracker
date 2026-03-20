@@ -68,22 +68,26 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="000000"
-                    android:textSize="48sp"
+                    android:textSize="@dimen/pairing_code_size"
                     android:textStyle="bold"
                     android:textColor="#007bff"
                     android:fontFamily="monospace"
                     android:background="#f8f9fa"
-                    android:padding="16dp"
-                    android:layout_marginBottom="16dp" />
+                    android:padding="@dimen/card_padding"
+                    android:layout_marginBottom="@dimen/text_margin"
+                    android:textIsSelectable="true"
+                    android:letterSpacing="0.1" />
 
                 <Button
                     android:id="@+id/generateCodeButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/button_height"
                     android:text="Generate New Code"
                     android:textColor="#ffffff"
+                    android:textSize="@dimen/button_text_size"
                     android:background="@drawable/button_primary"
-                    android:padding="12dp" />
+                    android:padding="@dimen/card_padding"
+                    android:minHeight="@dimen/touch_target_size" />
 
             </LinearLayout>
 

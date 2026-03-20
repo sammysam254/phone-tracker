@@ -1,276 +1,308 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
+    android:fillViewport="true"
     android:background="#f5f5f5">
 
-    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp"
-        android:background="@drawable/header_background"
-        android:layout_marginBottom="24dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_shield"
-            android:layout_marginEnd="12dp" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Parental Control"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#ffffff" />
-
-    </LinearLayout>
-
-    <!-- Status Card -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp">
-
+        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/header_background"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_shield"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="App Icon" />
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Device Status"
-                android:textSize="18sp"
+                android:layout_weight="1"
+                android:text="Parental Control"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#333333"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:id="@+id/statusText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Checking permissions..."
-                android:textSize="14sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Device ID:"
-                android:textSize="12sp"
-                android:textColor="#888888" />
-
-            <TextView
-                android:id="@+id/deviceIdText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Loading..."
-                android:textSize="12sp"
-                android:textColor="#333333"
-                android:fontFamily="monospace"
-                android:layout_marginBottom="8dp" />
+                android:textColor="#ffffff" />
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
+        <!-- Status Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
 
-    <!-- Consent Section -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Device Status"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/statusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Checking permissions..."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="12dp"
+                    android:lineSpacingExtra="2dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Device ID:"
+                    android:textSize="12sp"
+                    android:textColor="#888888" />
+
+                <TextView
+                    android:id="@+id/deviceIdText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Loading..."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="monospace"
+                    android:layout_marginBottom="8dp"
+                    android:textIsSelectable="true" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Action Buttons Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Consent Management"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#333333"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Review and manage monitoring consent"
-                android:textSize="14sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="16dp" />
-
-        <Button
-            android:id="@+id/setupButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Start Setup"
-            android:textColor="#ffffff"
-            android:background="@drawable/button_primary"
-            android:padding="12dp"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/startButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Start Monitoring"
-            android:textColor="#ffffff"
-            android:background="@drawable/button_success"
-            android:padding="12dp"
-            android:enabled="false" />
-
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <!-- Monitoring Control -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Monitoring Service"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#333333"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Start or stop activity monitoring"
-                android:textSize="14sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="16dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp"
+            android:weightSum="2">
 
             <Button
-                android:id="@+id/monitoringButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:id="@+id/setupButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="Setup"
+                android:textColor="#ffffff"
+                android:textSize="14sp"
+                android:background="@drawable/button_primary"
+                android:minHeight="48dp" />
+
+            <Button
+                android:id="@+id/startButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
                 android:text="Start Monitoring"
                 android:textColor="#ffffff"
+                android:textSize="14sp"
                 android:background="@drawable/button_success"
-                android:padding="12dp"
-                android:enabled="false" />
+                android:enabled="false"
+                android:minHeight="48dp" />
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
-
-    <!-- Monitored Activities -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp">
-
-        <LinearLayout
+        <!-- Monitoring Control -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Monitored Activities"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#333333"
-                android:layout_marginBottom="8dp" />
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <ScrollView
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Monitoring Service"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Control activity monitoring"
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="12dp" />
+
+                <Button
+                    android:id="@+id/monitoringButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Start Monitoring"
+                    android:textColor="#ffffff"
+                    android:textSize="14sp"
+                    android:background="@drawable/button_success"
+                    android:enabled="false"
+                    android:minHeight="48dp" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Monitored Activities -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Monitored Activities"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Activity Grid -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
+                    <!-- Row 1 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="📞 Call Logs"
-                        android:textSize="14sp"
-                        android:padding="8dp"
-                        android:background="#e8f5e8"
-                        android:layout_marginBottom="4dp" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="💬 SMS Messages"
-                        android:textSize="14sp"
-                        android:padding="8dp"
-                        android:background="#e8f5e8"
-                        android:layout_marginBottom="4dp" />
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📞 Calls"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:background="#e8f5e8"
+                            android:layout_marginEnd="4dp"
+                            android:gravity="center" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="📱 App Usage"
-                        android:textSize="14sp"
-                        android:padding="8dp"
-                        android:background="#e8f5e8"
-                        android:layout_marginBottom="4dp" />
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="💬 Messages"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:background="#e8f5e8"
+                            android:layout_marginStart="4dp"
+                            android:gravity="center" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="📷 Camera Access"
-                        android:textSize="14sp"
-                        android:padding="8dp"
-                        android:background="#fff3cd"
-                        android:layout_marginBottom="4dp" />
+                    </LinearLayout>
 
-                    <TextView
+                    <!-- Row 2 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="🎤 Microphone Access"
-                        android:textSize="14sp"
-                        android:padding="8dp"
-                        android:background="#fff3cd"
-                        android:layout_marginBottom="4dp" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📱 Apps"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:background="#e8f5e8"
+                            android:layout_marginEnd="4dp"
+                            android:gravity="center" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🌐 Web"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:background="#e8f5e8"
+                            android:layout_marginStart="4dp"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+
+                    <!-- Row 3 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📷 Camera"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:background="#fff3cd"
+                            android:layout_marginEnd="4dp"
+                            android:gravity="center" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🎤 Microphone"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:background="#fff3cd"
+                            android:layout_marginStart="4dp"
+                            android:gravity="center" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-            </ScrollView>
+            </LinearLayout>
 
-        </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-    </androidx.cardview.widget.CardView>
+    </LinearLayout>
 
-</LinearLayout>
+</ScrollView>

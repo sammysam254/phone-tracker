@@ -163,8 +163,57 @@
 
         @media (max-width: 480px) {
             .login-container {
-                margin: 20px;
-                padding: 30px 20px;
+                margin: 8px;
+                padding: 20px 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.6em;
+            }
+            
+            .header p {
+                font-size: 0.95em;
+            }
+            
+            .form-group input {
+                padding: 14px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .btn {
+                padding: 14px;
+                font-size: 15px;
+                min-height: 48px; /* Touch-friendly */
+            }
+            
+            .divider {
+                margin: 16px 0;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-container {
+                margin: 4px;
+                padding: 16px 8px;
+            }
+            
+            .header h1 {
+                font-size: 1.4em;
+            }
+            
+            .form-group {
+                margin-bottom: 18px;
+            }
+            
+            .form-group input {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .btn {
+                padding: 12px;
+                font-size: 14px;
             }
         }
     </style>

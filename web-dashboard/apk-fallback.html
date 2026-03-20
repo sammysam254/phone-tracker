@@ -8,13 +8,13 @@
         body {
             font-family: Arial, sans-serif;
             max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
+            margin: 20px auto;
+            padding: 10px;
             background: #f5f5f5;
         }
         .container {
             background: white;
-            padding: 30px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
@@ -22,14 +22,15 @@
         .btn {
             background: #007bff;
             color: white;
-            padding: 15px 30px;
+            padding: 12px 25px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin: 10px;
+            margin: 8px;
             text-decoration: none;
             display: inline-block;
-            font-size: 16px;
+            font-size: 15px;
+            min-width: 200px;
         }
         .btn:hover {
             background: #0056b3;
@@ -46,6 +47,7 @@
             border-radius: 5px;
             margin: 20px 0;
             border-left: 4px solid #007bff;
+            text-align: left;
         }
         .warning {
             background: #fff3cd;
@@ -54,6 +56,72 @@
             margin: 20px 0;
             border-left: 4px solid #ffc107;
             color: #856404;
+            text-align: left;
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                margin: 10px auto;
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            h3 {
+                font-size: 1.2em;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+                padding: 10px 20px;
+                font-size: 14px;
+                min-width: auto;
+            }
+            
+            .info, .warning {
+                padding: 12px;
+                margin: 15px 0;
+            }
+            
+            ol {
+                padding-left: 20px;
+            }
+            
+            ol li {
+                margin-bottom: 8px;
+                font-size: 14px;
+            }
+            
+            code {
+                font-size: 12px;
+                word-break: break-all;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.3em;
+            }
+            
+            .btn {
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+            
+            .info h4, .warning h4 {
+                font-size: 1em;
+            }
         }
     </style>
 </head>

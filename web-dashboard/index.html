@@ -92,6 +92,8 @@
             color: #718096;
             transition: all 0.3s;
             border-bottom: 3px solid transparent;
+            min-height: 44px; /* Touch-friendly */
+            touch-action: manipulation;
         }
 
         .nav-tabs button.active {
@@ -254,6 +256,8 @@
             font-weight: 600;
             transition: all 0.3s;
             margin: 5px;
+            min-height: 44px; /* Touch-friendly minimum size */
+            touch-action: manipulation; /* Prevent zoom on double-tap */
         }
 
         .btn:hover {
@@ -425,13 +429,31 @@
 
         @media (max-width: 768px) {
             .container {
-                padding: 10px;
+                padding: 8px;
             }
             
             .header {
                 flex-direction: column;
-                gap: 15px;
+                gap: 12px;
                 text-align: center;
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.6em;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+            }
+            
+            .user-info a, .user-info button {
+                width: 100%;
+                text-align: center;
+                padding: 10px 16px;
+                font-size: 14px;
             }
             
             .nav-tabs ul {
@@ -442,12 +464,241 @@
                 min-width: auto;
             }
             
+            .nav-tabs button {
+                padding: 14px 8px;
+                font-size: 13px;
+                min-height: 48px;
+            }
+            
             .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 16px 12px;
+            }
+            
+            .stat-number {
+                font-size: 2em;
             }
             
             .remote-controls {
                 grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .control-card {
+                padding: 16px;
+            }
+            
+            .tab-content {
+                padding: 16px 12px;
+            }
+            
+            .pairing-code-input {
+                flex-wrap: wrap;
+                gap: 6px;
+                justify-content: center;
+            }
+            
+            .code-digit {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1em;
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .filter-controls select, 
+            .filter-controls input {
+                width: 100%;
+                padding: 10px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 12px;
+            }
+            
+            .activity-info {
+                width: 100%;
+            }
+            
+            .media-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 8px;
+            }
+            
+            .media-item img {
+                height: 100px;
+            }
+            
+            .device-selector select {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 12px;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+                width: 100%;
+                margin: 4px 0;
+            }
+            
+            .pairing-section {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            
+            .location-map {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 4px;
+            }
+            
+            .header {
+                padding: 8px;
+                margin-bottom: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.4em;
+            }
+            
+            .tab-content {
+                padding: 12px 8px;
+                min-height: 400px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            
+            .stat-card {
+                padding: 10px 6px;
+            }
+            
+            .stat-number {
+                font-size: 1.4em;
+            }
+            
+            .stat-label {
+                font-size: 0.75em;
+            }
+            
+            .nav-tabs button {
+                padding: 12px 4px;
+                font-size: 10px;
+                min-height: 44px;
+            }
+            
+            .pairing-code-input {
+                gap: 3px;
+            }
+            
+            .code-digit {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9em;
+            }
+            
+            .control-card {
+                padding: 10px;
+            }
+            
+            .control-card .icon {
+                font-size: 1.6em;
+                margin-bottom: 8px;
+            }
+            
+            .control-card h4 {
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+            
+            .activity-item {
+                padding: 8px;
+            }
+            
+            .activity-icon {
+                font-size: 1.1em;
+                margin-right: 8px;
+            }
+            
+            .activity-type {
+                font-size: 0.85em;
+            }
+            
+            .activity-details {
+                font-size: 0.75em;
+            }
+            
+            .activity-time {
+                font-size: 0.7em;
+            }
+            
+            .media-gallery {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .media-item img {
+                height: 80px;
+            }
+            
+            .btn {
+                padding: 10px 12px;
+                font-size: 12px;
+                margin: 2px 0;
+            }
+            
+            .form-group input, 
+            .form-group select {
+                padding: 10px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .device-selector select {
+                font-size: 14px;
+                padding: 10px;
+            }
+            
+            .pairing-section {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .location-map {
+                height: 180px;
+            }
+            
+            .filter-controls select, 
+            .filter-controls input {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+            }
+            
+            .location-map {
+                height: 200px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
             }
         }
     </style>
@@ -495,7 +746,7 @@
                 <p style="margin: 15px 0; opacity: 0.9;">Install the Parental Control app on your child's device to begin monitoring their digital activities safely and securely.</p>
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 25px 0;">
                     <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
-                        📱 Download APK (2.6 MB)
+                        📱 Download APK (2.5 MB)
                     </a>
                     <a href="download.html#installation" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
                         📋 Installation Guide

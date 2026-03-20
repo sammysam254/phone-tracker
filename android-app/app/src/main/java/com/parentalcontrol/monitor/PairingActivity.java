@@ -114,6 +114,10 @@ public class PairingActivity extends AppCompatActivity {
     }
     
     private void checkPairingStatus() {
+        // Disable button during check to prevent multiple requests
+        checkPairingButton.setEnabled(false);
+        checkPairingButton.setText("Checking...");
+        
         supabaseClient.checkPairingStatus(deviceId, new SupabaseClient.ApiCallback() {
             @Override
             public void onSuccess(String response) {
@@ -123,6 +127,10 @@ public class PairingActivity extends AppCompatActivity {
                     String parentName = result.optString("parent_name", "");
                     
                     runOnUiThread(() -> {
+                        // Re-enable button
+                        checkPairingButton.setEnabled(true);
+                        checkPairingButton.setText("Check Pairing Status");
+                        
                         if (isPaired) {
                             // Save pairing info
                             SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
@@ -131,20 +139,36 @@ public class PairingActivity extends AppCompatActivity {
                             editor.putString("parent_name", parentName);
                             editor.apply();
                             
-                            Toast.makeText(PairingActivity.this, "Successfully paired with " + parentName, Toast.LENGTH_LONG).show();
-                            
-                            // Proceed to consent
-                            Intent intent = new Intent(PairingActivity.this, ConsentActivity.class);
-                            startActivity(intent);
-                            finish();
+                            // Show success dialog
+                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
+                            builder.setTitle("✅ Pairing Successful!")
+                                    .setMessage("Your device has been successfully paired with " + parentName + "'s account.\n\nYou will now proceed to the consent screen.")
+                                    .setPositiveButton("Continue", (dialog, which) -> {
+                                        Intent intent = new Intent(PairingActivity.this, ConsentActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    })
+                                    .setCancelable(false)
+                                    .show();
                         } else {
-                            Toast.makeText(PairingActivity.this, "Not paired yet. Please wait for parent to connect.", Toast.LENGTH_SHORT).show();
+                            // Show waiting message with helpful tips
+                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
+                            builder.setTitle("⏳ Waiting for Parent")
+                                    .setMessage("Your device is not paired yet. Please ensure:\n\n" +
+                                            "• Your parent has opened the web dashboard\n" +
+                                            "• They have entered the pairing code: " + currentPairingCode + "\n" +
+                                            "• Both devices have internet connection\n\n" +
+                                            "Try checking again in a few moments.")
+                                    .setPositiveButton("OK", null)
+                                    .show();
                         }
                     });
                     
                 } catch (Exception e) {
                     runOnUiThread(() -> {
-                        Toast.makeText(PairingActivity.this, "Error checking pairing status", Toast.LENGTH_SHORT).show();
+                        checkPairingButton.setEnabled(true);
+                        checkPairingButton.setText("Check Pairing Status");
+                        Toast.makeText(PairingActivity.this, "Error checking pairing status. Please try again.", Toast.LENGTH_SHORT).show();
                     });
                 }
             }
@@ -152,7 +176,16 @@ public class PairingActivity extends AppCompatActivity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    Toast.makeText(PairingActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                    checkPairingButton.setEnabled(true);
+                    checkPairingButton.setText("Check Pairing Status");
+                    
+                    // Show error dialog with retry option
+                    android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
+                    builder.setTitle("❌ Connection Error")
+                            .setMessage("Unable to check pairing status:\n" + error + "\n\nPlease check your internet connection and try again.")
+                            .setPositiveButton("Retry", (dialog, which) -> checkPairingStatus())
+                            .setNegativeButton("Cancel", null)
+                            .show();
                 });
             }
         });

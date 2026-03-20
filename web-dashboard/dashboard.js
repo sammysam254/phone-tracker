@@ -618,9 +618,28 @@ function getCurrentTab() {
 
 // Device pairing
 function moveToNext(input, index) {
+    // Auto-advance to next input
     if (input.value.length === 1 && index < 5) {
         const nextInput = document.querySelectorAll('.code-digit')[index + 1];
-        if (nextInput) nextInput.focus();
+        if (nextInput) {
+            nextInput.focus();
+            nextInput.select(); // Select content for easy replacement
+        }
+    }
+    
+    // Auto-submit when all digits are entered
+    if (index === 5 && input.value.length === 1) {
+        const allInputs = document.querySelectorAll('.code-digit');
+        const allFilled = Array.from(allInputs).every(inp => inp.value.length === 1);
+        if (allFilled) {
+            // Small delay to allow user to see the complete code
+            setTimeout(() => {
+                const pairBtn = document.getElementById('pairDeviceBtn');
+                if (pairBtn && !pairBtn.disabled) {
+                    pairBtn.click();
+                }
+            }, 500);
+        }
     }
 }
 
@@ -638,48 +657,93 @@ async function pairDevice() {
         return;
     }
     
+    // Disable the pair button and show loading state
+    const pairBtn = document.getElementById('pairDeviceBtn');
+    const originalText = pairBtn.textContent;
+    pairBtn.disabled = true;
+    pairBtn.textContent = 'Pairing...';
+    
     try {
-        const { data, error } = await supabaseClient.rpc('pair_device_with_parent', {
-            pairing_code_input: pairingCode,
-            parent_user_id: currentUser.id
-        });
+        // First, check if the pairing code exists and is valid
+        const { data: deviceCheck, error: checkError } = await supabaseClient
+            .from('devices')
+            .select('*')
+            .eq('pairing_code', pairingCode)
+            .eq('status', 'waiting_for_parent')
+            .single();
         
-        if (error) {
-            showError('Pairing failed: ' + error.message);
+        if (checkError || !deviceCheck) {
+            showError('Invalid pairing code or device not found. Please check the code and try again.');
             return;
         }
         
-        if (data && data.success) {
-            showSuccess(`Device "${data.device_name}" paired successfully!`);
+        // Update the device with parent information
+        const { data: updateData, error: updateError } = await supabaseClient
+            .from('devices')
+            .update({
+                parent_id: currentUser.id,
+                parent_name: currentUser.user_metadata?.name || currentUser.email,
+                status: 'paired',
+                paired_at: new Date().toISOString()
+            })
+            .eq('pairing_code', pairingCode)
+            .select();
+        
+        if (updateError) {
+            showError('Pairing failed: ' + updateError.message);
+            return;
+        }
+        
+        if (updateData && updateData.length > 0) {
+            const device = updateData[0];
+            showSuccess(`Device "${device.device_name}" paired successfully! The child can now proceed with consent.`);
+            
             // Clear pairing code inputs
             codeInputs.forEach(input => input.value = '');
-            // Reload devices
-            loadDevices();
+            
+            // Reload devices to show the new paired device
+            await loadDevices();
+            
+            // Show additional success information
+            setTimeout(() => {
+                showSuccess(`Pairing complete! Device ID: ${device.device_id} is now connected to your account.`);
+            }, 2000);
         } else {
-            showError(data?.error || 'Pairing failed');
+            showError('Pairing failed: No device data returned');
         }
     } catch (error) {
+        console.error('Pairing error:', error);
         showError('Pairing error: ' + error.message);
+    } finally {
+        // Re-enable the button
+        pairBtn.disabled = false;
+        pairBtn.textContent = originalText;
     }
 }
 
 // Data loading functions
 async function loadOverviewData() {
-    if (!selectedDevice) return;
+    if (!selectedDevice || !supabaseClient) return;
     
     try {
-        // Load statistics
-        const { data: stats, error: statsError } = await supabase.rpc('get_device_stats', {
-            device_uuid: selectedDevice
-        });
-        
-        if (!statsError && stats) {
-            document.getElementById('callCount').textContent = stats.callCount || 0;
-            document.getElementById('smsCount').textContent = stats.smsCount || 0;
-            document.getElementById('appCount').textContent = stats.appUsageCount || 0;
-            document.getElementById('webCount').textContent = stats.webActivityCount || 0;
-            document.getElementById('locationCount').textContent = stats.locationCount || 0;
-            document.getElementById('keyboardCount').textContent = stats.keyboardInputCount || 0;
+        // Load statistics using backend API as fallback
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+            const response = await fetch(`/api/stats/${selectedDevice}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const stats = await response.json();
+                document.getElementById('callCount').textContent = stats.callCount || 0;
+                document.getElementById('smsCount').textContent = stats.smsCount || 0;
+                document.getElementById('appCount').textContent = stats.appUsageCount || 0;
+                document.getElementById('webCount').textContent = stats.webActivityCount || 0;
+                document.getElementById('locationCount').textContent = stats.locationCount || 0;
+                document.getElementById('keyboardCount').textContent = stats.keyboardInputCount || 0;
+            }
         }
         
         // Load recent activities
@@ -690,10 +754,10 @@ async function loadOverviewData() {
 }
 
 async function loadRecentActivities() {
-    if (!selectedDevice) return;
+    if (!selectedDevice || !supabaseClient) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -746,10 +810,10 @@ async function loadTabData(tabName) {
 }
 
 async function loadCallData() {
-    if (!selectedDevice) return;
+    if (!selectedDevice || !supabaseClient) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -772,7 +836,7 @@ async function loadMessageData() {
     if (!selectedDevice) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -795,7 +859,7 @@ async function loadAppData() {
     if (!selectedDevice) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -818,7 +882,7 @@ async function loadWebData() {
     if (!selectedDevice) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -841,7 +905,7 @@ async function loadLocationData() {
     if (!selectedDevice) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -864,7 +928,7 @@ async function loadKeyboardData() {
     if (!selectedDevice) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -887,7 +951,7 @@ async function loadMediaData() {
     if (!selectedDevice) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -910,7 +974,7 @@ async function loadNotificationData() {
     if (!selectedDevice) return;
     
     try {
-        const { data: activities, error } = await supabase
+        const { data: activities, error } = await supabaseClient
             .from('activities')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -933,7 +997,7 @@ async function loadRemoteCommandHistory() {
     if (!selectedDevice) return;
     
     try {
-        const { data: commands, error } = await supabase
+        const { data: commands, error } = await supabaseClient
             .from('remote_commands')
             .select('*')
             .eq('device_id', selectedDevice)
@@ -1121,7 +1185,7 @@ async function activateCamera() {
     const cameraType = document.getElementById('cameraType').value;
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('remote_commands')
             .insert([{
                 device_id: selectedDevice,
@@ -1151,7 +1215,7 @@ async function startAudioRecording() {
     const duration = document.getElementById('audioDuration').value;
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('remote_commands')
             .insert([{
                 device_id: selectedDevice,
@@ -1179,7 +1243,7 @@ async function requestLocation() {
     }
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('remote_commands')
             .insert([{
                 device_id: selectedDevice,
@@ -1211,7 +1275,7 @@ async function sendEmergencyAlert() {
     }
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('remote_commands')
             .insert([{
                 device_id: selectedDevice,

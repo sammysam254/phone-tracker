@@ -26,6 +26,7 @@ public class PermissionSetupActivity extends AppCompatActivity {
     private static final int NOTIFICATION_ACCESS_REQUEST_CODE = 102;
     private static final int ACCESSIBILITY_REQUEST_CODE = 103;
     private static final int OVERLAY_REQUEST_CODE = 104;
+    private static final int STORAGE_REQUEST_CODE = 105;
     
     private LinearLayout permissionContainer;
     private Button continueButton;
@@ -38,7 +39,6 @@ public class PermissionSetupActivity extends AppCompatActivity {
         Manifest.permission.CAMERA,
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.READ_CONTACTS,
         Manifest.permission.READ_PHONE_STATE
     };
@@ -75,6 +75,10 @@ public class PermissionSetupActivity extends AppCompatActivity {
         }
         
         // Special permissions
+        addPermissionItem("Storage Access", 
+            hasStoragePermission(), 
+            this::requestStoragePermission);
+            
         addPermissionItem("Usage Stats Access", 
             hasUsageStatsPermission(), 
             this::requestUsageStatsPermission);
@@ -145,7 +149,8 @@ public class PermissionSetupActivity extends AppCompatActivity {
         }
         
         // Check special permissions
-        return hasUsageStatsPermission() && 
+        return hasStoragePermission() &&
+               hasUsageStatsPermission() && 
                hasNotificationAccess() && 
                hasAccessibilityPermission() && 
                hasOverlayPermission();
@@ -185,8 +190,22 @@ public class PermissionSetupActivity extends AppCompatActivity {
     }
     
     private void requestAccessibilityPermission() {
-        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-        startActivityForResult(intent, ACCESSIBILITY_REQUEST_CODE);
+        // Show detailed instructions before opening settings
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Enable Accessibility Service")
+                .setMessage("To monitor device activities, please:\n\n" +
+                        "1. Find 'Parental Control Monitor' in the list\n" +
+                        "2. Tap on it to open settings\n" +
+                        "3. Toggle the switch to 'ON'\n" +
+                        "4. Confirm by tapping 'OK' in the dialog\n" +
+                        "5. Return to this app\n\n" +
+                        "This permission is required for monitoring keyboard inputs and app activities.")
+                .setPositiveButton("Open Settings", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                    startActivityForResult(intent, ACCESSIBILITY_REQUEST_CODE);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
     
     private boolean hasOverlayPermission() {
@@ -198,6 +217,49 @@ public class PermissionSetupActivity extends AppCompatActivity {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, OVERLAY_REQUEST_CODE);
+        }
+    }
+    
+    private boolean hasStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ uses MANAGE_EXTERNAL_STORAGE
+            return android.os.Environment.isExternalStorageManager();
+        } else {
+            // Android 10 and below use READ_EXTERNAL_STORAGE
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) 
+                == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+    
+    private void requestStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ - Request MANAGE_EXTERNAL_STORAGE
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setTitle("Storage Permission Required")
+                    .setMessage("This app needs access to device storage to monitor media files and app data.\n\n" +
+                            "Please:\n" +
+                            "1. Find this app in the list\n" +
+                            "2. Toggle 'Allow access to manage all files' to ON\n" +
+                            "3. Return to this app\n\n" +
+                            "This permission is required for comprehensive monitoring.")
+                    .setPositiveButton("Open Settings", (dialog, which) -> {
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                            intent.setData(Uri.parse("package:" + getPackageName()));
+                            startActivityForResult(intent, STORAGE_REQUEST_CODE);
+                        } catch (Exception e) {
+                            // Fallback to general storage settings
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                            startActivityForResult(intent, STORAGE_REQUEST_CODE);
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            // Android 10 and below - Request READ_EXTERNAL_STORAGE
+            ActivityCompat.requestPermissions(this, 
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 
+                STORAGE_REQUEST_CODE);
         }
     }
     
@@ -232,7 +294,7 @@ public class PermissionSetupActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         
-        if (requestCode == PERMISSION_REQUEST_CODE) {
+        if (requestCode == PERMISSION_REQUEST_CODE || requestCode == STORAGE_REQUEST_CODE) {
             updatePermissionStatus();
         }
     }
