@@ -575,55 +575,93 @@ async function loadDevices() {
     
     console.log('Loading devices for user:', currentUser.email);
     
+    const deviceSelect = document.getElementById('deviceSelect');
+    if (!deviceSelect) {
+        console.log('Device select element not found');
+        return;
+    }
+    
+    // Show loading state
+    deviceSelect.innerHTML = '<option value="">Loading devices...</option>';
+    
+    // Try backend API first
+    const authToken = localStorage.getItem('authToken');
+    if (authToken) {
+        try {
+            console.log('Attempting to load devices from backend API...');
+            const response = await fetch('/api/devices', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const devices = await response.json();
+                console.log('Loaded devices from backend:', devices);
+                populateDeviceSelect(devices);
+                return;
+            } else {
+                console.log('Backend API failed, trying Supabase...');
+            }
+        } catch (error) {
+            console.log('Backend API error, trying Supabase:', error);
+        }
+    }
+    
+    // Fallback to Supabase
     if (!supabaseClient) {
         console.log('Supabase not available, showing empty device list');
-        const deviceSelect = document.getElementById('deviceSelect');
-        if (deviceSelect) {
-            deviceSelect.innerHTML = '<option value="">No devices found (Supabase unavailable)</option>';
-        }
+        deviceSelect.innerHTML = '<option value="">No devices found (Service unavailable)</option>';
         return;
     }
     
     try {
+        console.log('Loading devices from Supabase...');
         const { data: devices, error } = await supabaseClient
             .from('devices')
             .select('*')
             .eq('parent_id', currentUser.id);
         
         if (error) {
-            console.error('Error loading devices:', error);
+            console.error('Error loading devices from Supabase:', error);
+            deviceSelect.innerHTML = '<option value="">Error loading devices</option>';
             return;
         }
         
-        console.log('Loaded devices:', devices);
+        console.log('Loaded devices from Supabase:', devices);
+        populateDeviceSelect(devices);
         
-        const deviceSelect = document.getElementById('deviceSelect');
-        if (deviceSelect) {
-            deviceSelect.innerHTML = '<option value="">Select a device...</option>';
-            
-            if (devices && devices.length > 0) {
-                devices.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.device_id;
-                    option.textContent = `${device.device_name} (${device.device_id})`;
-                    deviceSelect.appendChild(option);
-                });
-                
-                // Auto-select first device if available
-                if (!selectedDevice) {
-                    selectedDevice = devices[0].device_id;
-                    deviceSelect.value = selectedDevice;
-                    loadOverviewData();
-                }
-            } else {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'No devices paired yet';
-                deviceSelect.appendChild(option);
-            }
-        }
     } catch (error) {
         console.error('Error loading devices:', error);
+        deviceSelect.innerHTML = '<option value="">Error loading devices</option>';
+    }
+}
+
+function populateDeviceSelect(devices) {
+    const deviceSelect = document.getElementById('deviceSelect');
+    if (!deviceSelect) return;
+    
+    deviceSelect.innerHTML = '<option value="">Select a device...</option>';
+    
+    if (devices && devices.length > 0) {
+        devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.device_id;
+            option.textContent = `${device.device_name || 'Unknown Device'} (${device.device_id})`;
+            deviceSelect.appendChild(option);
+        });
+        
+        // Auto-select first device if available
+        if (!selectedDevice) {
+            selectedDevice = devices[0].device_id;
+            deviceSelect.value = selectedDevice;
+            loadOverviewData();
+        }
+    } else {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No devices paired yet';
+        deviceSelect.appendChild(option);
     }
 }
 
@@ -703,27 +741,24 @@ async function pairDevice() {
     pairBtn.innerHTML = `<span class="spinner"></span>Pairing...`;
     
     try {
-        // Try Supabase first if available
-        if (supabaseClient) {
-            await pairDeviceWithSupabase(pairingCode);
-        } else {
-            // Fallback to backend API
-            await pairDeviceWithBackend(pairingCode, authToken);
-        }
+        // Always try backend API first for more reliable pairing
+        console.log('Attempting pairing with backend API...');
+        await pairDeviceWithBackend(pairingCode, authToken);
     } catch (error) {
-        console.error('Pairing error:', error);
+        console.error('Backend pairing failed, trying Supabase...', error);
         
-        let errorMessage = 'Pairing failed due to a network error.';
-        
-        if (error.message.includes('fetch')) {
-            errorMessage = 'Network connection error. Please check your internet connection and try again.';
-        } else if (error.message.includes('timeout')) {
-            errorMessage = 'Request timed out. Please check your connection and try again.';
-        } else if (error.message.includes('CORS')) {
-            errorMessage = 'Connection blocked. Please refresh the page and try again.';
+        // Fallback to Supabase if backend fails
+        if (supabaseClient) {
+            try {
+                await pairDeviceWithSupabase(pairingCode);
+            } catch (supabaseError) {
+                console.error('Supabase pairing also failed:', supabaseError);
+                handlePairingError(supabaseError);
+            }
+        } else {
+            console.error('No Supabase client available');
+            handlePairingError(error);
         }
-        
-        showError(errorMessage);
     } finally {
         // Reset button state
         pairBtn.disabled = false;
@@ -732,59 +767,150 @@ async function pairDevice() {
     }
 }
 
+function handlePairingError(error) {
+    let errorMessage = 'Pairing failed. Please try again.';
+    
+    if (error.message && error.message.includes('fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.';
+    } else if (error.message && error.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+    } else if (error.message && error.message.includes('CORS')) {
+        errorMessage = 'Connection blocked. Please refresh the page and try again.';
+    } else if (error.message && error.message.includes('404')) {
+        errorMessage = 'Pairing service not available. Please try again later.';
+    } else if (error.message && error.message.includes('JSON')) {
+        errorMessage = 'Invalid server response. Please refresh the page and try again.';
+    }
+    
+    showError(errorMessage);
+}
+
 async function pairDeviceWithSupabase(pairingCode) {
-    // First, check if the pairing code exists and is valid
-    const { data: deviceCheck, error: checkError } = await supabaseClient
-        .from('device_pairing')
-        .select('*')
-        .eq('pairing_code', pairingCode)
-        .eq('status', 'waiting_for_parent')
-        .single();
+    console.log('Attempting Supabase pairing for code:', pairingCode);
     
-    if (checkError) {
-        let errorMessage = 'Invalid pairing code or device not found.';
+    try {
+        // First, check if the pairing code exists and is valid
+        const { data: deviceCheck, error: checkError } = await supabaseClient
+            .from('device_pairing')
+            .select('*')
+            .eq('pairing_code', pairingCode)
+            .eq('status', 'waiting_for_parent')
+            .single();
         
-        if (checkError.code === 'PGRST116') {
-            errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
-        } else if (checkError.message.includes('expired')) {
-            errorMessage = 'Pairing code has expired. Please generate a new code on your child\'s device.';
-        } else if (checkError.message.includes('not found')) {
-            errorMessage = 'Pairing code not found. Please ensure the code is correct and the child\'s app is open.';
+        console.log('Device check result:', { deviceCheck, checkError });
+        
+        if (checkError) {
+            let errorMessage = 'Invalid pairing code or device not found.';
+            
+            if (checkError.code === 'PGRST116') {
+                errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
+            } else if (checkError.message && checkError.message.includes('expired')) {
+                errorMessage = 'Pairing code has expired. Please generate a new code on your child\'s device.';
+            } else if (checkError.message && checkError.message.includes('not found')) {
+                errorMessage = 'Pairing code not found. Please ensure the code is correct and the child\'s app is open.';
+            }
+            
+            throw new Error(errorMessage);
         }
         
-        showError(errorMessage);
-        return;
+        if (!deviceCheck) {
+            throw new Error('No device found with this pairing code. Please check the code and try again.');
+        }
+        
+        // Use the RPC function to pair the device
+        const { data: pairResult, error: pairError } = await supabaseClient
+            .rpc('pair_device_with_parent', {
+                pairing_code_input: pairingCode,
+                parent_user_id: currentUser.id
+            });
+        
+        console.log('Pairing RPC result:', { pairResult, pairError });
+        
+        if (pairError) {
+            let errorMessage = 'Pairing failed. Please try again.';
+            
+            if (pairError.message && pairError.message.includes('Invalid or expired')) {
+                errorMessage = 'Pairing code is invalid or has expired. Please generate a new code.';
+            } else if (pairError.message && pairError.message.includes('already paired')) {
+                errorMessage = 'This device is already paired with another parent account.';
+            } else if (pairError.code === 'PGRST204') {
+                errorMessage = 'Database permission error. Please contact support.';
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        if (pairResult && pairResult.success) {
+            showSuccess(`Device "${pairResult.device_name || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
+            
+            // Clear pairing code inputs
+            const codeInputs = document.querySelectorAll('.code-digit');
+            codeInputs.forEach(input => input.value = '');
+            
+            // Reload devices to show the new paired device
+            await loadDevices();
+            
+            // Show additional success information
+            setTimeout(() => {
+                showSuccess(`Pairing complete! Device "${pairResult.device_name || 'Unknown'}" is now connected to your account.`);
+            }, 2000);
+        } else {
+            throw new Error(pairResult?.error || 'Pairing failed for unknown reason. Please try again.');
+        }
+        
+    } catch (supabaseError) {
+        console.error('Supabase pairing error:', supabaseError);
+        throw supabaseError; // Re-throw for handling in main function
+    }
+}
+
+async function pairDeviceWithBackend(pairingCode, authToken) {
+    console.log('Attempting backend pairing for code:', pairingCode);
+    
+    if (!authToken) {
+        throw new Error('Authentication token missing. Please login again.');
     }
     
-    if (!deviceCheck) {
-        showError('No device found with this pairing code. Please check the code and try again.');
-        return;
-    }
-    
-    // Use the RPC function to pair the device
-    const { data: pairResult, error: pairError } = await supabaseClient
-        .rpc('pair_device_with_parent', {
-            pairing_code_input: pairingCode,
-            parent_user_id: currentUser.id
+    try {
+        const response = await fetch('/api/pair-device', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                pairingCode: pairingCode,
+                parentId: currentUser.id || currentUser.user_id
+            })
         });
-    
-    if (pairError) {
-        let errorMessage = 'Pairing failed. Please try again.';
         
-        if (pairError.message.includes('Invalid or expired')) {
-            errorMessage = 'Pairing code is invalid or has expired. Please generate a new code.';
-        } else if (pairError.message.includes('already paired')) {
-            errorMessage = 'This device is already paired with another parent account.';
-        } else if (pairError.code === 'PGRST204') {
-            errorMessage = 'Database permission error. Please contact support.';
+        console.log('Backend pairing response status:', response.status);
+        
+        // Check if response is HTML (error page) instead of JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('Backend returned non-JSON response:', contentType);
+            throw new Error('Backend service unavailable. Please try again later.');
         }
         
-        showError(errorMessage);
-        return;
-    }
-    
-    if (pairResult && pairResult.success) {
-        showSuccess(`Device "${pairResult.device_name}" paired successfully! The child can now proceed with consent.`);
+        const result = await response.json();
+        console.log('Backend pairing result:', result);
+        
+        if (!response.ok) {
+            let errorMessage = result.error || 'Pairing failed';
+            
+            if (response.status === 404) {
+                errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
+            } else if (response.status === 409) {
+                errorMessage = 'This device is already paired with another parent account.';
+            } else if (response.status === 401) {
+                errorMessage = 'Authentication expired. Please login again.';
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        showSuccess(`Device "${result.deviceName || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
         
         // Clear pairing code inputs
         const codeInputs = document.querySelectorAll('.code-digit');
@@ -793,58 +919,17 @@ async function pairDeviceWithSupabase(pairingCode) {
         // Reload devices to show the new paired device
         await loadDevices();
         
-        // Show additional success information
-        setTimeout(() => {
-            showSuccess(`Pairing complete! Device "${pairResult.device_name}" is now connected to your account.`);
-        }, 2000);
-    } else {
-        showError(pairResult?.error || 'Pairing failed for unknown reason. Please try again.');
-    }
-}
-
-async function pairDeviceWithBackend(pairingCode, authToken) {
-    if (!authToken) {
-        showError('Authentication token missing. Please login again.');
-        return;
-    }
-    
-    const response = await fetch('/api/pair-device', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-            pairingCode: pairingCode,
-            parentId: currentUser.id || currentUser.user_id
-        })
-    });
-    
-    const result = await response.json();
-    
-    if (!response.ok) {
-        let errorMessage = result.error || 'Pairing failed';
+    } catch (fetchError) {
+        console.error('Backend pairing fetch error:', fetchError);
         
-        if (response.status === 404) {
-            errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
-        } else if (response.status === 409) {
-            errorMessage = 'This device is already paired with another parent account.';
-        } else if (response.status === 401) {
-            errorMessage = 'Authentication expired. Please login again.';
+        if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
+            throw new Error('Cannot connect to pairing service. Please check your internet connection.');
+        } else if (fetchError.message.includes('JSON')) {
+            throw new Error('Invalid server response. The pairing service may be temporarily unavailable.');
+        } else {
+            throw fetchError; // Re-throw the original error
         }
-        
-        showError(errorMessage);
-        return;
     }
-    
-    showSuccess(`Device "${result.deviceName}" paired successfully! The child can now proceed with consent.`);
-    
-    // Clear pairing code inputs
-    const codeInputs = document.querySelectorAll('.code-digit');
-    codeInputs.forEach(input => input.value = '');
-    
-    // Reload devices to show the new paired device
-    await loadDevices();
 }
 
 // Data loading functions
