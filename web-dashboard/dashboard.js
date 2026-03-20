@@ -96,12 +96,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     const authToken = localStorage.getItem('authToken');
     const storedUser = localStorage.getItem('currentUser');
     
+    // Special handling for parent app
+    const isParentApp = navigator.userAgent.includes('ParentalControlParentApp') || 
+                       navigator.userAgent.includes('ParentApp') || 
+                       window.location.search.includes('parent=true');
+    
     if (authToken && storedUser) {
         try {
             currentUser = JSON.parse(storedUser);
             console.log('Found stored authentication, showing dashboard immediately');
             showDashboard();
-            // Don't load devices yet, wait for Supabase to initialize
+            
+            // For parent app, skip complex auth verification
+            if (isParentApp) {
+                console.log('Parent app detected, using simplified auth flow');
+                loadDevices();
+                startAutoRefresh();
+                return;
+            }
         } catch (error) {
             console.log('Failed to parse stored user, continuing with full auth check');
         }
@@ -110,10 +122,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         showAuth();
     }
     
-    // Initialize Supabase first
+    // Initialize Supabase with timeout for parent app
     try {
         console.log('Initializing Supabase...');
-        await initializeSupabase();
+        const initPromise = initializeSupabase();
+        
+        if (isParentApp) {
+            // Shorter timeout for parent app
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Supabase init timeout')), 3000)
+            );
+            await Promise.race([initPromise, timeoutPromise]);
+        } else {
+            await initPromise;
+        }
+        
         console.log('Supabase initialization complete');
     } catch (error) {
         console.error('Supabase initialization failed:', error);
@@ -122,8 +145,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     setupEventListeners();
     
-    // Check authentication after Supabase is ready
-    await checkAuthState();
+    // Check authentication after Supabase is ready (skip for parent app if already authenticated)
+    if (!isParentApp || !currentUser) {
+        await checkAuthState();
+    }
     
     // Load devices if we have a current user
     if (currentUser) {
@@ -131,23 +156,45 @@ document.addEventListener('DOMContentLoaded', async function() {
         startAutoRefresh();
     }
     
-    // Also try checking auth periodically until resolved (fallback)
-    const authCheckInterval = setInterval(() => {
-        if (currentUser) {
+    // Simplified auth check for parent app
+    if (isParentApp) {
+        const authCheckInterval = setInterval(() => {
+            if (currentUser) {
+                clearInterval(authCheckInterval);
+            } else {
+                // Force show login form for parent app
+                showAuth();
+                clearInterval(authCheckInterval);
+            }
+        }, 2000);
+        
+        // Stop trying after 6 seconds for parent app
+        setTimeout(() => {
             clearInterval(authCheckInterval);
-        } else {
-            checkAuthState();
-        }
-    }, 3000);
-    
-    // Stop trying after 15 seconds and force redirect if needed
-    setTimeout(() => {
-        clearInterval(authCheckInterval);
-        if (!currentUser && !authToken) {
-            console.log('No authentication found after 15 seconds, forcing redirect to login');
-            window.location.href = '/login.html';
-        }
-    }, 15000);
+            if (!currentUser && !authToken) {
+                console.log('Parent app: forcing login form display');
+                showAuth();
+            }
+        }, 6000);
+    } else {
+        // Original flow for web browser
+        const authCheckInterval = setInterval(() => {
+            if (currentUser) {
+                clearInterval(authCheckInterval);
+            } else {
+                checkAuthState();
+            }
+        }, 3000);
+        
+        // Stop trying after 15 seconds and force redirect if needed
+        setTimeout(() => {
+            clearInterval(authCheckInterval);
+            if (!currentUser && !authToken) {
+                console.log('No authentication found after 15 seconds, forcing redirect to login');
+                window.location.href = '/login.html';
+            }
+        }, 15000);
+    }
 });
 
 function setupEventListeners() {

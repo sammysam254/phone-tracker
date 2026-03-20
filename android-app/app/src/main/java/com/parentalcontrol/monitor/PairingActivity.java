@@ -56,8 +56,17 @@ public class PairingActivity extends AppCompatActivity {
         currentPairingCode = generateSecureCode();
         pairingCodeText.setText(currentPairingCode);
         
-        // Register device with pairing code
-        registerDeviceWithCode();
+        // Check if device is already registered
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        boolean isDeviceRegistered = prefs.getBoolean("device_registered", false);
+        
+        if (isDeviceRegistered) {
+            // Device already registered, just update the pairing code
+            updatePairingCodeOnly();
+        } else {
+            // First time registration
+            registerDeviceWithCode();
+        }
     }
     
     private String generateSecureCode() {
@@ -87,14 +96,27 @@ public class PairingActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String response) {
                     runOnUiThread(() -> {
-                        // Clear any previous pairing status
+                        // Mark device as registered for the first time
                         SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
                         SharedPreferences.Editor editor = prefs.edit();
+                        editor.putBoolean("device_registered", true);
                         editor.putBoolean("device_paired", false);
                         editor.remove("parent_name");
-                        editor.apply();
                         
-                        Toast.makeText(PairingActivity.this, "New pairing code generated. Ready for pairing.", Toast.LENGTH_SHORT).show();
+                        // Check if this is offline mode
+                        if (response.contains("offline mode")) {
+                            editor.putBoolean("offline_pairing", true);
+                            editor.putString("pending_pairing_code", currentPairingCode);
+                            editor.apply();
+                            
+                            Toast.makeText(PairingActivity.this, "Device registered (offline mode). Will sync when connection is restored.", Toast.LENGTH_LONG).show();
+                        } else {
+                            editor.putBoolean("offline_pairing", false);
+                            editor.remove("pending_pairing_code");
+                            editor.apply();
+                            
+                            Toast.makeText(PairingActivity.this, "Device registered successfully. Ready for pairing.", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
                 
@@ -121,6 +143,63 @@ public class PairingActivity extends AppCompatActivity {
         }
     }
     
+    private void updatePairingCodeOnly() {
+        try {
+            JSONObject updateData = new JSONObject();
+            updateData.put("device_id", deviceId);
+            updateData.put("pairing_code", currentPairingCode);
+            updateData.put("expires_at", getExpirationTime());
+            
+            supabaseClient.updatePairingCode(deviceId, updateData, new SupabaseClient.ApiCallback() {
+                @Override
+                public void onSuccess(String response) {
+                    runOnUiThread(() -> {
+                        // Clear pairing status but keep device registration
+                        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putBoolean("device_paired", false);
+                        editor.remove("parent_name");
+                        
+                        // Check if this is offline mode
+                        if (response.contains("offline mode")) {
+                            editor.putBoolean("offline_pairing", true);
+                            editor.putString("pending_pairing_code", currentPairingCode);
+                            editor.apply();
+                            
+                            Toast.makeText(PairingActivity.this, "New pairing code generated (offline mode). Will sync when connection is restored.", Toast.LENGTH_LONG).show();
+                        } else {
+                            editor.putBoolean("offline_pairing", false);
+                            editor.remove("pending_pairing_code");
+                            editor.apply();
+                            
+                            Toast.makeText(PairingActivity.this, "New pairing code generated. Ready for pairing.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+                
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        String userFriendlyError = getUserFriendlyError(error);
+                        
+                        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
+                        builder.setTitle("❌ Code Update Error")
+                                .setMessage(userFriendlyError + "\n\nWould you like to try again?")
+                                .setPositiveButton("Retry", (dialog, which) -> {
+                                    // Try updating code again
+                                    updatePairingCodeOnly();
+                                })
+                                .setNegativeButton("Cancel", null)
+                                .show();
+                    });
+                }
+            });
+            
+        } catch (Exception e) {
+            Toast.makeText(this, "Error updating pairing code: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
     private String getExpirationTime() {
         // Set expiration to 24 hours from now
         long expirationTime = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
@@ -129,18 +208,30 @@ public class PairingActivity extends AppCompatActivity {
     }
     
     private String getUserFriendlyError(String error) {
-        if (error.contains("HTTP 400") || error.contains("pgrst204")) {
+        if (error.contains("No internet connection") || error.contains("Network unavailable")) {
+            return "No internet connection detected. Please check your WiFi or mobile data and try again.";
+        } else if (error.contains("Connection timeout") || error.contains("timeout")) {
+            return "Connection is taking too long. Please check your internet speed and try again.";
+        } else if (error.contains("Cannot connect to server") || error.contains("ConnectException")) {
+            return "Unable to reach the server. Please check your internet connection and try again.";
+        } else if (error.contains("HTTP 400") || error.contains("pgrst204")) {
             return "Database connection issue. Please check your internet connection and try again.";
         } else if (error.contains("HTTP 401") || error.contains("unauthorized")) {
             return "Authentication error. Please restart the app and try again.";
         } else if (error.contains("HTTP 409") || error.contains("conflict") || error.contains("duplicate")) {
             return "Device already has a pairing code. Generating new code for re-pairing...";
-        } else if (error.contains("Network error") || error.contains("timeout")) {
+        } else if (error.contains("HTTP 403") || error.contains("forbidden")) {
+            return "Access denied. Please check your internet connection and try again.";
+        } else if (error.contains("HTTP 5")) {
+            return "Server is temporarily unavailable. Please try again in a few moments.";
+        } else if (error.contains("Failed to register device after") && error.contains("attempts")) {
+            return "Multiple connection attempts failed. Please check your internet connection and try again.";
+        } else if (error.contains("Network error") || error.contains("UnknownHostException")) {
             return "Network connection problem. Please check your internet connection.";
         } else if (error.contains("JSON") || error.contains("parse")) {
             return "Data format error. Please try again.";
         } else {
-            return "Registration failed: " + error + "\n\nPlease ensure you have a stable internet connection.";
+            return "Registration failed. Please ensure you have a stable internet connection and try again.\n\nTechnical details: " + error;
         }
     }
     

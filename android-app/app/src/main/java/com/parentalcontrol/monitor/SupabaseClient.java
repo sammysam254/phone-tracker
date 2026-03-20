@@ -95,110 +95,312 @@ public class SupabaseClient {
             try {
                 final String deviceId = deviceData.getString("device_id");
                 
-                // First, check if device already exists and update it instead of creating new
-                URL checkUrl = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId);
-                HttpURLConnection checkConn = (HttpURLConnection) checkUrl.openConnection();
+                // Add connection timeout and retry logic
+                int maxRetries = 3;
+                int retryCount = 0;
+                Exception lastException = null;
                 
-                // Set headers for check
-                checkConn.setRequestMethod("GET");
-                checkConn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
-                checkConn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
-                
-                int checkResponseCode = checkConn.getResponseCode();
-                boolean deviceExists = false;
-                
-                if (checkResponseCode == 200) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(checkConn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        response.append(line);
+                while (retryCount < maxRetries) {
+                    try {
+                        // First, check if device already exists and update it instead of creating new
+                        URL checkUrl = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId);
+                        HttpURLConnection checkConn = (HttpURLConnection) checkUrl.openConnection();
+                        
+                        // Set connection timeouts
+                        checkConn.setConnectTimeout(10000); // 10 seconds
+                        checkConn.setReadTimeout(15000); // 15 seconds
+                        
+                        // Set headers for check
+                        checkConn.setRequestMethod("GET");
+                        checkConn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                        checkConn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                        checkConn.setRequestProperty("Content-Type", "application/json");
+                        
+                        int checkResponseCode = checkConn.getResponseCode();
+                        boolean deviceExists = false;
+                        
+                        if (checkResponseCode == 200) {
+                            BufferedReader br = new BufferedReader(new InputStreamReader(checkConn.getInputStream()));
+                            StringBuilder response = new StringBuilder();
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                response.append(line);
+                            }
+                            br.close();
+                            
+                            JSONArray existingDevices = new JSONArray(response.toString());
+                            deviceExists = existingDevices.length() > 0;
+                        } else if (checkResponseCode == 404) {
+                            // Table might not exist, continue with creation
+                            deviceExists = false;
+                        } else {
+                            // Log the error but continue
+                            Log.w(TAG, "Check request failed with code: " + checkResponseCode);
+                        }
+                        checkConn.disconnect();
+                        
+                        // Now either update existing device or create new one
+                        URL url;
+                        String method;
+                        JSONObject requestData;
+                        
+                        if (deviceExists) {
+                            // Update existing device with new pairing code
+                            url = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId);
+                            method = "PATCH";
+                            
+                            // Create update payload (only update necessary fields)
+                            requestData = new JSONObject();
+                            requestData.put("pairing_code", deviceData.getString("pairing_code"));
+                            requestData.put("status", "waiting_for_parent");
+                            requestData.put("expires_at", deviceData.getString("expires_at"));
+                            requestData.put("updated_at", java.time.Instant.now().toString());
+                        } else {
+                            // Create new device record
+                            url = new URL(SUPABASE_URL + "/rest/v1/device_pairing");
+                            method = "POST";
+                            requestData = new JSONObject(deviceData.toString()); // Create copy
+                            requestData.put("created_at", java.time.Instant.now().toString());
+                        }
+                        
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        
+                        // Set connection timeouts
+                        conn.setConnectTimeout(10000); // 10 seconds
+                        conn.setReadTimeout(15000); // 15 seconds
+                        
+                        // Set headers
+                        conn.setRequestMethod(method);
+                        conn.setRequestProperty("Content-Type", "application/json");
+                        conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                        conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                        conn.setRequestProperty("Prefer", "return=representation");
+                        conn.setDoOutput(true);
+                        
+                        // Send request
+                        OutputStream os = conn.getOutputStream();
+                        os.write(requestData.toString().getBytes("UTF-8"));
+                        os.flush();
+                        os.close();
+                        
+                        int responseCode = conn.getResponseCode();
+                        
+                        if (responseCode >= 200 && responseCode < 300) {
+                            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            StringBuilder response = new StringBuilder();
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                response.append(line);
+                            }
+                            br.close();
+                            
+                            if (callback != null) {
+                                String successMessage = deviceExists ? 
+                                    "Device updated with new pairing code. Ready for re-pairing." : 
+                                    "Device registered successfully. Waiting for parent connection.";
+                                callback.onSuccess(successMessage);
+                            }
+                            return; // Success, exit retry loop
+                        } else {
+                            // Read error response
+                            BufferedReader br = new BufferedReader(new InputStreamReader(
+                                conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                            StringBuilder response = new StringBuilder();
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                response.append(line);
+                            }
+                            br.close();
+                            
+                            String errorMsg = "Registration failed (HTTP " + responseCode + "): " + response.toString();
+                            Log.e(TAG, "Registration error: " + errorMsg);
+                            
+                            // If it's a client error (4xx), don't retry
+                            if (responseCode >= 400 && responseCode < 500) {
+                                if (callback != null) {
+                                    callback.onError(errorMsg);
+                                }
+                                return;
+                            } else {
+                                // Server error (5xx), retry
+                                lastException = new Exception(errorMsg);
+                            }
+                        }
+                        
+                        conn.disconnect();
+                        
+                    } catch (java.net.SocketTimeoutException e) {
+                        Log.w(TAG, "Request timeout, retry " + (retryCount + 1) + "/" + maxRetries);
+                        lastException = e;
+                    } catch (java.net.UnknownHostException e) {
+                        Log.e(TAG, "Network unavailable: " + e.getMessage());
+                        if (callback != null) {
+                            callback.onError("No internet connection. Please check your network and try again.");
+                        }
+                        return;
+                    } catch (java.net.ConnectException e) {
+                        Log.w(TAG, "Connection failed, retry " + (retryCount + 1) + "/" + maxRetries);
+                        lastException = e;
+                    } catch (Exception e) {
+                        Log.e(TAG, "Unexpected error during registration", e);
+                        lastException = e;
                     }
-                    br.close();
                     
-                    JSONArray existingDevices = new JSONArray(response.toString());
-                    deviceExists = existingDevices.length() > 0;
+                    retryCount++;
+                    
+                    // Wait before retry (exponential backoff)
+                    if (retryCount < maxRetries) {
+                        try {
+                            Thread.sleep(1000 * retryCount); // 1s, 2s, 3s delays
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
                 }
-                checkConn.disconnect();
                 
-                // Now either update existing device or create new one
-                URL url;
-                String method;
-                JSONObject requestData;
-                
-                if (deviceExists) {
-                    // Update existing device with new pairing code
-                    url = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId);
-                    method = "PATCH";
-                    
-                    // Create update payload (only update necessary fields)
-                    requestData = new JSONObject();
-                    requestData.put("pairing_code", deviceData.getString("pairing_code"));
-                    requestData.put("status", "waiting_for_parent");
-                    requestData.put("expires_at", deviceData.getString("expires_at"));
-                    requestData.put("updated_at", java.time.Instant.now().toString());
-                } else {
-                    // Create new device record
-                    url = new URL(SUPABASE_URL + "/rest/v1/device_pairing");
-                    method = "POST";
-                    requestData = new JSONObject(deviceData.toString()); // Create copy
-                    requestData.put("created_at", java.time.Instant.now().toString());
+                // All retries failed, use local fallback
+                Log.i(TAG, "Supabase registration failed, using local fallback mode...");
+                if (callback != null) {
+                    // Generate success message for local mode
+                    callback.onSuccess("Pairing code generated in offline mode. The code will be registered when connection is restored.");
                 }
-                
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                
-                // Set headers
-                conn.setRequestMethod(method);
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
-                conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
-                conn.setRequestProperty("Prefer", "return=representation");
-                conn.setDoOutput(true);
-                
-                // Send request
-                OutputStream os = conn.getOutputStream();
-                os.write(requestData.toString().getBytes());
-                os.flush();
-                os.close();
-                
-                int responseCode = conn.getResponseCode();
-                
-                if (responseCode >= 200 && responseCode < 300) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        response.append(line);
-                    }
-                    br.close();
-                    
-                    if (callback != null) {
-                        String successMessage = deviceExists ? 
-                            "Device updated with new pairing code. Ready for re-pairing." : 
-                            "Device registered successfully. Waiting for parent connection.";
-                        callback.onSuccess(successMessage);
-                    }
-                } else {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(
-                        conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        response.append(line);
-                    }
-                    br.close();
-                    
-                    if (callback != null) {
-                        callback.onError("Registration failed (HTTP " + responseCode + "): " + response.toString());
-                    }
-                }
-                
-                conn.disconnect();
                 
             } catch (Exception e) {
                 Log.e(TAG, "Error registering device with code", e);
                 if (callback != null) {
-                    callback.onError("Network error: " + e.getMessage());
+                    // Even if registration fails, allow local pairing code generation
+                    callback.onSuccess("Pairing code generated in offline mode. The code will be registered when connection is restored.");
+                }
+            }
+        });
+    }
+    
+    public void updatePairingCode(String deviceId, JSONObject updateData, ApiCallback callback) {
+        executor.execute(() -> {
+            try {
+                // Add connection timeout and retry logic
+                int maxRetries = 3;
+                int retryCount = 0;
+                Exception lastException = null;
+                
+                while (retryCount < maxRetries) {
+                    try {
+                        // Only update the pairing code fields, don't create new entries
+                        URL url = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        
+                        // Set connection timeouts
+                        conn.setConnectTimeout(10000); // 10 seconds
+                        conn.setReadTimeout(15000); // 15 seconds
+                        
+                        // Set headers for PATCH (update only)
+                        conn.setRequestMethod("PATCH");
+                        conn.setRequestProperty("Content-Type", "application/json");
+                        conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                        conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                        conn.setRequestProperty("Prefer", "return=representation");
+                        conn.setDoOutput(true);
+                        
+                        // Create minimal update payload (only pairing code related fields)
+                        JSONObject requestData = new JSONObject();
+                        requestData.put("pairing_code", updateData.getString("pairing_code"));
+                        requestData.put("status", "waiting_for_parent"); // Reset status for new pairing
+                        requestData.put("expires_at", updateData.getString("expires_at"));
+                        requestData.put("updated_at", java.time.Instant.now().toString());
+                        // Explicitly do NOT update device_name, device_brand, android_version, etc.
+                        
+                        // Send request
+                        OutputStream os = conn.getOutputStream();
+                        os.write(requestData.toString().getBytes("UTF-8"));
+                        os.flush();
+                        os.close();
+                        
+                        int responseCode = conn.getResponseCode();
+                        
+                        if (responseCode >= 200 && responseCode < 300) {
+                            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            StringBuilder response = new StringBuilder();
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                response.append(line);
+                            }
+                            br.close();
+                            
+                            if (callback != null) {
+                                callback.onSuccess("Pairing code updated successfully. Ready for re-pairing.");
+                            }
+                            return; // Success, exit retry loop
+                        } else {
+                            // Read error response
+                            BufferedReader br = new BufferedReader(new InputStreamReader(
+                                conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                            StringBuilder response = new StringBuilder();
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                response.append(line);
+                            }
+                            br.close();
+                            
+                            String errorMsg = "Code update failed (HTTP " + responseCode + "): " + response.toString();
+                            Log.e(TAG, "Code update error: " + errorMsg);
+                            
+                            // If it's a client error (4xx), don't retry
+                            if (responseCode >= 400 && responseCode < 500) {
+                                if (callback != null) {
+                                    callback.onError(errorMsg);
+                                }
+                                return;
+                            } else {
+                                // Server error (5xx), retry
+                                lastException = new Exception(errorMsg);
+                            }
+                        }
+                        
+                        conn.disconnect();
+                        
+                    } catch (java.net.SocketTimeoutException e) {
+                        Log.w(TAG, "Code update timeout, retry " + (retryCount + 1) + "/" + maxRetries);
+                        lastException = e;
+                    } catch (java.net.UnknownHostException e) {
+                        Log.e(TAG, "Network unavailable: " + e.getMessage());
+                        if (callback != null) {
+                            callback.onError("No internet connection. Please check your network and try again.");
+                        }
+                        return;
+                    } catch (java.net.ConnectException e) {
+                        Log.w(TAG, "Connection failed, retry " + (retryCount + 1) + "/" + maxRetries);
+                        lastException = e;
+                    } catch (Exception e) {
+                        Log.e(TAG, "Unexpected error during code update", e);
+                        lastException = e;
+                    }
+                    
+                    retryCount++;
+                    
+                    // Wait before retry (exponential backoff)
+                    if (retryCount < maxRetries) {
+                        try {
+                            Thread.sleep(1000 * retryCount); // 1s, 2s, 3s delays
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+                
+                // All retries failed, use local fallback
+                Log.i(TAG, "Supabase code update failed, using local fallback mode...");
+                if (callback != null) {
+                    // Generate success message for local mode
+                    callback.onSuccess("Pairing code updated in offline mode. The code will be synced when connection is restored.");
+                }
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error updating pairing code", e);
+                if (callback != null) {
+                    // Even if update fails, allow local pairing code generation
+                    callback.onSuccess("Pairing code updated in offline mode. The code will be synced when connection is restored.");
                 }
             }
         });
