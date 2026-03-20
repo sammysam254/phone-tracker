@@ -6,12 +6,12 @@ This directory contains the Android APK files for the Parent Dashboard applicati
 
 ### Parent App - Release APK (Latest)
 - **File:** `app-release.apk`
-- **Version:** 1.2.0
+- **Version:** 1.2.1
 - **Size:** 4.6 MB
 - **Purpose:** Parent dashboard access (Production ready)
 - **Optimized:** Yes (ProGuard enabled)
 - **Signed:** Release certificate
-- **Latest Fixes:** Device ID pairing & enhanced clipboard support
+- **Latest Fixes:** Native device ID pairing interface & enhanced user experience
 
 ## Installation Requirements
 
@@ -29,7 +29,14 @@ When deployed, these files are accessible at:
 
 ## Version History
 
-### v1.2.0 (March 20, 2026) - Current
+### v1.2.1 (March 20, 2026) - Current
+- ✅ Native device ID pairing interface with manual input dialog
+- ✅ Enhanced clipboard integration with better validation
+- ✅ Improved user instructions and guidance
+- ✅ Better error handling and user feedback
+- ✅ Enhanced WebView integration for seamless pairing
+
+### v1.2.0 (Previous)
 - ✅ Device ID pairing system support
 - ✅ Enhanced clipboard integration for easy device ID sharing
 - ✅ Improved WebView authentication flow
@@ -99,5 +106,5 @@ For issues with APK downloads or installation:
 ---
 
 **Last Updated:** March 20, 2026  
-**Version:** 1.2.0  
+**Version:** 1.2.1  
 **Build Date:** March 20, 2026

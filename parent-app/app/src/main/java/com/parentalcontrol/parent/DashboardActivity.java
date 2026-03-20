@@ -216,23 +216,47 @@ public class DashboardActivity extends AppCompatActivity {
                     "    " +
                     "    // Add paste button functionality" +
                     "    var pasteBtn = document.createElement('button');" +
-                    "    pasteBtn.textContent = '📋 Paste';" +
-                    "    pasteBtn.style.cssText = 'margin-left: 10px; padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;';" +
+                    "    pasteBtn.textContent = '📋 Paste Device ID';" +
+                    "    pasteBtn.style.cssText = 'margin: 10px 0; padding: 12px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; width: 100%;';" +
                     "    pasteBtn.onclick = function() {" +
                     "      var clipboardText = window.AndroidInterface.getFromClipboard();" +
                     "      if(clipboardText && clipboardText.length >= 16) {" +
-                    "        deviceIdInput.value = clipboardText.toUpperCase();" +
-                    "        deviceIdInput.dispatchEvent(new Event('input', { bubbles: true }));" +
-                    "        window.AndroidInterface.showToast('Device ID pasted from clipboard');" +
+                    "        var cleanDeviceId = clipboardText.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();" +
+                    "        if(cleanDeviceId.length >= 16) {" +
+                    "          deviceIdInput.value = cleanDeviceId;" +
+                    "          deviceIdInput.dispatchEvent(new Event('input', { bubbles: true }));" +
+                    "          window.AndroidInterface.showToast('Device ID pasted: ' + cleanDeviceId.substring(0, 8) + '...');" +
+                    "        } else {" +
+                    "          window.AndroidInterface.showToast('Invalid Device ID format in clipboard');" +
+                    "        }" +
                     "      } else {" +
                     "        window.AndroidInterface.showToast('No valid Device ID found in clipboard');" +
                     "      }" +
                     "    };" +
                     "    " +
-                    "    // Insert paste button after device ID input" +
+                    "    // Add manual input button" +
+                    "    var manualBtn = document.createElement('button');" +
+                    "    manualBtn.textContent = '⌨️ Enter Device ID Manually';" +
+                    "    manualBtn.style.cssText = 'margin: 5px 0; padding: 12px 16px; background: #48bb78; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; width: 100%;';" +
+                    "    manualBtn.onclick = function() {" +
+                    "      window.AndroidInterface.showDeviceIdInputDialog();" +
+                    "    };" +
+                    "    " +
+                    "    // Insert buttons after device ID input" +
                     "    var inputContainer = deviceIdInput.parentElement;" +
                     "    if(inputContainer) {" +
                     "      inputContainer.appendChild(pasteBtn);" +
+                    "      inputContainer.appendChild(manualBtn);" +
+                    "      " +
+                    "      // Add instructions for parent app" +
+                    "      var instructions = document.createElement('div');" +
+                    "      instructions.style.cssText = 'margin: 15px 0; padding: 12px; background: #f7fafc; border-left: 4px solid #667eea; font-size: 13px; line-height: 1.4;';" +
+                    "      instructions.innerHTML = '<strong>📱 How to pair your child\\'s device:</strong><br>' +" +
+                    "        '1. Open the child app on their device<br>' +" +
+                    "        '2. Tap \"Copy Device ID\" button<br>' +" +
+                    "        '3. Come back here and tap \"📋 Paste Device ID\"<br>' +" +
+                    "        '4. Tap \"Pair Device\" to complete pairing';" +
+                    "      inputContainer.appendChild(instructions);" +
                     "    }" +
                     "  }" +
                     "}, 500);" +
@@ -435,6 +459,52 @@ public class DashboardActivity extends AppCompatActivity {
     
     // JavaScript interface for device ID sharing and clipboard operations
     public class DeviceIdInterface {
+        
+        @JavascriptInterface
+        public void showDeviceIdInputDialog() {
+            runOnUiThread(() -> {
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(DashboardActivity.this);
+                
+                // Create input field
+                final android.widget.EditText input = new android.widget.EditText(DashboardActivity.this);
+                input.setHint("Enter Device ID (16+ characters)");
+                input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+                
+                // Add some padding
+                android.widget.LinearLayout container = new android.widget.LinearLayout(DashboardActivity.this);
+                container.setPadding(50, 20, 50, 20);
+                container.addView(input);
+                
+                builder.setTitle("📱 Enter Device ID")
+                        .setMessage("Enter the Device ID from your child's device:")
+                        .setView(container)
+                        .setPositiveButton("Pair Device", (dialog, which) -> {
+                            String deviceId = input.getText().toString().trim().toUpperCase();
+                            if (deviceId.length() >= 16) {
+                                // Inject the device ID into the web page and trigger pairing
+                                String javascript = String.format(
+                                    "javascript:(function(){" +
+                                    "var deviceIdInput = document.getElementById('deviceIdInput');" +
+                                    "if(deviceIdInput) {" +
+                                    "  deviceIdInput.value = '%s';" +
+                                    "  deviceIdInput.dispatchEvent(new Event('input', { bubbles: true }));" +
+                                    "  var pairBtn = document.getElementById('pairDeviceBtn');" +
+                                    "  if(pairBtn) {" +
+                                    "    setTimeout(function(){ pairBtn.click(); }, 500);" +
+                                    "  }" +
+                                    "}" +
+                                    "})()", deviceId
+                                );
+                                webView.evaluateJavascript(javascript, null);
+                                showToast("Attempting to pair device: " + deviceId.substring(0, 8) + "...");
+                            } else {
+                                showToast("Device ID must be at least 16 characters long");
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
         
         @JavascriptInterface
         public void copyToClipboard(String text, String label) {

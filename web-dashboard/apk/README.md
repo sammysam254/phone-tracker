@@ -6,12 +6,12 @@ This directory contains the Android APK files for the Parental Control monitorin
 
 ### Child App - Release APK (Latest)
 - **File:** `app-release.apk`
-- **Version:** 1.2.2
+- **Version:** 1.2.3
 - **Size:** 2.6 MB
 - **Purpose:** Child device monitoring (Production ready)
 - **Optimized:** Yes (ProGuard enabled)
 - **Signed:** Release certificate
-- **Latest Fixes:** Device ID pairing & copy-to-clipboard functionality
+- **Latest Fixes:** Auto-registration for existing device IDs & enhanced error handling
 
 ## Installation Requirements
 
@@ -29,7 +29,14 @@ When deployed, these files are accessible at:
 
 ## Version History
 
-### v1.2.2 (March 20, 2026) - Current
+### v1.2.3 (March 20, 2026) - Current
+- ✅ Auto-registration fix for existing device IDs
+- ✅ Smart device updates instead of conflicts
+- ✅ Enhanced error handling and user feedback
+- ✅ Improved offline mode with automatic sync
+- ✅ Better device ID formatting and display
+
+### v1.2.2 (Previous)
 - ✅ Device ID pairing system for better reliability
 - ✅ Copy-to-clipboard functionality for device IDs
 - ✅ Enhanced pairing instructions and user guidance
@@ -80,5 +87,5 @@ For issues with APK downloads or installation:
 ---
 
 **Last Updated:** March 20, 2026  
-**Version:** 1.2.2  
+**Version:** 1.2.3  
 **Build Date:** March 20, 2026

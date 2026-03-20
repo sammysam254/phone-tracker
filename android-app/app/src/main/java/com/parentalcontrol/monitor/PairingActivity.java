@@ -147,17 +147,40 @@ public class PairingActivity extends AppCompatActivity {
                 @Override
                 public void onError(String error) {
                     runOnUiThread(() -> {
-                        String userFriendlyError = getUserFriendlyError(error);
-                        
-                        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
-                        builder.setTitle("❌ Registration Error")
-                                .setMessage(userFriendlyError + "\n\nWould you like to try again?")
-                                .setPositiveButton("Retry", (dialog, which) -> {
-                                    // Generate new code and retry
-                                    generatePairingCode();
-                                })
-                                .setNegativeButton("Cancel", null)
-                                .show();
+                        // Check if error is due to device already existing
+                        if (error.contains("duplicate") || error.contains("already exists") || 
+                            error.contains("conflict") || error.contains("409")) {
+                            
+                            // Device already exists, try to update it instead
+                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
+                            builder.setTitle("🔄 Device Already Registered")
+                                    .setMessage("This device ID is already registered. Would you like to update it with a new pairing code?")
+                                    .setPositiveButton("Yes, Update", (dialog, which) -> {
+                                        // Mark as registered and update code only
+                                        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+                                        SharedPreferences.Editor editor = prefs.edit();
+                                        editor.putBoolean("device_registered", true);
+                                        editor.apply();
+                                        
+                                        // Update pairing code only
+                                        updatePairingCodeOnly();
+                                        Toast.makeText(PairingActivity.this, "Device updated with new pairing code", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                        } else {
+                            String userFriendlyError = getUserFriendlyError(error);
+                            
+                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
+                            builder.setTitle("❌ Registration Error")
+                                    .setMessage(userFriendlyError + "\n\nWould you like to try again?")
+                                    .setPositiveButton("Retry", (dialog, which) -> {
+                                        // Generate new code and retry
+                                        generatePairingCode();
+                                    })
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                        }
                     });
                 }
             });

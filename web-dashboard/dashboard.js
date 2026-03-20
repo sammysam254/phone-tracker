@@ -888,45 +888,42 @@ async function pairDevice() {
     let lastError = null;
     
     try {
-        // Try Supabase first if available
-        if (supabaseClient) {
-            console.log('Attempting Supabase pairing first...');
+        // Always try backend API first as it's more reliable for device ID pairing
+        if (authToken) {
+            console.log('Attempting backend pairing first...');
             try {
-                await pairDeviceWithSupabaseById(deviceId);
+                await pairDeviceWithBackendById(deviceId, authToken);
                 pairingSuccessful = true;
-                console.log('Supabase pairing successful');
-            } catch (supabaseError) {
-                console.log('Supabase pairing failed:', supabaseError.message);
-                lastError = supabaseError;
+                console.log('Backend pairing successful');
+            } catch (backendError) {
+                console.log('Backend pairing failed:', backendError.message);
+                lastError = backendError;
                 
-                // Try backend as fallback for specific errors
-                if (authToken && (
-                    supabaseError.message.includes('Invalid') || 
-                    supabaseError.message.includes('not found') ||
-                    supabaseError.message.includes('expired') ||
-                    supabaseError.message.includes('PGRST')
-                )) {
-                    console.log('Trying backend API as fallback...');
+                // Try Supabase as fallback if available
+                if (supabaseClient) {
+                    console.log('Trying Supabase as fallback...');
                     try {
-                        await pairDeviceWithBackendById(deviceId, authToken);
+                        await pairDeviceWithSupabaseById(deviceId);
                         pairingSuccessful = true;
-                        console.log('Backend pairing successful after Supabase failure');
-                    } catch (backendError) {
-                        console.error('Backend pairing also failed:', backendError.message);
-                        lastError = backendError; // Use backend error as it might be more specific
+                        console.log('Supabase pairing successful after backend failure');
+                    } catch (supabaseError) {
+                        console.error('Supabase pairing also failed:', supabaseError.message);
+                        // Keep backend error as it's usually more specific
                     }
+                } else {
+                    console.log('No Supabase available for fallback');
                 }
             }
         } else {
-            // No Supabase available, try backend directly
-            console.log('Supabase not available, attempting backend pairing...');
-            if (authToken) {
+            // No auth token, try Supabase if available
+            console.log('No auth token, attempting Supabase pairing...');
+            if (supabaseClient) {
                 try {
-                    await pairDeviceWithBackendById(deviceId, authToken);
+                    await pairDeviceWithSupabaseById(deviceId);
                     pairingSuccessful = true;
-                } catch (backendError) {
-                    console.error('Backend pairing failed and no Supabase available');
-                    lastError = backendError;
+                } catch (supabaseError) {
+                    console.error('Supabase pairing failed and no auth token for backend');
+                    lastError = supabaseError;
                 }
             } else {
                 lastError = new Error('No pairing service available. Please ensure you are logged in and try again.');

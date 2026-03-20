@@ -311,16 +311,44 @@ app.post('/api/pair-device-by-id', authenticateUser, async (req, res) => {
       return res.status(400).json({ error: 'Invalid device ID. Please enter a valid device ID.' });
     }
     
-    // Look for device in device_pairing table
-    const { data: deviceRecord, error: deviceError } = await supabase
+    // Look for device in device_pairing table with multiple possible statuses
+    const { data: deviceRecords, error: deviceError } = await supabase
       .from('device_pairing')
       .select('*')
       .eq('device_id', deviceId)
-      .single();
+      .in('status', ['waiting_for_parent', 'pending', 'active', 'paired', 'registered']);
     
-    if (deviceError || !deviceRecord) {
-      return res.status(404).json({ error: 'Device not found. Please check the device ID and ensure the child app is installed and running.' });
+    if (deviceError) {
+      console.error('Device lookup error:', deviceError);
+      return res.status(500).json({ error: 'Database error during device lookup.' });
     }
+    
+    if (!deviceRecords || deviceRecords.length === 0) {
+      // Try to find device in any status as a last resort
+      const { data: anyStatusRecords, error: anyStatusError } = await supabase
+        .from('device_pairing')
+        .select('*')
+        .eq('device_id', deviceId);
+      
+      if (anyStatusError) {
+        console.error('Fallback device lookup error:', anyStatusError);
+        return res.status(500).json({ error: 'Database error during device lookup.' });
+      }
+      
+      if (!anyStatusRecords || anyStatusRecords.length === 0) {
+        return res.status(404).json({ 
+          error: 'Device not found. Please check the device ID and ensure the child app is installed and running.',
+          suggestion: 'Make sure the child app has generated a pairing code or device ID at least once.'
+        });
+      } else {
+        // Device exists but in wrong status - try to update it anyway
+        console.log(`Device ${deviceId} found with status: ${anyStatusRecords[0].status}, attempting to pair anyway`);
+        deviceRecords = anyStatusRecords;
+      }
+    }
+    
+    // Use the most recent device record
+    const deviceRecord = deviceRecords[0];
     
     // Check if device is already paired with another parent
     if (deviceRecord.parent_id && deviceRecord.parent_id !== req.user.id && deviceRecord.status === 'paired') {
@@ -340,6 +368,7 @@ app.post('/api/pair-device-by-id', authenticateUser, async (req, res) => {
       .single();
     
     if (updateError) {
+      console.error('Device update error:', updateError);
       return res.status(500).json({ error: 'Failed to complete pairing. Please try again.' });
     }
     
