@@ -3,6 +3,8 @@ package com.parentalcontrol.monitor;
 import android.content.Context;
 import android.util.Log;
 import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -99,7 +101,7 @@ public class SupabaseClient {
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
                 conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
-                conn.setRequestProperty("Prefer", "return=minimal");
+                conn.setRequestProperty("Prefer", "return=representation");
                 conn.setDoOutput(true);
                 
                 // Send request
@@ -111,11 +113,7 @@ public class SupabaseClient {
                 int responseCode = conn.getResponseCode();
                 
                 if (responseCode >= 200 && responseCode < 300) {
-                    if (callback != null) {
-                        callback.onSuccess("Device registered with pairing code");
-                    }
-                } else {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
                     while ((line = br.readLine()) != null) {
@@ -124,7 +122,20 @@ public class SupabaseClient {
                     br.close();
                     
                     if (callback != null) {
-                        callback.onError("HTTP " + responseCode + ": " + response.toString());
+                        callback.onSuccess(response.toString());
+                    }
+                } else {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                        conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line);
+                    }
+                    br.close();
+                    
+                    if (callback != null) {
+                        callback.onError("Registration failed (HTTP " + responseCode + "): " + response.toString());
                     }
                 }
                 
@@ -133,7 +144,7 @@ public class SupabaseClient {
             } catch (Exception e) {
                 Log.e(TAG, "Error registering device with code", e);
                 if (callback != null) {
-                    callback.onError(e.getMessage());
+                    callback.onError("Network error: " + e.getMessage());
                 }
             }
         });
@@ -142,7 +153,8 @@ public class SupabaseClient {
     public void checkPairingStatus(String deviceId, ApiCallback callback) {
         executor.execute(() -> {
             try {
-                URL url = new URL(SUPABASE_URL + "/rest/v1/devices?device_id=eq." + deviceId + "&select=*");
+                // First check device_pairing table for pairing status
+                URL url = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId + "&select=*");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 
                 // Set headers
@@ -161,12 +173,51 @@ public class SupabaseClient {
                     }
                     br.close();
                     
-                    if (callback != null) {
-                        callback.onSuccess(response.toString());
+                    // Parse response to check if paired
+                    try {
+                        JSONArray pairingArray = new JSONArray(response.toString());
+                        if (pairingArray.length() > 0) {
+                            JSONObject pairingRecord = pairingArray.getJSONObject(0);
+                            String status = pairingRecord.optString("status", "waiting_for_parent");
+                            boolean isPaired = "paired".equals(status);
+                            
+                            JSONObject result = new JSONObject();
+                            result.put("is_paired", isPaired);
+                            result.put("status", status);
+                            if (isPaired && pairingRecord.has("parent_id") && !pairingRecord.isNull("parent_id")) {
+                                result.put("parent_name", "Parent"); // We'll get this from users table if needed
+                            }
+                            
+                            if (callback != null) {
+                                callback.onSuccess(result.toString());
+                            }
+                        } else {
+                            // No pairing record found
+                            JSONObject result = new JSONObject();
+                            result.put("is_paired", false);
+                            result.put("status", "not_found");
+                            
+                            if (callback != null) {
+                                callback.onSuccess(result.toString());
+                            }
+                        }
+                    } catch (JSONException e) {
+                        if (callback != null) {
+                            callback.onError("Failed to parse pairing status: " + e.getMessage());
+                        }
                     }
                 } else {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                        conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                    br.close();
+                    
                     if (callback != null) {
-                        callback.onError("HTTP " + responseCode);
+                        callback.onError("Failed to check pairing status (HTTP " + responseCode + "): " + errorResponse.toString());
                     }
                 }
                 
@@ -175,7 +226,7 @@ public class SupabaseClient {
             } catch (Exception e) {
                 Log.e(TAG, "Error checking pairing status", e);
                 if (callback != null) {
-                    callback.onError(e.getMessage());
+                    callback.onError("Network error: " + e.getMessage());
                 }
             }
         });

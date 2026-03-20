@@ -81,7 +81,7 @@ public class PairingActivity extends AppCompatActivity {
             deviceData.put("device_brand", DeviceUtils.getDeviceBrand());
             deviceData.put("android_version", DeviceUtils.getAndroidVersion());
             deviceData.put("status", "waiting_for_parent");
-            deviceData.put("consent_granted", false);
+            deviceData.put("expires_at", getExpirationTime());
             
             supabaseClient.registerDeviceWithCode(deviceData, new SupabaseClient.ApiCallback() {
                 @Override
@@ -94,13 +94,46 @@ public class PairingActivity extends AppCompatActivity {
                 @Override
                 public void onError(String error) {
                     runOnUiThread(() -> {
-                        Toast.makeText(PairingActivity.this, "Registration error: " + error, Toast.LENGTH_LONG).show();
+                        String userFriendlyError = getUserFriendlyError(error);
+                        
+                        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
+                        builder.setTitle("❌ Registration Error")
+                                .setMessage(userFriendlyError + "\n\nWould you like to try again?")
+                                .setPositiveButton("Retry", (dialog, which) -> {
+                                    // Generate new code and retry
+                                    generatePairingCode();
+                                })
+                                .setNegativeButton("Cancel", null)
+                                .show();
                     });
                 }
             });
             
         } catch (Exception e) {
-            Toast.makeText(this, "Error generating pairing code", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error generating pairing code: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private String getExpirationTime() {
+        // Set expiration to 24 hours from now
+        long expirationTime = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
+        return new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US)
+                .format(new java.util.Date(expirationTime));
+    }
+    
+    private String getUserFriendlyError(String error) {
+        if (error.contains("HTTP 400") || error.contains("pgrst204")) {
+            return "Database connection issue. Please check your internet connection and try again.";
+        } else if (error.contains("HTTP 401") || error.contains("unauthorized")) {
+            return "Authentication error. Please restart the app and try again.";
+        } else if (error.contains("HTTP 409") || error.contains("conflict")) {
+            return "This device is already registered. Please use a different pairing code.";
+        } else if (error.contains("Network error") || error.contains("timeout")) {
+            return "Network connection problem. Please check your internet connection.";
+        } else if (error.contains("JSON") || error.contains("parse")) {
+            return "Data format error. Please try again.";
+        } else {
+            return "Registration failed: " + error + "\n\nPlease ensure you have a stable internet connection.";
         }
     }
     

@@ -657,46 +657,83 @@ async function pairDevice() {
         return;
     }
     
-    // Disable the pair button and show loading state
+    // Show loading state
     const pairBtn = document.getElementById('pairDeviceBtn');
     const originalText = pairBtn.textContent;
     pairBtn.disabled = true;
-    pairBtn.textContent = 'Pairing...';
+    pairBtn.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <div style="width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            Pairing...
+        </div>
+    `;
+    
+    // Add CSS animation if not already present
+    if (!document.getElementById('spin-animation')) {
+        const style = document.createElement('style');
+        style.id = 'spin-animation';
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
     
     try {
         // First, check if the pairing code exists and is valid
         const { data: deviceCheck, error: checkError } = await supabaseClient
-            .from('devices')
+            .from('device_pairing')
             .select('*')
             .eq('pairing_code', pairingCode)
             .eq('status', 'waiting_for_parent')
             .single();
         
-        if (checkError || !deviceCheck) {
-            showError('Invalid pairing code or device not found. Please check the code and try again.');
+        if (checkError) {
+            let errorMessage = 'Invalid pairing code or device not found.';
+            
+            if (checkError.code === 'PGRST116') {
+                errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
+            } else if (checkError.message.includes('expired')) {
+                errorMessage = 'Pairing code has expired. Please generate a new code on your child\'s device.';
+            } else if (checkError.message.includes('not found')) {
+                errorMessage = 'Pairing code not found. Please ensure the code is correct and the child\'s app is open.';
+            }
+            
+            showError(errorMessage);
             return;
         }
         
-        // Update the device with parent information
-        const { data: updateData, error: updateError } = await supabaseClient
-            .from('devices')
-            .update({
-                parent_id: currentUser.id,
-                parent_name: currentUser.user_metadata?.name || currentUser.email,
-                status: 'paired',
-                paired_at: new Date().toISOString()
-            })
-            .eq('pairing_code', pairingCode)
-            .select();
-        
-        if (updateError) {
-            showError('Pairing failed: ' + updateError.message);
+        if (!deviceCheck) {
+            showError('No device found with this pairing code. Please check the code and try again.');
             return;
         }
         
-        if (updateData && updateData.length > 0) {
-            const device = updateData[0];
-            showSuccess(`Device "${device.device_name}" paired successfully! The child can now proceed with consent.`);
+        // Use the RPC function to pair the device
+        const { data: pairResult, error: pairError } = await supabaseClient
+            .rpc('pair_device_with_parent', {
+                pairing_code_input: pairingCode,
+                parent_user_id: currentUser.id
+            });
+        
+        if (pairError) {
+            let errorMessage = 'Pairing failed. Please try again.';
+            
+            if (pairError.message.includes('Invalid or expired')) {
+                errorMessage = 'Pairing code is invalid or has expired. Please generate a new code.';
+            } else if (pairError.message.includes('already paired')) {
+                errorMessage = 'This device is already paired with another parent account.';
+            } else if (pairError.code === 'PGRST204') {
+                errorMessage = 'Database permission error. Please contact support.';
+            }
+            
+            showError(errorMessage);
+            return;
+        }
+        
+        if (pairResult && pairResult.success) {
+            showSuccess(`Device "${pairResult.device_name}" paired successfully! The child can now proceed with consent.`);
             
             // Clear pairing code inputs
             codeInputs.forEach(input => input.value = '');
@@ -706,18 +743,29 @@ async function pairDevice() {
             
             // Show additional success information
             setTimeout(() => {
-                showSuccess(`Pairing complete! Device ID: ${device.device_id} is now connected to your account.`);
+                showSuccess(`Pairing complete! Device "${pairResult.device_name}" is now connected to your account.`);
             }, 2000);
         } else {
-            showError('Pairing failed: No device data returned');
+            showError(pairResult?.error || 'Pairing failed for unknown reason. Please try again.');
         }
     } catch (error) {
         console.error('Pairing error:', error);
-        showError('Pairing error: ' + error.message);
+        
+        let errorMessage = 'Pairing failed due to a network error.';
+        
+        if (error.message.includes('fetch')) {
+            errorMessage = 'Network connection error. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout')) {
+            errorMessage = 'Request timed out. Please check your connection and try again.';
+        } else if (error.message.includes('CORS')) {
+            errorMessage = 'Connection blocked. Please refresh the page and try again.';
+        }
+        
+        showError(errorMessage);
     } finally {
-        // Re-enable the button
+        // Reset button state
         pairBtn.disabled = false;
-        pairBtn.textContent = originalText;
+        pairBtn.innerHTML = originalText;
     }
 }
 
