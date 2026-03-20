@@ -316,7 +316,7 @@ app.post('/api/pair-device', authenticateUser, async (req, res) => {
       .from('device_pairing')
       .select('*')
       .eq('pairing_code', pairingCode)
-      .eq('status', 'pending')
+      .in('status', ['pending', 'waiting_for_parent'])
       .single();
     
     if (pairingError || !pairingRequest) {

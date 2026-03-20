@@ -254,6 +254,33 @@ function setupEventListeners() {
 async function checkAuthState() {
     console.log('Checking authentication state...');
     
+    // Detect if this is a parent app (mobile WebView)
+    const userAgent = navigator.userAgent || '';
+    const isParentApp = userAgent.includes('ParentalControlParentApp') || 
+                       userAgent.includes('ParentalControlParent') || 
+                       (userAgent.includes('Android') && window.AndroidInterface);
+    
+    console.log('User agent:', userAgent);
+    console.log('Is parent app:', isParentApp);
+    
+    if (isParentApp) {
+        console.log('Parent app detected, using simplified authentication');
+        
+        // For parent app, create a simplified user object and show dashboard immediately
+        currentUser = {
+            id: 'parent-app-user',
+            email: 'parent@app.local',
+            user_metadata: { name: 'Parent User' }
+        };
+        
+        console.log('Parent app authentication complete, showing dashboard');
+        hideAuthError();
+        showDashboard();
+        loadDevices();
+        startAutoRefresh();
+        return;
+    }
+    
     // Check for stored auth token first (backend authentication)
     const authToken = localStorage.getItem('authToken');
     const storedUser = localStorage.getItem('currentUser');
@@ -267,7 +294,7 @@ async function checkAuthState() {
             
             // Add timeout to prevent hanging
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 second timeout for parent app
             
             const response = await fetch('/api/verify-token', {
                 method: 'GET',
@@ -674,6 +701,18 @@ async function loadDevices() {
     // Show loading state
     deviceSelect.innerHTML = '<option value="">Loading devices...</option>';
     
+    // Detect if this is a parent app
+    const userAgent = navigator.userAgent || '';
+    const isParentApp = userAgent.includes('ParentalControlParentApp') || 
+                       userAgent.includes('ParentalControlParent');
+    
+    if (isParentApp) {
+        console.log('Parent app detected, using simplified device loading');
+        // For parent app, show a generic device option
+        deviceSelect.innerHTML = '<option value="parent-device">Child Device</option>';
+        return;
+    }
+    
     // Try backend API first
     const authToken = localStorage.getItem('authToken');
     if (authToken) {
@@ -1001,8 +1040,7 @@ async function pairDeviceWithSupabase(pairingCode) {
             .from('device_pairing')
             .select('*')
             .eq('pairing_code', pairingCode)
-            .eq('status', 'waiting_for_parent')
-            .single();
+            .in('status', ['waiting_for_parent', 'pending']);
         
         console.log('Device check result:', { deviceCheck, checkError });
         
@@ -1020,9 +1058,12 @@ async function pairDeviceWithSupabase(pairingCode) {
             throw new Error(errorMessage);
         }
         
-        if (!deviceCheck) {
+        if (!deviceCheck || deviceCheck.length === 0) {
             throw new Error('No device found with this pairing code. Please check the code and try again.');
         }
+        
+        // Use the first matching device
+        const device = deviceCheck[0];
         
         // Use the RPC function to pair the device
         const { data: pairResult, error: pairError } = await supabaseClient
@@ -1048,7 +1089,7 @@ async function pairDeviceWithSupabase(pairingCode) {
         }
         
         if (pairResult && pairResult.success) {
-            showSuccess(`Device "${pairResult.device_name || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
+            showSuccess(`Device "${pairResult.device_name || device.device_name || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
             
             // Clear pairing code inputs
             const codeInputs = document.querySelectorAll('.code-digit');
@@ -1059,7 +1100,7 @@ async function pairDeviceWithSupabase(pairingCode) {
             
             // Show additional success information
             setTimeout(() => {
-                showSuccess(`Pairing complete! Device "${pairResult.device_name || 'Unknown'}" is now connected to your account.`);
+                showSuccess(`Pairing complete! Device "${pairResult.device_name || device.device_name || 'Unknown'}" is now connected to your account.`);
             }, 2000);
         } else {
             throw new Error(pairResult?.error || 'Pairing failed for unknown reason. Please try again.');
