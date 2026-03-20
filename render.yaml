@@ -1,7 +1,7 @@
 services:
-  # Backend API Service
+  # Combined Backend API + Frontend Service
   - type: web
-    name: parental-control-api
+    name: parental-control-platform
     env: node
     plan: starter
     buildCommand: npm install
@@ -12,25 +12,9 @@ services:
       - key: PORT
         value: 10000
       - key: SUPABASE_URL
-        fromDatabase:
-          name: parental-control-db
-          property: connectionString
+        sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-
-  # Static Web Dashboard
-  - type: static
-    name: parental-control-dashboard
-    staticPublishPath: ./web-dashboard
-    buildCommand: echo "Static files ready"
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
-databases:
-  - name: parental-control-db
-    databaseName: parental_control
-    user: parental_control_user
+    healthCheckPath: /health
