@@ -1,5 +1,6 @@
 package com.parentalcontrol.monitor;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -13,8 +14,10 @@ import java.security.SecureRandom;
 public class PairingActivity extends AppCompatActivity {
     
     private TextView pairingCodeText;
+    private TextView deviceIdText;
     private TextView instructionsText;
     private Button generateCodeButton;
+    private Button copyDeviceIdButton;
     private Button checkPairingButton;
     private SupabaseClient supabaseClient;
     private String deviceId;
@@ -33,8 +36,10 @@ public class PairingActivity extends AppCompatActivity {
     
     private void initViews() {
         pairingCodeText = findViewById(R.id.pairingCodeText);
+        deviceIdText = findViewById(R.id.deviceIdText);
         instructionsText = findViewById(R.id.instructionsText);
         generateCodeButton = findViewById(R.id.generateCodeButton);
+        copyDeviceIdButton = findViewById(R.id.copyDeviceIdButton);
         checkPairingButton = findViewById(R.id.checkPairingButton);
     }
     
@@ -42,14 +47,33 @@ public class PairingActivity extends AppCompatActivity {
         supabaseClient = new SupabaseClient(this);
         deviceId = DeviceUtils.getDeviceId(this);
         
-        String instructions = "Share this pairing code with your parent/guardian:\\n\\n" +
+        // Display device ID with formatting
+        String formattedDeviceId = formatDeviceId(deviceId);
+        deviceIdText.setText(formattedDeviceId);
+        
+        String instructions = "Share this Device ID with your parent/guardian:\\n\\n" +
+            "RECOMMENDED: Use Device ID (more reliable)\\n" +
             "1. Parent opens the web dashboard\\n" +
             "2. Parent clicks 'Add Device'\\n" +
-            "3. Parent enters this pairing code\\n" +
-            "4. Click 'Check Pairing Status' below\\n\\n" +
+            "3. Parent enters the Device ID shown above\\n\\n" +
+            "ALTERNATIVE: Use Pairing Code\\n" +
+            "1. Parent enters the 6-digit pairing code\\n" +
+            "2. Click 'Check Pairing Status' below\\n\\n" +
             "Device ID: " + deviceId;
         
         instructionsText.setText(instructions);
+    }
+    
+    private String formatDeviceId(String deviceId) {
+        // Format device ID as XXXX-XXXX-XXXX-XXXX for better readability
+        if (deviceId.length() >= 16) {
+            return deviceId.substring(0, 4) + "-" + 
+                   deviceId.substring(4, 8) + "-" + 
+                   deviceId.substring(8, 12) + "-" + 
+                   deviceId.substring(12, 16) +
+                   (deviceId.length() > 16 ? "-" + deviceId.substring(16) : "");
+        }
+        return deviceId;
     }
     
     private void generatePairingCode() {
@@ -246,6 +270,23 @@ public class PairingActivity extends AppCompatActivity {
                         Toast.makeText(PairingActivity.this, "New pairing code generated", Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("Cancel", null)
+                    .show();
+        });
+        
+        copyDeviceIdButton.setOnClickListener(v -> {
+            // Copy device ID to clipboard
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            android.content.ClipData clip = android.content.ClipData.newPlainText("Device ID", deviceId);
+            clipboard.setPrimaryClip(clip);
+            
+            // Show confirmation
+            Toast.makeText(this, "Device ID copied to clipboard!", Toast.LENGTH_SHORT).show();
+            
+            // Optional: Show formatted version in a dialog
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setTitle("📋 Device ID Copied")
+                    .setMessage("Device ID has been copied to clipboard:\n\n" + formatDeviceId(deviceId) + "\n\nShare this with your parent to pair the device.")
+                    .setPositiveButton("OK", null)
                     .show();
         });
         

@@ -303,6 +303,72 @@ app.get('/api/activities/:deviceId', authenticateUser, async (req, res) => {
   }
 });
 
+app.post('/api/pair-device-by-id', authenticateUser, async (req, res) => {
+  try {
+    const { deviceId, parentId } = req.body;
+    
+    if (!deviceId || deviceId.length < 16) {
+      return res.status(400).json({ error: 'Invalid device ID. Please enter a valid device ID.' });
+    }
+    
+    // Look for device in device_pairing table
+    const { data: deviceRecord, error: deviceError } = await supabase
+      .from('device_pairing')
+      .select('*')
+      .eq('device_id', deviceId)
+      .single();
+    
+    if (deviceError || !deviceRecord) {
+      return res.status(404).json({ error: 'Device not found. Please check the device ID and ensure the child app is installed and running.' });
+    }
+    
+    // Check if device is already paired with another parent
+    if (deviceRecord.parent_id && deviceRecord.parent_id !== req.user.id && deviceRecord.status === 'paired') {
+      return res.status(409).json({ error: 'This device is already paired with another parent account.' });
+    }
+    
+    // Update pairing status
+    const { data: updatedDevice, error: updateError } = await supabase
+      .from('device_pairing')
+      .update({
+        parent_id: req.user.id,
+        status: 'paired',
+        paired_at: new Date().toISOString()
+      })
+      .eq('device_id', deviceId)
+      .select()
+      .single();
+    
+    if (updateError) {
+      return res.status(500).json({ error: 'Failed to complete pairing. Please try again.' });
+    }
+    
+    // Also create/update entry in devices table for compatibility
+    const { error: deviceTableError } = await supabase
+      .from('devices')
+      .upsert({
+        device_id: deviceId,
+        parent_id: req.user.id,
+        device_name: deviceRecord.device_name || 'Child Device',
+        consent_granted: false, // Will be updated when child grants consent
+        last_active: new Date().toISOString()
+      });
+    
+    if (deviceTableError) {
+      console.warn('Failed to update devices table:', deviceTableError);
+    }
+    
+    res.json({ 
+      message: 'Device paired successfully',
+      deviceId: deviceId,
+      deviceName: deviceRecord.device_name || 'Child Device'
+    });
+  } catch (error) {
+    console.error('Device ID pairing error:', error);
+    res.status(500).json({ error: 'Internal server error during pairing' });
+  }
+});
+
 app.post('/api/pair-device', authenticateUser, async (req, res) => {
   try {
     const { pairingCode, parentId } = req.body;

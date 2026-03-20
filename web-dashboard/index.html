@@ -322,14 +322,20 @@
             margin: 20px 0;
         }
 
-        .code-digit {
-            width: 50px;
-            height: 50px;
+        .device-id-input {
+            margin: 20px 0;
             text-align: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            border: 2px solid #38b2ac;
-            border-radius: 8px;
+        }
+
+        .device-id-input input {
+            background: #f8fafc;
+            transition: all 0.3s;
+        }
+
+        .device-id-input input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
         }
 
         .filter-controls {
@@ -788,14 +794,12 @@
             <!-- Device Pairing -->
             <div class="pairing-section">
                 <h3>📱 Device Pairing</h3>
-                <p>After installing the app, enter the 6-digit code from your child's device:</p>
-                <div class="pairing-code-input">
-                    <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 0)">
-                    <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 1)">
-                    <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 2)">
-                    <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 3)">
-                    <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 4)">
-                    <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 5)">
+                <p>After installing the app, enter the Device ID from your child's device:</p>
+                <div class="device-id-input">
+                    <input type="text" id="deviceIdInput" placeholder="Enter Device ID (e.g., ABCD1234-EFGH5678-IJKL9012-MNOP3456)" maxlength="35" style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; font-family: monospace; letter-spacing: 1px;">
+                    <div style="margin-top: 10px; font-size: 0.9em; color: #718096;">
+                        💡 Find the Device ID in your child's app settings or copy it from the pairing screen
+                    </div>
                 </div>
                 <button class="btn" id="pairDeviceBtn" onclick="pairDevice()">Pair Device</button>
             </div>

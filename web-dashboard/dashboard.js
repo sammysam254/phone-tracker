@@ -229,19 +229,28 @@ function setupEventListeners() {
         });
     }
     
-    // Code input navigation
-    const codeInputs = document.querySelectorAll('.code-digit');
-    codeInputs.forEach((input, index) => {
-        input.addEventListener('input', function() {
-            moveToNext(this, index);
+    // Device ID input navigation (replacing code inputs)
+    const deviceIdInput = document.getElementById('deviceIdInput');
+    if (deviceIdInput) {
+        deviceIdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') pairDevice();
         });
         
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Backspace' && !this.value && index > 0) {
-                codeInputs[index - 1].focus();
+        deviceIdInput.addEventListener('input', function() {
+            // Auto-format device ID (add dashes for readability)
+            let value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            if (value.length > 8) {
+                value = value.substring(0, 8) + '-' + value.substring(8, 16);
             }
+            if (value.length > 17) {
+                value = value.substring(0, 17) + '-' + value.substring(17, 25);
+            }
+            if (value.length > 26) {
+                value = value.substring(0, 26) + '-' + value.substring(26, 32);
+            }
+            this.value = value;
         });
-    });
+    }
     
     // Device selector
     const deviceSelect = document.getElementById('deviceSelect');
@@ -395,26 +404,7 @@ function hideAuthError() {
     }
 }
 
-function setupEventListeners() {
-    // Enter key listeners for forms
-    document.getElementById('loginPassword').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') login();
-    });
-    
-    document.getElementById('registerPassword').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') register();
-    });
-    
-    // Code input navigation
-    const codeInputs = document.querySelectorAll('.code-digit');
-    codeInputs.forEach((input, index) => {
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Backspace' && !this.value && index > 0) {
-                codeInputs[index - 1].focus();
-            }
-        });
-    });
-}
+
 
 // Authentication functions
 async function login() {
@@ -874,11 +864,17 @@ function moveToNext(input, index) {
 }
 
 async function pairDevice() {
-    const codeInputs = document.querySelectorAll('.code-digit');
-    const pairingCode = Array.from(codeInputs).map(input => input.value).join('');
+    // Get device ID from input
+    const deviceIdInput = document.getElementById('deviceIdInput');
+    if (!deviceIdInput) {
+        showError('Device ID input not found');
+        return;
+    }
     
-    if (pairingCode.length !== 6) {
-        showError('Please enter the complete 6-digit pairing code');
+    const deviceId = deviceIdInput.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    
+    if (!deviceId || deviceId.length < 16) {
+        showError('Please enter a valid device ID (at least 16 characters)');
         return;
     }
     
@@ -916,7 +912,7 @@ async function pairDevice() {
         if (supabaseClient) {
             console.log('Attempting Supabase pairing first...');
             try {
-                await pairDeviceWithSupabase(pairingCode);
+                await pairDeviceWithSupabaseById(deviceId);
                 pairingSuccessful = true;
                 console.log('Supabase pairing successful');
             } catch (supabaseError) {
@@ -932,7 +928,7 @@ async function pairDevice() {
                 )) {
                     console.log('Trying backend API as fallback...');
                     try {
-                        await pairDeviceWithBackend(pairingCode, authToken);
+                        await pairDeviceWithBackendById(deviceId, authToken);
                         pairingSuccessful = true;
                         console.log('Backend pairing successful after Supabase failure');
                     } catch (backendError) {
@@ -946,7 +942,7 @@ async function pairDevice() {
             console.log('Supabase not available, attempting backend pairing...');
             if (authToken) {
                 try {
-                    await pairDeviceWithBackend(pairingCode, authToken);
+                    await pairDeviceWithBackendById(deviceId, authToken);
                     pairingSuccessful = true;
                 } catch (backendError) {
                     console.error('Backend pairing failed and no Supabase available');
@@ -973,9 +969,9 @@ async function pairDevice() {
         pairBtn.classList.remove('btn-loading');
         pairBtn.innerHTML = originalText;
         
-        // If pairing was successful, clear the code inputs
+        // If pairing was successful, clear the device ID input
         if (pairingSuccessful) {
-            codeInputs.forEach(input => input.value = '');
+            deviceIdInput.value = '';
         }
     }
 }
@@ -1029,6 +1025,188 @@ function handlePairingError(error) {
     }
     
     showError(errorMessage);
+}
+
+async function pairDeviceWithSupabaseById(deviceId) {
+    console.log('Attempting Supabase pairing for device ID:', deviceId);
+    
+    try {
+        // First, check if the device exists and is available for pairing
+        const { data: deviceCheck, error: checkError } = await supabaseClient
+            .from('device_pairing')
+            .select('*')
+            .eq('device_id', deviceId)
+            .in('status', ['waiting_for_parent', 'pending', 'active']);
+        
+        console.log('Device check result:', { deviceCheck, checkError });
+        
+        if (checkError) {
+            let errorMessage = 'Invalid device ID or device not found.';
+            
+            if (checkError.code === 'PGRST116') {
+                errorMessage = 'Invalid device ID. Please check the device ID from your child\'s device.';
+            } else if (checkError.message && checkError.message.includes('not found')) {
+                errorMessage = 'Device not found. Please ensure the device ID is correct and the child\'s app is running.';
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        if (!deviceCheck || deviceCheck.length === 0) {
+            throw new Error('No device found with this device ID. Please check the ID and ensure the child app is installed and running.');
+        }
+        
+        // Use the first matching device
+        const device = deviceCheck[0];
+        
+        // Check if device is already paired with another parent
+        if (device.parent_id && device.parent_id !== currentUser.id && device.status === 'paired') {
+            throw new Error('This device is already paired with another parent account.');
+        }
+        
+        // Update the device pairing directly
+        const { data: updateResult, error: updateError } = await supabaseClient
+            .from('device_pairing')
+            .update({
+                parent_id: currentUser.id,
+                status: 'paired',
+                paired_at: new Date().toISOString()
+            })
+            .eq('device_id', deviceId)
+            .select()
+            .single();
+        
+        console.log('Device pairing update result:', { updateResult, updateError });
+        
+        if (updateError) {
+            let errorMessage = 'Pairing failed. Please try again.';
+            
+            if (updateError.message && updateError.message.includes('already paired')) {
+                errorMessage = 'This device is already paired with another parent account.';
+            } else if (updateError.code === 'PGRST204') {
+                errorMessage = 'Database permission error. Please contact support.';
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        if (updateResult) {
+            showSuccess(`Device "${updateResult.device_name || device.device_name || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
+            
+            // Clear device ID input
+            const deviceIdInput = document.getElementById('deviceIdInput');
+            if (deviceIdInput) deviceIdInput.value = '';
+            
+            // Reload devices to show the new paired device
+            await loadDevices();
+            
+            // Show additional success information
+            setTimeout(() => {
+                showSuccess(`Pairing complete! Device "${updateResult.device_name || device.device_name || 'Unknown'}" is now connected to your account.`);
+            }, 2000);
+        } else {
+            throw new Error('Pairing failed for unknown reason. Please try again.');
+        }
+        
+    } catch (supabaseError) {
+        console.error('Supabase pairing error:', supabaseError);
+        throw supabaseError; // Re-throw for handling in main function
+    }
+}
+
+async function pairDeviceWithBackendById(deviceId, authToken) {
+    console.log('Attempting backend pairing for device ID:', deviceId);
+    
+    if (!authToken) {
+        throw new Error('Authentication token missing. Please login again.');
+    }
+    
+    try {
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
+        const response = await fetch('/api/pair-device-by-id', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                deviceId: deviceId,
+                parentId: currentUser.id || currentUser.user_id
+            }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        console.log('Backend pairing response status:', response.status);
+        
+        // Handle different response types more gracefully
+        let result;
+        const contentType = response.headers.get('content-type') || '';
+        
+        if (contentType.includes('application/json')) {
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                console.error('Failed to parse JSON response:', jsonError);
+                throw new Error('Invalid server response format. Please try again.');
+            }
+        } else {
+            // Handle non-JSON responses (likely error pages)
+            const textResponse = await response.text();
+            console.error('Backend returned non-JSON response:', contentType, textResponse.substring(0, 200));
+            
+            if (response.status === 404) {
+                throw new Error('Pairing service not found. Please try using Supabase pairing or contact support.');
+            } else if (response.status >= 500) {
+                throw new Error('Server error. Please try again in a few moments.');
+            } else {
+                throw new Error('Backend service unavailable. Trying alternative pairing method...');
+            }
+        }
+        
+        console.log('Backend pairing result:', result);
+        
+        if (!response.ok) {
+            let errorMessage = result?.error || 'Pairing failed';
+            
+            if (response.status === 404) {
+                errorMessage = 'Invalid device ID. Please check the device ID from your child\'s device.';
+            } else if (response.status === 409) {
+                errorMessage = 'This device is already paired with another parent account.';
+            } else if (response.status === 401) {
+                errorMessage = 'Authentication expired. Please login again.';
+            } else if (response.status === 400) {
+                errorMessage = result?.error || 'Invalid pairing request. Please check the device ID and try again.';
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        showSuccess(`Device "${result.deviceName || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
+        
+        // Clear device ID input
+        const deviceIdInput = document.getElementById('deviceIdInput');
+        if (deviceIdInput) deviceIdInput.value = '';
+        
+        // Reload devices to show the new paired device
+        await loadDevices();
+        
+    } catch (fetchError) {
+        console.error('Backend pairing fetch error:', fetchError);
+        
+        if (fetchError.name === 'AbortError') {
+            throw new Error('Request timed out. Please check your connection and try again.');
+        } else if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
+            throw new Error('Cannot connect to pairing service. Please check your internet connection.');
+        } else if (fetchError.message.includes('JSON')) {
+            throw new Error('Invalid server response. The pairing service may be temporarily unavailable.');
+        } else {
+            throw fetchError; // Re-throw the original error
+        }
+    }
 }
 
 async function pairDeviceWithSupabase(pairingCode) {
