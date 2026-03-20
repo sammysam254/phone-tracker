@@ -152,31 +152,11 @@ function setupEventListeners() {
 
 // Authentication state management
 async function checkAuthState() {
-    // Check if Supabase is loaded
-    if (!supabaseClient) {
-        console.log('Supabase not loaded yet, showing auth form');
-        showAuth();
-        return;
-    }
-    
-    try {
-        // First check Supabase session
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        
-        if (session) {
-            currentUser = session.user;
-            showDashboard();
-            loadDevices();
-            startAutoRefresh();
-            return;
-        }
-    } catch (error) {
-        console.log('Supabase session check failed:', error);
-    }
-    
-    // Check for stored auth token (backend authentication)
+    // Check for stored auth token first (backend authentication)
     const authToken = localStorage.getItem('authToken');
-    if (authToken) {
+    const storedUser = localStorage.getItem('currentUser');
+    
+    if (authToken && storedUser) {
         try {
             // Verify token with backend
             const response = await fetch('/api/verify-token', {
@@ -188,7 +168,7 @@ async function checkAuthState() {
             
             if (response.ok) {
                 const result = await response.json();
-                currentUser = result.user;
+                currentUser = result.user || JSON.parse(storedUser);
                 showDashboard();
                 loadDevices();
                 startAutoRefresh();
@@ -196,15 +176,36 @@ async function checkAuthState() {
             } else {
                 // Token is invalid, remove it
                 localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
             }
         } catch (error) {
             console.log('Token verification failed:', error);
             localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
         }
     }
     
-    // No valid authentication found
-    showAuth();
+    // Check Supabase session if available
+    if (supabaseClient) {
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showDashboard();
+                loadDevices();
+                startAutoRefresh();
+                return;
+            }
+        } catch (error) {
+            console.log('Supabase session check failed:', error);
+        }
+    }
+    
+    // No valid authentication found - redirect to login
+    console.log('No authentication found, redirecting to login');
+    window.location.href = '/login.html';
 }
 
 function setupEventListeners() {
@@ -434,11 +435,14 @@ async function logout() {
     
     // Remove backend auth token
     localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
     
     currentUser = null;
     selectedDevice = null;
     stopAutoRefresh();
-    showAuth();
+    
+    // Redirect to login page
+    window.location.href = '/login.html';
 }
 
 // UI Navigation

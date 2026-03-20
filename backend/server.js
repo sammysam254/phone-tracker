@@ -340,7 +340,16 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  // Serve the frontend dashboard
+  // Serve specific pages
+  if (req.path === '/login.html' || req.path === '/login') {
+    return res.sendFile(path.join(__dirname, '../web-dashboard/login.html'));
+  }
+  
+  if (req.path === '/register.html' || req.path === '/register') {
+    return res.sendFile(path.join(__dirname, '../web-dashboard/register.html'));
+  }
+  
+  // Serve the main dashboard for root and other paths
   res.sendFile(path.join(__dirname, '../web-dashboard/index.html'));
 });
 
