@@ -105,8 +105,12 @@ android-app/gradlew.bat
 # APK files (except web-dashboard downloads)
 *.apk
 *.aab
-# Allow APK files in web-dashboard for downloads
-!web-dashboard/apk/*.apk
+# Allow only release APK files in web-dashboard for downloads
+!web-dashboard/apk/app-release.apk
+!web-dashboard/parent-apk/app-release.apk
+# Exclude debug APKs from being committed
+web-dashboard/apk/app-debug.apk
+web-dashboard/parent-apk/app-debug.apk
 
 # Keystore files
 *.jks

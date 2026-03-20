@@ -427,6 +427,29 @@
             opacity: 0.5;
         }
 
+        /* Loading animation for buttons */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn-loading .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 8px;
@@ -769,7 +792,7 @@
                     <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 4)">
                     <input type="text" class="code-digit" maxlength="1" oninput="moveToNext(this, 5)">
                 </div>
-                <button class="btn" id="pairDeviceBtn">Pair Device</button>
+                <button class="btn" id="pairDeviceBtn" onclick="pairDevice()">Pair Device</button>
             </div>
 
             <!-- Device Selector -->

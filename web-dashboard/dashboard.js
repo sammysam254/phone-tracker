@@ -661,25 +661,8 @@ async function pairDevice() {
     const pairBtn = document.getElementById('pairDeviceBtn');
     const originalText = pairBtn.textContent;
     pairBtn.disabled = true;
-    pairBtn.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <div style="width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            Pairing...
-        </div>
-    `;
-    
-    // Add CSS animation if not already present
-    if (!document.getElementById('spin-animation')) {
-        const style = document.createElement('style');
-        style.id = 'spin-animation';
-        style.textContent = `
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
+    pairBtn.classList.add('btn-loading');
+    pairBtn.innerHTML = `<span class="spinner"></span>Pairing...`;
     
     try {
         // First, check if the pairing code exists and is valid
@@ -765,6 +748,7 @@ async function pairDevice() {
     } finally {
         // Reset button state
         pairBtn.disabled = false;
+        pairBtn.classList.remove('btn-loading');
         pairBtn.innerHTML = originalText;
     }
 }
