@@ -73,13 +73,30 @@ const ACTIVITY_LABELS = {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard initializing...');
     
+    // Check for immediate authentication first
+    const authToken = localStorage.getItem('authToken');
+    const storedUser = localStorage.getItem('currentUser');
+    
+    if (authToken && storedUser) {
+        try {
+            currentUser = JSON.parse(storedUser);
+            console.log('Found stored authentication, showing dashboard immediately');
+            showDashboard();
+            loadDevices();
+            startAutoRefresh();
+            return;
+        } catch (error) {
+            console.log('Failed to parse stored user, continuing with full auth check');
+        }
+    }
+    
     // Show auth section initially
     showAuth();
     
     initializeSupabase();
     setupEventListeners();
     
-    // Check authentication immediately
+    // Check authentication
     checkAuthState();
     
     // Also try checking auth periodically until resolved
@@ -89,16 +106,16 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             checkAuthState();
         }
-    }, 1000);
+    }, 2000);
     
-    // Stop trying after 5 seconds and force redirect
+    // Stop trying after 10 seconds and force redirect
     setTimeout(() => {
         clearInterval(authCheckInterval);
         if (!currentUser) {
-            console.log('No authentication found after 5 seconds, forcing redirect to login');
+            console.log('No authentication found after 10 seconds, forcing redirect to login');
             window.location.href = '/login.html';
         }
-    }, 5000);
+    }, 10000);
 });
 
 function setupEventListeners() {
@@ -194,8 +211,21 @@ async function checkAuthState() {
             }
         } catch (error) {
             console.log('Token verification failed:', error);
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('currentUser');
+            // If verification fails, try using stored user anyway
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                    console.log('Using stored user data, showing dashboard');
+                    showDashboard();
+                    loadDevices();
+                    startAutoRefresh();
+                    return;
+                } catch (parseError) {
+                    console.log('Failed to parse stored user:', parseError);
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                }
+            }
         }
     }
     
@@ -514,7 +544,21 @@ function showTab(tabName, buttonElement) {
 
 // Device management
 async function loadDevices() {
-    if (!supabaseClient || !currentUser) return;
+    if (!currentUser) {
+        console.log('No current user, skipping device loading');
+        return;
+    }
+    
+    console.log('Loading devices for user:', currentUser.email);
+    
+    if (!supabaseClient) {
+        console.log('Supabase not available, showing empty device list');
+        const deviceSelect = document.getElementById('deviceSelect');
+        if (deviceSelect) {
+            deviceSelect.innerHTML = '<option value="">No devices found (Supabase unavailable)</option>';
+        }
+        return;
+    }
     
     try {
         const { data: devices, error } = await supabaseClient
@@ -527,21 +571,32 @@ async function loadDevices() {
             return;
         }
         
+        console.log('Loaded devices:', devices);
+        
         const deviceSelect = document.getElementById('deviceSelect');
-        deviceSelect.innerHTML = '<option value="">Select a device...</option>';
-        
-        devices.forEach(device => {
-            const option = document.createElement('option');
-            option.value = device.device_id;
-            option.textContent = `${device.device_name} (${device.device_id})`;
-            deviceSelect.appendChild(option);
-        });
-        
-        // Auto-select first device if available
-        if (devices.length > 0 && !selectedDevice) {
-            selectedDevice = devices[0].device_id;
-            deviceSelect.value = selectedDevice;
-            loadOverviewData();
+        if (deviceSelect) {
+            deviceSelect.innerHTML = '<option value="">Select a device...</option>';
+            
+            if (devices && devices.length > 0) {
+                devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.device_id;
+                    option.textContent = `${device.device_name} (${device.device_id})`;
+                    deviceSelect.appendChild(option);
+                });
+                
+                // Auto-select first device if available
+                if (!selectedDevice) {
+                    selectedDevice = devices[0].device_id;
+                    deviceSelect.value = selectedDevice;
+                    loadOverviewData();
+                }
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No devices paired yet';
+                deviceSelect.appendChild(option);
+            }
         }
     } catch (error) {
         console.error('Error loading devices:', error);
