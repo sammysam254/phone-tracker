@@ -21,13 +21,16 @@
     <application
         android:allowBackup="true"
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:extractNativeLibs="false"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
             android:name="com.parentalcontrol.parent.MainActivity"
-            android:exported="true" >
+            android:exported="true"
+            android:launchMode="singleTop" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -36,10 +39,12 @@
         </activity>
         <activity
             android:name="com.parentalcontrol.parent.LoginActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName="com.parentalcontrol.parent.MainActivity" />
         <activity
             android:name="com.parentalcontrol.parent.DashboardActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName="com.parentalcontrol.parent.LoginActivity" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

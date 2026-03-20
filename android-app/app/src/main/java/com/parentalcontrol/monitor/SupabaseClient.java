@@ -93,11 +93,62 @@ public class SupabaseClient {
     public void registerDeviceWithCode(JSONObject deviceData, ApiCallback callback) {
         executor.execute(() -> {
             try {
-                URL url = new URL(SUPABASE_URL + "/rest/v1/device_pairing");
+                final String deviceId = deviceData.getString("device_id");
+                
+                // First, check if device already exists and update it instead of creating new
+                URL checkUrl = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId);
+                HttpURLConnection checkConn = (HttpURLConnection) checkUrl.openConnection();
+                
+                // Set headers for check
+                checkConn.setRequestMethod("GET");
+                checkConn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                checkConn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                
+                int checkResponseCode = checkConn.getResponseCode();
+                boolean deviceExists = false;
+                
+                if (checkResponseCode == 200) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(checkConn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line);
+                    }
+                    br.close();
+                    
+                    JSONArray existingDevices = new JSONArray(response.toString());
+                    deviceExists = existingDevices.length() > 0;
+                }
+                checkConn.disconnect();
+                
+                // Now either update existing device or create new one
+                URL url;
+                String method;
+                JSONObject requestData;
+                
+                if (deviceExists) {
+                    // Update existing device with new pairing code
+                    url = new URL(SUPABASE_URL + "/rest/v1/device_pairing?device_id=eq." + deviceId);
+                    method = "PATCH";
+                    
+                    // Create update payload (only update necessary fields)
+                    requestData = new JSONObject();
+                    requestData.put("pairing_code", deviceData.getString("pairing_code"));
+                    requestData.put("status", "waiting_for_parent");
+                    requestData.put("expires_at", deviceData.getString("expires_at"));
+                    requestData.put("updated_at", java.time.Instant.now().toString());
+                } else {
+                    // Create new device record
+                    url = new URL(SUPABASE_URL + "/rest/v1/device_pairing");
+                    method = "POST";
+                    requestData = new JSONObject(deviceData.toString()); // Create copy
+                    requestData.put("created_at", java.time.Instant.now().toString());
+                }
+                
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 
                 // Set headers
-                conn.setRequestMethod("POST");
+                conn.setRequestMethod(method);
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
                 conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
@@ -106,7 +157,7 @@ public class SupabaseClient {
                 
                 // Send request
                 OutputStream os = conn.getOutputStream();
-                os.write(deviceData.toString().getBytes());
+                os.write(requestData.toString().getBytes());
                 os.flush();
                 os.close();
                 
@@ -122,7 +173,10 @@ public class SupabaseClient {
                     br.close();
                     
                     if (callback != null) {
-                        callback.onSuccess(response.toString());
+                        String successMessage = deviceExists ? 
+                            "Device updated with new pairing code. Ready for re-pairing." : 
+                            "Device registered successfully. Waiting for parent connection.";
+                        callback.onSuccess(successMessage);
                     }
                 } else {
                     BufferedReader br = new BufferedReader(new InputStreamReader(

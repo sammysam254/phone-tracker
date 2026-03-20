@@ -87,7 +87,14 @@ public class PairingActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String response) {
                     runOnUiThread(() -> {
-                        Toast.makeText(PairingActivity.this, "Device registered. Waiting for parent connection.", Toast.LENGTH_SHORT).show();
+                        // Clear any previous pairing status
+                        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putBoolean("device_paired", false);
+                        editor.remove("parent_name");
+                        editor.apply();
+                        
+                        Toast.makeText(PairingActivity.this, "New pairing code generated. Ready for pairing.", Toast.LENGTH_SHORT).show();
                     });
                 }
                 
@@ -126,8 +133,8 @@ public class PairingActivity extends AppCompatActivity {
             return "Database connection issue. Please check your internet connection and try again.";
         } else if (error.contains("HTTP 401") || error.contains("unauthorized")) {
             return "Authentication error. Please restart the app and try again.";
-        } else if (error.contains("HTTP 409") || error.contains("conflict")) {
-            return "This device is already registered. Please use a different pairing code.";
+        } else if (error.contains("HTTP 409") || error.contains("conflict") || error.contains("duplicate")) {
+            return "Device already has a pairing code. Generating new code for re-pairing...";
         } else if (error.contains("Network error") || error.contains("timeout")) {
             return "Network connection problem. Please check your internet connection.";
         } else if (error.contains("JSON") || error.contains("parse")) {
@@ -139,8 +146,16 @@ public class PairingActivity extends AppCompatActivity {
     
     private void setupClickListeners() {
         generateCodeButton.setOnClickListener(v -> {
-            generatePairingCode();
-            Toast.makeText(this, "New pairing code generated", Toast.LENGTH_SHORT).show();
+            // Show confirmation dialog for re-pairing
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setTitle("🔄 Generate New Pairing Code")
+                    .setMessage("This will generate a new pairing code and allow re-pairing with a parent account.\n\nAny existing pairing will be reset. Continue?")
+                    .setPositiveButton("Yes, Generate New Code", (dialog, which) -> {
+                        generatePairingCode();
+                        Toast.makeText(PairingActivity.this, "New pairing code generated", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
         
         checkPairingButton.setOnClickListener(v -> checkPairingStatus());

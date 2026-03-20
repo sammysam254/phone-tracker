@@ -199,6 +199,7 @@ async function checkAuthState() {
                 const result = await response.json();
                 currentUser = result.user || JSON.parse(storedUser);
                 console.log('Authentication successful, showing dashboard');
+                hideAuthError(); // Hide any auth error messages
                 showDashboard();
                 loadDevices();
                 startAutoRefresh();
@@ -216,6 +217,7 @@ async function checkAuthState() {
                 try {
                     currentUser = JSON.parse(storedUser);
                     console.log('Using stored user data, showing dashboard');
+                    hideAuthError(); // Hide any auth error messages
                     showDashboard();
                     loadDevices();
                     startAutoRefresh();
@@ -239,6 +241,7 @@ async function checkAuthState() {
                 console.log('Supabase session found, showing dashboard');
                 currentUser = session.user;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                hideAuthError(); // Hide any auth error messages
                 showDashboard();
                 loadDevices();
                 startAutoRefresh();
@@ -249,9 +252,30 @@ async function checkAuthState() {
         }
     }
     
-    // No valid authentication found - redirect to login
-    console.log('No authentication found, redirecting to login');
-    window.location.href = '/login.html';
+    // No valid authentication found - show auth error only if we're on the dashboard page
+    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+        console.log('No authentication found, showing auth error');
+        showAuthError();
+    } else {
+        // Redirect to login if on other pages
+        console.log('No authentication found, redirecting to login');
+        window.location.href = '/login.html';
+    }
+}
+
+function showAuthError() {
+    const errorDiv = document.getElementById('authError');
+    if (errorDiv) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Authentication required. Please login first.';
+    }
+}
+
+function hideAuthError() {
+    const errorDiv = document.getElementById('authError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
 }
 
 function setupEventListeners() {
@@ -652,9 +676,23 @@ async function pairDevice() {
         return;
     }
     
-    if (!supabaseClient || !currentUser) {
+    // Check authentication more thoroughly
+    const authToken = localStorage.getItem('authToken');
+    const storedUser = localStorage.getItem('currentUser');
+    
+    if (!currentUser && !storedUser) {
         showError('Authentication required. Please login first.');
         return;
+    }
+    
+    // Use stored user if currentUser is not set
+    if (!currentUser && storedUser) {
+        try {
+            currentUser = JSON.parse(storedUser);
+        } catch (error) {
+            showError('Authentication error. Please login again.');
+            return;
+        }
     }
     
     // Show loading state
@@ -665,71 +703,12 @@ async function pairDevice() {
     pairBtn.innerHTML = `<span class="spinner"></span>Pairing...`;
     
     try {
-        // First, check if the pairing code exists and is valid
-        const { data: deviceCheck, error: checkError } = await supabaseClient
-            .from('device_pairing')
-            .select('*')
-            .eq('pairing_code', pairingCode)
-            .eq('status', 'waiting_for_parent')
-            .single();
-        
-        if (checkError) {
-            let errorMessage = 'Invalid pairing code or device not found.';
-            
-            if (checkError.code === 'PGRST116') {
-                errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
-            } else if (checkError.message.includes('expired')) {
-                errorMessage = 'Pairing code has expired. Please generate a new code on your child\'s device.';
-            } else if (checkError.message.includes('not found')) {
-                errorMessage = 'Pairing code not found. Please ensure the code is correct and the child\'s app is open.';
-            }
-            
-            showError(errorMessage);
-            return;
-        }
-        
-        if (!deviceCheck) {
-            showError('No device found with this pairing code. Please check the code and try again.');
-            return;
-        }
-        
-        // Use the RPC function to pair the device
-        const { data: pairResult, error: pairError } = await supabaseClient
-            .rpc('pair_device_with_parent', {
-                pairing_code_input: pairingCode,
-                parent_user_id: currentUser.id
-            });
-        
-        if (pairError) {
-            let errorMessage = 'Pairing failed. Please try again.';
-            
-            if (pairError.message.includes('Invalid or expired')) {
-                errorMessage = 'Pairing code is invalid or has expired. Please generate a new code.';
-            } else if (pairError.message.includes('already paired')) {
-                errorMessage = 'This device is already paired with another parent account.';
-            } else if (pairError.code === 'PGRST204') {
-                errorMessage = 'Database permission error. Please contact support.';
-            }
-            
-            showError(errorMessage);
-            return;
-        }
-        
-        if (pairResult && pairResult.success) {
-            showSuccess(`Device "${pairResult.device_name}" paired successfully! The child can now proceed with consent.`);
-            
-            // Clear pairing code inputs
-            codeInputs.forEach(input => input.value = '');
-            
-            // Reload devices to show the new paired device
-            await loadDevices();
-            
-            // Show additional success information
-            setTimeout(() => {
-                showSuccess(`Pairing complete! Device "${pairResult.device_name}" is now connected to your account.`);
-            }, 2000);
+        // Try Supabase first if available
+        if (supabaseClient) {
+            await pairDeviceWithSupabase(pairingCode);
         } else {
-            showError(pairResult?.error || 'Pairing failed for unknown reason. Please try again.');
+            // Fallback to backend API
+            await pairDeviceWithBackend(pairingCode, authToken);
         }
     } catch (error) {
         console.error('Pairing error:', error);
@@ -751,6 +730,121 @@ async function pairDevice() {
         pairBtn.classList.remove('btn-loading');
         pairBtn.innerHTML = originalText;
     }
+}
+
+async function pairDeviceWithSupabase(pairingCode) {
+    // First, check if the pairing code exists and is valid
+    const { data: deviceCheck, error: checkError } = await supabaseClient
+        .from('device_pairing')
+        .select('*')
+        .eq('pairing_code', pairingCode)
+        .eq('status', 'waiting_for_parent')
+        .single();
+    
+    if (checkError) {
+        let errorMessage = 'Invalid pairing code or device not found.';
+        
+        if (checkError.code === 'PGRST116') {
+            errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
+        } else if (checkError.message.includes('expired')) {
+            errorMessage = 'Pairing code has expired. Please generate a new code on your child\'s device.';
+        } else if (checkError.message.includes('not found')) {
+            errorMessage = 'Pairing code not found. Please ensure the code is correct and the child\'s app is open.';
+        }
+        
+        showError(errorMessage);
+        return;
+    }
+    
+    if (!deviceCheck) {
+        showError('No device found with this pairing code. Please check the code and try again.');
+        return;
+    }
+    
+    // Use the RPC function to pair the device
+    const { data: pairResult, error: pairError } = await supabaseClient
+        .rpc('pair_device_with_parent', {
+            pairing_code_input: pairingCode,
+            parent_user_id: currentUser.id
+        });
+    
+    if (pairError) {
+        let errorMessage = 'Pairing failed. Please try again.';
+        
+        if (pairError.message.includes('Invalid or expired')) {
+            errorMessage = 'Pairing code is invalid or has expired. Please generate a new code.';
+        } else if (pairError.message.includes('already paired')) {
+            errorMessage = 'This device is already paired with another parent account.';
+        } else if (pairError.code === 'PGRST204') {
+            errorMessage = 'Database permission error. Please contact support.';
+        }
+        
+        showError(errorMessage);
+        return;
+    }
+    
+    if (pairResult && pairResult.success) {
+        showSuccess(`Device "${pairResult.device_name}" paired successfully! The child can now proceed with consent.`);
+        
+        // Clear pairing code inputs
+        const codeInputs = document.querySelectorAll('.code-digit');
+        codeInputs.forEach(input => input.value = '');
+        
+        // Reload devices to show the new paired device
+        await loadDevices();
+        
+        // Show additional success information
+        setTimeout(() => {
+            showSuccess(`Pairing complete! Device "${pairResult.device_name}" is now connected to your account.`);
+        }, 2000);
+    } else {
+        showError(pairResult?.error || 'Pairing failed for unknown reason. Please try again.');
+    }
+}
+
+async function pairDeviceWithBackend(pairingCode, authToken) {
+    if (!authToken) {
+        showError('Authentication token missing. Please login again.');
+        return;
+    }
+    
+    const response = await fetch('/api/pair-device', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+            pairingCode: pairingCode,
+            parentId: currentUser.id || currentUser.user_id
+        })
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+        let errorMessage = result.error || 'Pairing failed';
+        
+        if (response.status === 404) {
+            errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
+        } else if (response.status === 409) {
+            errorMessage = 'This device is already paired with another parent account.';
+        } else if (response.status === 401) {
+            errorMessage = 'Authentication expired. Please login again.';
+        }
+        
+        showError(errorMessage);
+        return;
+    }
+    
+    showSuccess(`Device "${result.deviceName}" paired successfully! The child can now proceed with consent.`);
+    
+    // Clear pairing code inputs
+    const codeInputs = document.querySelectorAll('.code-digit');
+    codeInputs.forEach(input => input.value = '');
+    
+    // Reload devices to show the new paired device
+    await loadDevices();
 }
 
 // Data loading functions
