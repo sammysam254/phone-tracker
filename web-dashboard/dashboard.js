@@ -843,7 +843,57 @@ function moveToNext(input, index) {
     console.log('moveToNext called but no longer used with device ID system');
 }
 
+// DEPRECATED: Device ID/Code pairing has been replaced with QR code pairing
+// Use the Parent Mobile App to generate QR codes for instant pairing
+// These functions are kept for reference but should not be called
+
+/*
 async function pairDevice() {
+    showError('Device pairing via web dashboard is no longer supported. Please use the Parent Mobile App to generate a QR code for instant pairing.');
+    return;
+}
+*/
+
+// Redirect users to download the parent app for QR code pairing
+async function pairDevice() {
+    const message = `
+        <div style="text-align: center; padding: 20px;">
+            <h3 style="color: #667eea; margin-bottom: 15px;">📱 QR Code Pairing Required</h3>
+            <p style="margin-bottom: 20px;">Device pairing is now done exclusively through the Parent Mobile App using QR codes.</p>
+            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h4 style="margin-bottom: 10px;">How to pair:</h4>
+                <ol style="text-align: left; margin: 0 auto; max-width: 400px; line-height: 1.8;">
+                    <li>Download the Parent App</li>
+                    <li>Tap "Pair Child Device"</li>
+                    <li>Scan the QR code on child's device</li>
+                    <li>Instant pairing!</li>
+                </ol>
+            </div>
+            <a href="download.html" class="btn" style="display: inline-block; margin-top: 15px; text-decoration: none;">
+                📱 Download Parent App
+            </a>
+        </div>
+    `;
+    
+    // Show the message in a modal or alert
+    const errorDiv = document.createElement('div');
+    errorDiv.innerHTML = message;
+    errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000; max-width: 500px; width: 90%;';
+    
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999;';
+    overlay.onclick = () => {
+        document.body.removeChild(overlay);
+        document.body.removeChild(errorDiv);
+    };
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(errorDiv);
+}
+
+// Legacy pairing functions - DEPRECATED
+/*
+async function pairDevice_OLD() {
     // Get device ID from input
     const deviceIdInput = document.getElementById('deviceIdInput');
     if (!deviceIdInput) {
@@ -952,7 +1002,10 @@ async function pairDevice() {
         }
     }
 }
+*/
 
+// Legacy pairing helper functions - DEPRECATED (kept for reference only)
+/*
 function handlePairingError(error) {
     let errorMessage = 'Pairing failed. Please try again.';
     
@@ -1361,6 +1414,8 @@ async function pairDeviceWithBackend(pairingCode, authToken) {
         }
     }
 }
+*/
+// End of deprecated pairing functions
 
 // Data loading functions
 async function loadOverviewData() {

@@ -791,17 +791,35 @@
                 </p>
             </div>
 
-            <!-- Device Pairing -->
-            <div class="pairing-section">
-                <h3>📱 Device Pairing</h3>
-                <p>After installing the app, enter the Device ID from your child's device:</p>
-                <div class="device-id-input">
-                    <input type="text" id="deviceIdInput" placeholder="Enter Device ID (e.g., ABCD1234-EFGH5678-IJKL9012-MNOP3456)" maxlength="35" style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; font-family: monospace; letter-spacing: 1px;">
-                    <div style="margin-top: 10px; font-size: 0.9em; color: #718096;">
-                        💡 Find the Device ID in your child's app settings or copy it from the pairing screen
-                    </div>
+            <!-- Device Pairing - QR Code Only -->
+            <div class="pairing-section" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none;">
+                <h3>📱 Device Pairing via QR Code</h3>
+                <p style="margin: 15px 0; font-size: 1.1em;">Use the Parent Mobile App to pair devices instantly with QR codes!</p>
+                
+                <div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 10px; margin: 20px 0; backdrop-filter: blur(10px);">
+                    <h4 style="margin-bottom: 15px;">🚀 How to Pair:</h4>
+                    <ol style="text-align: left; margin: 0 auto; max-width: 500px; line-height: 1.8;">
+                        <li>Download and install the <strong>Parent App</strong> on your phone</li>
+                        <li>Install the <strong>Child App</strong> on your child's device</li>
+                        <li>Open Parent App and tap <strong>"Pair Child Device"</strong></li>
+                        <li>A QR code will appear on your screen</li>
+                        <li>On child's device, tap <strong>"Scan QR Code"</strong></li>
+                        <li>Point camera at QR code - <strong>Instant pairing!</strong></li>
+                    </ol>
                 </div>
-                <button class="btn" id="pairDeviceBtn" onclick="pairDevice()">Pair Device</button>
+                
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 25px;">
+                    <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.9); color: #38a169; border: 2px solid rgba(255, 255, 255, 0.3); font-weight: bold;">
+                        📱 Download Parent App
+                    </a>
+                    <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.5);">
+                        📖 View Instructions
+                    </a>
+                </div>
+                
+                <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.9;">
+                    ✨ No typing required • ⚡ Instant connection • 🔒 Secure pairing
+                </p>
             </div>
 
             <!-- Device Selector -->
