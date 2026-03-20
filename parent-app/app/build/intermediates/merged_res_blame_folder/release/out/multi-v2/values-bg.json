@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-29:/values-bg/values-bg.xml",
+            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-30:/values-bg/values-bg.xml",
             "map": [
                 {
                     "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\ec58f110124a3428a16ec337c431efeb\\transformed\\core-1.9.0\\res\\values-bg\\values-bg.xml",
@@ -54,6 +54,23 @@
                         "startOffsets": "315,435,541,646,732,842,963,1043,1120,1211,1304,1399,1493,1593,1686,1781,1889,1980,2071,2154,2268,2376,2476,2590,2697,2805,2965,8706",
                         "endColumns": "119,105,104,85,109,120,79,76,90,92,94,93,99,92,94,107,90,90,82,113,107,99,113,106,107,159,98,83",
                         "endOffsets": "430,536,641,727,837,958,1038,1115,1206,1299,1394,1488,1588,1681,1776,1884,1975,2066,2149,2263,2371,2471,2585,2692,2800,2960,3059,8785"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\01e4fd16feee26351a5d19780a716f39\\transformed\\jetified-zxing-android-embedded-4.3.0\\res\\values-bg\\values-bg.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,112,159,311",
+                        "endColumns": "56,46,151,110",
+                        "endOffsets": "107,154,306,417"
+                    },
+                    "to": {
+                        "startLines": "103,104,105,106",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "8891,8948,8995,9147",
+                        "endColumns": "56,46,151,110",
+                        "endOffsets": "8943,8990,9142,9253"
                     }
                 }
             ]

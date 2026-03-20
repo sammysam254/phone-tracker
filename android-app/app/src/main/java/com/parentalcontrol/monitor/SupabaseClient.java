@@ -90,7 +90,18 @@ public class SupabaseClient {
         });
     }
     
+    // ============================================================================
+    // DEPRECATED METHODS - QR Code Pairing Only
+    // ============================================================================
+    // These methods are deprecated as of v1.2.1. The app now uses QR code pairing exclusively.
+    // Kept for reference only - DO NOT USE in new code.
+    // ============================================================================
+    
+    /*
+    @Deprecated
     public void registerDeviceWithCode(JSONObject deviceData, ApiCallback callback) {
+        // DEPRECATED: Use pairDeviceWithQR() instead
+        // This method was used for the old pairing code system
         executor.execute(() -> {
             try {
                 final String deviceId = deviceData.getString("device_id");
@@ -276,7 +287,10 @@ public class SupabaseClient {
         });
     }
     
+    @Deprecated
     public void updatePairingCode(String deviceId, JSONObject updateData, ApiCallback callback) {
+        // DEPRECATED: Use pairDeviceWithQR() instead
+        // This method was used for the old pairing code system
         executor.execute(() -> {
             try {
                 // Add connection timeout and retry logic
@@ -405,6 +419,7 @@ public class SupabaseClient {
             }
         });
     }
+    */
     
     public void checkPairingStatus(String deviceId, ApiCallback callback) {
         executor.execute(() -> {

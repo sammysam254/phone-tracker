@@ -17,136 +17,200 @@
 13    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 13-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:8:5-76
 13-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:8:22-73
-14
-15    <permission
-15-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:22:5-24:47
-16        android:name="com.parentalcontrol.parent.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-16-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:23:9-81
-17        android:protectionLevel="signature" />
-17-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:24:9-44
-18
-19    <uses-permission android:name="com.parentalcontrol.parent.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-19-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:26:5-97
-19-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:26:22-94
-20
-21    <application
-21-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:10:5-39:19
-22        android:allowBackup="true"
-22-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:11:9-35
-23        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-23-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:28:18-86
-24        android:dataExtractionRules="@xml/data_extraction_rules"
-24-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:12:9-65
-25        android:extractNativeLibs="false"
-26        android:fullBackupContent="@xml/backup_rules"
-26-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:13:9-54
-27        android:icon="@mipmap/ic_launcher"
-27-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:14:9-43
-28        android:label="@string/app_name"
-28-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:15:9-41
-29        android:theme="@style/AppTheme" >
-29-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:16:9-40
-30        <activity
-30-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:19:9-27:20
-31            android:name="com.parentalcontrol.parent.MainActivity"
-31-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:20:13-41
-32            android:exported="true"
-32-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:21:13-36
-33            android:launchMode="singleTop" >
-33-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:22:13-43
-34            <intent-filter>
-34-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:23:13-26:29
-35                <action android:name="android.intent.action.MAIN" />
-35-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:24:17-69
-35-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:24:25-66
-36
-37                <category android:name="android.intent.category.LAUNCHER" />
-37-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:25:17-77
-37-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:25:27-74
-38            </intent-filter>
-39        </activity>
-40        <activity
-40-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:29:9-32:58
-41            android:name="com.parentalcontrol.parent.LoginActivity"
-41-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:30:13-42
-42            android:exported="false"
-42-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:31:13-37
-43            android:parentActivityName="com.parentalcontrol.parent.MainActivity" />
-43-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:32:13-55
-44        <activity
-44-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:34:9-37:59
-45            android:name="com.parentalcontrol.parent.DashboardActivity"
-45-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:35:13-46
-46            android:exported="false"
-46-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:36:13-37
-47            android:parentActivityName="com.parentalcontrol.parent.LoginActivity" />
-47-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:37:13-56
-48
-49        <provider
-49-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
-50            android:name="androidx.startup.InitializationProvider"
-50-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:25:13-67
-51            android:authorities="com.parentalcontrol.parent.androidx-startup"
-51-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:26:13-68
-52            android:exported="false" >
-52-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:27:13-37
-53            <meta-data
-53-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
-54                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-54-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:30:17-75
-55                android:value="androidx.startup" />
-55-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:31:17-49
-56            <meta-data
-56-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\4fb95a2d322c0b24610ffef19a70ef50\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:29:13-31:52
-57                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-57-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\4fb95a2d322c0b24610ffef19a70ef50\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:30:17-78
-58                android:value="androidx.startup" />
-58-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\4fb95a2d322c0b24610ffef19a70ef50\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:31:17-49
-59            <meta-data
-59-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
-60                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-60-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
-61                android:value="androidx.startup" />
-61-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
-62        </provider>
-63
-64        <receiver
-64-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
-65            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-65-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
-66            android:directBootAware="false"
-66-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
-67            android:enabled="true"
-67-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
-68            android:exported="true"
-68-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
-69            android:permission="android.permission.DUMP" >
-69-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
-70            <intent-filter>
-70-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
-71                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-71-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
-71-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
-72            </intent-filter>
-73            <intent-filter>
-73-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
-74                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-74-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
-74-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
-75            </intent-filter>
-76            <intent-filter>
-76-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
-77                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-77-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
-77-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
-78            </intent-filter>
-79            <intent-filter>
-79-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
-80                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-80-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
-80-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
-81            </intent-filter>
-82        </receiver>
-83    </application>
-84
-85</manifest>
+14    <uses-permission android:name="android.permission.CAMERA" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+14-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:22:5-65
+14-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:22:22-62
+15    <uses-feature
+15-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:25:5-27:36
+16        android:name="android.hardware.camera"
+16-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:26:9-47
+17        android:required="false" />
+17-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:27:9-33
+18    <uses-feature
+18-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:28:5-30:36
+19        android:name="android.hardware.camera.front"
+19-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:29:9-53
+20        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+20-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:30:9-33
+21    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
+22    <uses-feature
+22-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:33:5-35:36
+23        android:name="android.hardware.camera.autofocus"
+23-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:34:9-57
+24        android:required="false" />
+24-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:35:9-33
+25    <uses-feature
+25-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:36:5-38:36
+26        android:name="android.hardware.camera.flash"
+26-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:37:9-53
+27        android:required="false" />
+27-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:38:9-33
+28    <uses-feature
+28-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:39:5-41:36
+29        android:name="android.hardware.screen.landscape"
+29-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:40:9-57
+30        android:required="false" />
+30-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:41:9-33
+31    <uses-feature
+31-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:42:5-44:36
+32        android:name="android.hardware.wifi"
+32-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:43:9-45
+33        android:required="false" />
+33-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:44:9-33
+34
+35    <permission
+35-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:22:5-24:47
+36        android:name="com.parentalcontrol.parent.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+36-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:23:9-81
+37        android:protectionLevel="signature" />
+37-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:24:9-44
+38
+39    <uses-permission android:name="com.parentalcontrol.parent.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+39-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:26:5-97
+39-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:26:22-94
+40
+41    <application
+41-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:10:5-45:19
+42        android:allowBackup="true"
+42-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:11:9-35
+43        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+43-->[androidx.core:core:1.9.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\ec58f110124a3428a16ec337c431efeb\transformed\core-1.9.0\AndroidManifest.xml:28:18-86
+44        android:dataExtractionRules="@xml/data_extraction_rules"
+44-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:12:9-65
+45        android:extractNativeLibs="false"
+46        android:fullBackupContent="@xml/backup_rules"
+46-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:13:9-54
+47        android:icon="@mipmap/ic_launcher"
+47-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:14:9-43
+48        android:label="@string/app_name"
+48-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:15:9-41
+49        android:theme="@style/AppTheme" >
+49-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:16:9-40
+50        <activity
+50-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:19:9-27:20
+51            android:name="com.parentalcontrol.parent.MainActivity"
+51-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:20:13-41
+52            android:exported="true"
+52-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:21:13-36
+53            android:launchMode="singleTop" >
+53-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:22:13-43
+54            <intent-filter>
+54-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:23:13-26:29
+55                <action android:name="android.intent.action.MAIN" />
+55-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:24:17-69
+55-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:24:25-66
+56
+57                <category android:name="android.intent.category.LAUNCHER" />
+57-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:25:17-77
+57-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:25:27-74
+58            </intent-filter>
+59        </activity>
+60        <activity
+60-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:29:9-32:58
+61            android:name="com.parentalcontrol.parent.LoginActivity"
+61-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:30:13-42
+62            android:exported="false"
+62-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:31:13-37
+63            android:parentActivityName="com.parentalcontrol.parent.MainActivity" />
+63-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:32:13-55
+64        <activity
+64-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:34:9-37:59
+65            android:name="com.parentalcontrol.parent.DashboardActivity"
+65-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:35:13-46
+66            android:exported="false"
+66-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:36:13-37
+67            android:parentActivityName="com.parentalcontrol.parent.LoginActivity" />
+67-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:37:13-56
+68        <activity
+68-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:39:9-43:58
+69            android:name="com.parentalcontrol.parent.QRGeneratorActivity"
+69-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:40:13-48
+70            android:exported="false"
+70-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:41:13-37
+71            android:parentActivityName="com.parentalcontrol.parent.MainActivity"
+71-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:43:13-55
+72            android:screenOrientation="portrait" />
+72-->C:\Users\COLLINS KIBET\OneDrive\Desktop\phone activity\parent-app\app\src\main\AndroidManifest.xml:42:13-49
+73        <activity
+73-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:47:9-53:63
+74            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+74-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:48:13-74
+75            android:clearTaskOnLaunch="true"
+75-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:49:13-45
+76            android:screenOrientation="sensorLandscape"
+76-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:50:13-56
+77            android:stateNotNeeded="true"
+77-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:51:13-42
+78            android:theme="@style/zxing_CaptureTheme"
+78-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:52:13-54
+79            android:windowSoftInputMode="stateAlwaysHidden" />
+79-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:53:13-60
+80
+81        <provider
+81-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+82            android:name="androidx.startup.InitializationProvider"
+82-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:25:13-67
+83            android:authorities="com.parentalcontrol.parent.androidx-startup"
+83-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:26:13-68
+84            android:exported="false" >
+84-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:27:13-37
+85            <meta-data
+85-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+86                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+86-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:30:17-75
+87                android:value="androidx.startup" />
+87-->[androidx.emoji2:emoji2:1.2.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\aade806597be5a4a892d17aada523eeb\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:31:17-49
+88            <meta-data
+88-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\4fb95a2d322c0b24610ffef19a70ef50\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:29:13-31:52
+89                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+89-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\4fb95a2d322c0b24610ffef19a70ef50\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:30:17-78
+90                android:value="androidx.startup" />
+90-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\4fb95a2d322c0b24610ffef19a70ef50\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:31:17-49
+91            <meta-data
+91-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+92                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+92-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+93                android:value="androidx.startup" />
+93-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+94        </provider>
+95
+96        <receiver
+96-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+97            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+98            android:directBootAware="false"
+98-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+99            android:enabled="true"
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+100            android:exported="true"
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+101            android:permission="android.permission.DUMP" >
+101-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+102            <intent-filter>
+102-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+103                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+103-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+103-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+104            </intent-filter>
+105            <intent-filter>
+105-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+106                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+106-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+106-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+107            </intent-filter>
+108            <intent-filter>
+108-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+109                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+109-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+109-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+110            </intent-filter>
+111            <intent-filter>
+111-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+112                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+112-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+112-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\af1f177eeab879b85506d1b348862d8a\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+113            </intent-filter>
+114        </receiver>
+115    </application>
+116
+117</manifest>

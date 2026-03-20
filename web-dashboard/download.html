@@ -456,11 +456,11 @@
             <h3 style="margin: 0 0 15px 0; font-size: 1.5em;">🎉 NEW: QR Code Pairing System!</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
                 <div style="background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 10px;">
-                    <h4 style="margin: 0 0 8px 0;">👶 Child App v1.2.0-QR</h4>
+                    <h4 style="margin: 0 0 8px 0;">👶 Child App v1.2.1-QR</h4>
                     <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">📷 QR code scanner for instant pairing - no typing required!</p>
                 </div>
                 <div style="background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 10px;">
-                    <h4 style="margin: 0 0 8px 0;">👨‍👩‍👧‍👦 Parent App v1.3.0-QR</h4>
+                    <h4 style="margin: 0 0 8px 0;">👨‍👩‍👧‍👦 Parent App v1.3.1-QR</h4>
                     <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">📱 QR code generator for seamless device pairing</p>
                 </div>
             </div>
@@ -479,7 +479,7 @@
             </p>
 
             <div class="download-buttons">
-                <a href="apk/child-monitor-v1.2.0-qr.apk" class="download-btn" download="ParentalControl-Child-QR.apk">
+                <a href="apk/child-monitor-v1.2.1-qr.apk" class="download-btn" download="ParentalControl-Child-QR.apk">
                     <span class="icon">📱</span>
                     <div class="download-info">
                         <span class="title">Child Monitoring App (QR)</span>
@@ -493,7 +493,7 @@
                 <div class="version-details">
                     <div class="version-item">
                         <span><strong>Version:</strong></span>
-                        <span>1.2.0-QR</span>
+                        <span>1.2.1-QR</span>
                     </div>
                     <div class="version-item">
                         <span><strong>Build Date:</strong></span>
@@ -518,13 +518,13 @@
                 </div>
                 
                 <div style="background: #e6fffa; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #38b2ac;">
-                    <h5 style="color: #234e52; margin-bottom: 10px;">🆕 What's New in v1.2.0-QR</h5>
+                    <h5 style="color: #234e52; margin-bottom: 10px;">🆕 What's New in v1.2.1-QR</h5>
                     <ul style="color: #234e52; margin: 0; padding-left: 20px;">
-                        <li>📷 QR code scanner for instant pairing</li>
-                        <li>✅ No manual entry required - just scan!</li>
-                        <li>⚡ Automatic pairing in seconds</li>
-                        <li>🔒 Secure time-limited QR codes (10 min expiry)</li>
-                        <li>✨ Simplified user interface</li>
+                        <li>🧹 Removed legacy pairing code methods</li>
+                        <li>📷 QR code scanner only - simplified pairing</li>
+                        <li>✅ Cleaner codebase for better performance</li>
+                        <li>⚡ Faster app startup</li>
+                        <li>🔒 Enhanced security with QR-only pairing</li>
                     </ul>
                 </div>
             </div>
@@ -540,7 +540,7 @@
             </p>
 
             <div class="download-buttons">
-                <a href="parent-apk/parent-monitor-v1.3.0-qr.apk" class="download-btn" download="ParentalControl-Parent-QR.apk" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);">
+                <a href="parent-apk/parent-monitor-v1.3.1-qr.apk" class="download-btn" download="ParentalControl-Parent-QR.apk" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);">
                     <span class="icon">👨‍👩‍👧‍👦</span>
                     <div class="download-info">
                         <span class="title">Parent Dashboard App (QR)</span>
@@ -562,7 +562,7 @@
                 <div class="version-details">
                     <div class="version-item">
                         <span><strong>Version:</strong></span>
-                        <span>1.3.0-QR</span>
+                        <span>1.3.1-QR</span>
                     </div>
                     <div class="version-item">
                         <span><strong>Build Date:</strong></span>
@@ -587,13 +587,13 @@
                 </div>
                 
                 <div style="background: #fff5f5; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #e53e3e;">
-                    <h5 style="color: #742a2a; margin-bottom: 10px;">🆕 What's New in v1.3.0-QR</h5>
+                    <h5 style="color: #742a2a; margin-bottom: 10px;">🆕 What's New in v1.3.1-QR</h5>
                     <ul style="color: #742a2a; margin: 0; padding-left: 20px;">
-                        <li>📱 QR code generator for instant device pairing</li>
-                        <li>✅ One-tap pairing - no typing required</li>
-                        <li>🔄 Regenerate QR codes anytime</li>
+                        <li>🧹 Removed legacy device ID pairing</li>
+                        <li>📱 QR code generator only - streamlined experience</li>
+                        <li>✅ Cleaner interface</li>
                         <li>⏱️ Time-limited codes for security (10 min)</li>
-                        <li>✨ Enhanced user experience</li>
+                        <li>✨ Improved performance</li>
                     </ul>
                 </div>
             </div>
@@ -771,11 +771,11 @@
 
         // Check if APK files exist and update download links accordingly
         function checkAPKAvailability() {
-            const releaseBtn = document.querySelector('a[href="apk/child-monitor-v1.2.0-qr.apk"]');
-            const parentBtn = document.querySelector('a[href="parent-apk/parent-monitor-v1.3.0-qr.apk"]');
+            const releaseBtn = document.querySelector('a[href="apk/child-monitor-v1.2.1-qr.apk"]');
+            const parentBtn = document.querySelector('a[href="parent-apk/parent-monitor-v1.3.1-qr.apk"]');
             
             // Test if child APK is available
-            fetch('apk/child-monitor-v1.2.0-qr.apk', { method: 'HEAD' })
+            fetch('apk/child-monitor-v1.2.1-qr.apk', { method: 'HEAD' })
                 .then(response => {
                     if (!response.ok) {
                         // APK not available, show alternative
@@ -788,7 +788,7 @@
                                     <span class="subtitle">Primary link unavailable</span>
                                 </div>
                             `;
-                            releaseBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/child-monitor-v1.2.0-qr.apk';
+                            releaseBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/child-monitor-v1.2.1-qr.apk';
                             releaseBtn.target = '_blank';
                         }
                     }
@@ -809,10 +809,10 @@
                 });
 
             // Test parent APK similarly
-            fetch('parent-apk/parent-monitor-v1.3.0-qr.apk', { method: 'HEAD' })
+            fetch('parent-apk/parent-monitor-v1.3.1-qr.apk', { method: 'HEAD' })
                 .then(response => {
                     if (!response.ok && parentBtn) {
-                        parentBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/parent-apk/parent-monitor-v1.3.0-qr.apk';
+                        parentBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/parent-apk/parent-monitor-v1.3.1-qr.apk';
                         parentBtn.target = '_blank';
                     }
                 })

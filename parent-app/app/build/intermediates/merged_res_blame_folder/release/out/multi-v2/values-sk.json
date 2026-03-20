@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-29:/values-sk/values-sk.xml",
+            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-30:/values-sk/values-sk.xml",
             "map": [
                 {
                     "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\9a3df51d9e94318dbbaa67107b6ed6fd\\transformed\\material-1.10.0\\res\\values-sk\\values-sk.xml",
@@ -37,6 +37,23 @@
                         "startOffsets": "8675",
                         "endColumns": "100",
                         "endOffsets": "8771"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\01e4fd16feee26351a5d19780a716f39\\transformed\\jetified-zxing-android-embedded-4.3.0\\res\\values-sk\\values-sk.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,114,161,315",
+                        "endColumns": "58,46,153,120",
+                        "endOffsets": "109,156,310,431"
+                    },
+                    "to": {
+                        "startLines": "105,106,107,108",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "8776,8835,8882,9036",
+                        "endColumns": "58,46,153,120",
+                        "endOffsets": "8830,8877,9031,9152"
                     }
                 },
                 {

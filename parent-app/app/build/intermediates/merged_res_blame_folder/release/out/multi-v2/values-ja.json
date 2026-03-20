@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-29:/values-ja/values-ja.xml",
+            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-30:/values-ja/values-ja.xml",
             "map": [
                 {
                     "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\ec58f110124a3428a16ec337c431efeb\\transformed\\core-1.9.0\\res\\values-ja\\values-ja.xml",
@@ -37,6 +37,23 @@
                         "endLines": "5,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100",
                         "endColumns": "12,66,63,68,80,81,84,103,75,62,83,63,57,80,60,63,54,58,56,53,92,55,56,53,65,99,75,80,121,61,61,100,78,74,52,50,65,69,69,76,69,63,70,67,62,90,78,62,79,81,71,70,71,47,71,63,74,76,61,63,62,66,85,85,80,82,56,54,72",
                         "endOffsets": "298,2951,3015,3084,3165,3247,3332,3436,3512,3575,3659,3723,3781,3862,3923,3987,4042,4101,4158,4212,4305,4361,4418,4472,4538,4638,4714,4795,4917,4979,5041,5142,5221,5296,5349,5400,5466,5536,5606,5683,5753,5817,5888,5956,6019,6110,6189,6252,6332,6414,6486,6557,6629,6677,6749,6813,6888,6965,7027,7091,7154,7221,7307,7393,7474,7557,7614,7669,7742"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\01e4fd16feee26351a5d19780a716f39\\transformed\\jetified-zxing-android-embedded-4.3.0\\res\\values-ja\\values-ja.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,109,156,256",
+                        "endColumns": "53,46,99,81",
+                        "endOffsets": "104,151,251,333"
+                    },
+                    "to": {
+                        "startLines": "103,104,105,106",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "7927,7981,8028,8128",
+                        "endColumns": "53,46,99,81",
+                        "endOffsets": "7976,8023,8123,8205"
                     }
                 },
                 {

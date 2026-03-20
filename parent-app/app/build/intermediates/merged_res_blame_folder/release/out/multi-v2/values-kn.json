@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-29:/values-kn/values-kn.xml",
+            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-30:/values-kn/values-kn.xml",
             "map": [
                 {
                     "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\ec58f110124a3428a16ec337c431efeb\\transformed\\core-1.9.0\\res\\values-kn\\values-kn.xml",

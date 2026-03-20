@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-29:/values-fi/values-fi.xml",
+            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-30:/values-fi/values-fi.xml",
             "map": [
                 {
                     "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\ec58f110124a3428a16ec337c431efeb\\transformed\\core-1.9.0\\res\\values-fi\\values-fi.xml",
@@ -54,6 +54,23 @@
                         "startOffsets": "318,426,526,635,721,826,944,1030,1109,1200,1293,1388,1482,1576,1669,1765,1864,1955,2049,2129,2236,2337,2434,2540,2640,2738,2888,8396",
                         "endColumns": "107,99,108,85,104,117,85,78,90,92,94,93,93,92,95,98,90,93,79,106,100,96,105,99,97,149,99,80",
                         "endOffsets": "421,521,630,716,821,939,1025,1104,1195,1288,1383,1477,1571,1664,1760,1859,1950,2044,2124,2231,2332,2429,2535,2635,2733,2883,2983,8472"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\01e4fd16feee26351a5d19780a716f39\\transformed\\jetified-zxing-android-embedded-4.3.0\\res\\values-fi\\values-fi.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,114,161,321",
+                        "endColumns": "58,46,159,103",
+                        "endOffsets": "109,156,316,420"
+                    },
+                    "to": {
+                        "startLines": "103,104,105,106",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "8578,8637,8684,8844",
+                        "endColumns": "58,46,159,103",
+                        "endOffsets": "8632,8679,8839,8943"
                     }
                 }
             ]

@@ -11,7 +11,6 @@ public class PairingActivity extends AppCompatActivity {
     
     private TextView instructionsText;
     private Button scanQRButton;
-    private String deviceId;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,8 +28,6 @@ public class PairingActivity extends AppCompatActivity {
     }
     
     private void setupDevice() {
-        deviceId = DeviceUtils.getDeviceId(this);
-        
         String instructions = "📱 Connect to Parent's Account\n\n" +
             "To start monitoring, you need to pair this device with your parent's account.\n\n" +
             "Steps:\n" +
@@ -38,8 +35,7 @@ public class PairingActivity extends AppCompatActivity {
             "2. Parent generates a QR code for pairing\n" +
             "3. Tap 'Scan QR Code' below\n" +
             "4. Point camera at parent's QR code\n" +
-            "5. Pairing completes automatically!\n\n" +
-            "Device ID: " + deviceId;
+            "5. Pairing completes automatically!";
         
         instructionsText.setText(instructions);
     }

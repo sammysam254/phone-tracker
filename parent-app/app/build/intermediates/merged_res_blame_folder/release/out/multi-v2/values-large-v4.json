@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-29:/values-large-v4/values-large-v4.xml",
+            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-30:/values-large-v4/values-large-v4.xml",
             "map": [
                 {
                     "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\9a3df51d9e94318dbbaa67107b6ed6fd\\transformed\\material-1.10.0\\res\\values-large-v4\\values-large-v4.xml",

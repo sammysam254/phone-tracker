@@ -1,8 +1,25 @@
 {
     "logs": [
         {
-            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-29:/values-cs/values-cs.xml",
+            "outputFile": "com.parentalcontrol.parent.app-mergeReleaseResources-30:/values-cs/values-cs.xml",
             "map": [
+                {
+                    "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\01e4fd16feee26351a5d19780a716f39\\transformed\\jetified-zxing-android-embedded-4.3.0\\res\\values-cs\\values-cs.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,114,161,311",
+                        "endColumns": "58,46,149,83",
+                        "endOffsets": "109,156,306,390"
+                    },
+                    "to": {
+                        "startLines": "105,106,107,108",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "8764,8823,8870,9020",
+                        "endColumns": "58,46,149,83",
+                        "endOffsets": "8818,8865,9015,9099"
+                    }
+                },
                 {
                     "source": "C:\\Users\\COLLINS KIBET\\.gradle\\caches\\transforms-3\\67a0243de1b9042b8db333e00edbaab9\\transformed\\appcompat-1.6.1\\res\\values-cs\\values-cs.xml",
                     "from": {

@@ -52,6 +52,27 @@
       externalAnnotations="annotations.zip"
       proguardRules="proguard.txt"/>
   <library
+      name="com.journeyapps:zxing-android-embedded:4.3.0@aar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0\jars\classes.jar"
+      resolved="com.journeyapps:zxing-android-embedded:4.3.0"
+      folder="C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\01e4fd16feee26351a5d19780a716f39\transformed\jetified-zxing-android-embedded-4.3.0"
+      manifest="AndroidManifest.xml"
+      resFolder="res"
+      assetsFolder="assets"
+      lintJar="lint.jar"
+      publicResources="public.txt"
+      symbolFile="R.txt"
+      externalAnnotations="annotations.zip"
+      proguardRules="proguard.txt"/>
+  <library
+      name="com.google.zxing:core:3.5.2@jar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\com.google.zxing\core\3.5.2\baab0f4a47b2052c9393af6af7c47a9dd8d89297\core-3.5.2.jar"
+      resolved="com.google.zxing:core:3.5.2"/>
+  <library
+      name="com.squareup.okhttp3:okhttp:4.12.0@jar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\com.squareup.okhttp3\okhttp\4.12.0\2f4525d4a200e97e1b87449c2cd9bd2e25b7e8cd\okhttp-4.12.0.jar"
+      resolved="com.squareup.okhttp3:okhttp:4.12.0"/>
+  <library
       name="androidx.viewpager2:viewpager2:1.0.0@aar"
       jars="C:\Users\COLLINS KIBET\.gradle\caches\transforms-3\bc40b3a7a9e400bf02b58a7255e0fabc\transformed\jetified-viewpager2-1.0.0\jars\classes.jar"
       resolved="androidx.viewpager2:viewpager2:1.0.0"
@@ -471,6 +492,10 @@
       externalAnnotations="annotations.zip"
       proguardRules="proguard.txt"/>
   <library
+      name="com.squareup.okio:okio-jvm:3.6.0@jar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\com.squareup.okio\okio-jvm\3.6.0\5600569133b7bdefe1daf9ec7f4abeb6d13e1786\okio-jvm-3.6.0.jar"
+      resolved="com.squareup.okio:okio-jvm:3.6.0"/>
+  <library
       name="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4@jar"
       jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlinx\kotlinx-coroutines-core-jvm\1.6.4\2c997cd1c0ef33f3e751d3831929aeff1390cb30\kotlinx-coroutines-core-jvm-1.6.4.jar"
       resolved="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4"/>
@@ -479,21 +504,21 @@
       jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlinx\kotlinx-coroutines-android\1.6.4\f955fc8b2ad196e2f4429598440e15f7492eeb2b\kotlinx-coroutines-android-1.6.4.jar"
       resolved="org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"/>
   <library
-      name="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22@jar"
-      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib-jdk8\1.8.22\b25c86d47d6b962b9cf0f8c3f320c8a10eea3dd1\kotlin-stdlib-jdk8-1.8.22.jar"
-      resolved="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"/>
+      name="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10@jar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib-jdk8\1.9.10\c7510d64a83411a649c76f2778304ddf71d7437b\kotlin-stdlib-jdk8-1.9.10.jar"
+      resolved="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10"/>
   <library
-      name="org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22@jar"
-      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib-jdk7\1.8.22\4dabb8248310d833bb6a8b516024a91fd3d275c\kotlin-stdlib-jdk7-1.8.22.jar"
-      resolved="org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"/>
+      name="org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10@jar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib-jdk7\1.9.10\bc5bfc2690338defd5195b05c57562f2194eeb10\kotlin-stdlib-jdk7-1.9.10.jar"
+      resolved="org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10"/>
   <library
-      name="org.jetbrains.kotlin:kotlin-stdlib:1.8.22@jar"
-      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib\1.8.22\636bf8b320e7627482771bbac9ed7246773c02bd\kotlin-stdlib-1.8.22.jar"
-      resolved="org.jetbrains.kotlin:kotlin-stdlib:1.8.22"/>
+      name="org.jetbrains.kotlin:kotlin-stdlib:1.9.10@jar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib\1.9.10\72812e8a368917ab5c0a5081b56915ffdfec93b7\kotlin-stdlib-1.9.10.jar"
+      resolved="org.jetbrains.kotlin:kotlin-stdlib:1.9.10"/>
   <library
-      name="org.jetbrains.kotlin:kotlin-stdlib-common:1.8.22@jar"
-      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib-common\1.8.22\1a8e3601703ae14bb58757ea6b2d8e8e5935a586\kotlin-stdlib-common-1.8.22.jar"
-      resolved="org.jetbrains.kotlin:kotlin-stdlib-common:1.8.22"/>
+      name="org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10@jar"
+      jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib-common\1.9.10\dafaf2c27f27c09220cee312df10917d9a5d97ce\kotlin-stdlib-common-1.9.10.jar"
+      resolved="org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10"/>
   <library
       name="org.jetbrains:annotations:13.0@jar"
       jars="C:\Users\COLLINS KIBET\.gradle\caches\modules-2\files-2.1\org.jetbrains\annotations\13.0\919f0dfe192fb4e063e7dacadee7f8bb9a2672a9\annotations-13.0.jar"
