@@ -102,6 +102,21 @@ android-app/gradle/
 android-app/gradlew
 android-app/gradlew.bat
 
+# Parent App Build Artifacts
+parent-app/.idea/
+parent-app/build/
+parent-app/app/build/
+parent-app/.gradle/
+parent-app/gradle/
+parent-app/gradlew
+parent-app/gradlew.bat
+
+# All Android build intermediates
+**/build/intermediates/
+**/build/outputs/
+**/build/generated/
+**/build/tmp/
+
 # APK files (except web-dashboard downloads)
 *.apk
 *.aab
