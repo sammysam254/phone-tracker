@@ -71,6 +71,11 @@
         <activity
             android:name=".PairingActivity"
             android:exported="false" />
+            
+        <activity
+            android:name=".QRScannerActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
         <service
             android:name=".MonitoringService"

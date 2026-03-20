@@ -783,6 +783,83 @@ public class SupabaseClient {
         });
     }
     
+    public void pairDeviceWithQR(JSONObject pairingData, ApiCallback callback) {
+        executor.execute(() -> {
+            try {
+                final String deviceId = pairingData.getString("device_id");
+                final String parentId = pairingData.getString("parent_id");
+                final String pairingToken = pairingData.getString("pairing_token");
+                
+                // Verify the pairing token with the backend
+                URL verifyUrl = new URL(SUPABASE_URL + "/rest/v1/rpc/verify_qr_pairing");
+                HttpURLConnection verifyConn = (HttpURLConnection) verifyUrl.openConnection();
+                
+                verifyConn.setConnectTimeout(10000);
+                verifyConn.setReadTimeout(15000);
+                verifyConn.setRequestMethod("POST");
+                verifyConn.setRequestProperty("Content-Type", "application/json");
+                verifyConn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                verifyConn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                verifyConn.setRequestProperty("Prefer", "return=representation");
+                verifyConn.setDoOutput(true);
+                
+                // Create verification payload
+                JSONObject verifyPayload = new JSONObject();
+                verifyPayload.put("p_parent_id", parentId);
+                verifyPayload.put("p_pairing_token", pairingToken);
+                verifyPayload.put("p_device_id", deviceId);
+                verifyPayload.put("p_device_name", pairingData.getString("device_name"));
+                verifyPayload.put("p_device_brand", pairingData.getString("device_brand"));
+                verifyPayload.put("p_android_version", pairingData.getString("android_version"));
+                
+                OutputStream os = verifyConn.getOutputStream();
+                os.write(verifyPayload.toString().getBytes("UTF-8"));
+                os.flush();
+                os.close();
+                
+                int responseCode = verifyConn.getResponseCode();
+                
+                if (responseCode >= 200 && responseCode < 300) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(verifyConn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line);
+                    }
+                    br.close();
+                    
+                    // Parse response to get parent name
+                    JSONObject result = new JSONObject(response.toString());
+                    
+                    if (callback != null) {
+                        callback.onSuccess(result.toString());
+                    }
+                } else {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                        verifyConn.getErrorStream() != null ? verifyConn.getErrorStream() : verifyConn.getInputStream()));
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                    br.close();
+                    
+                    if (callback != null) {
+                        callback.onError("Pairing verification failed (HTTP " + responseCode + "): " + errorResponse.toString());
+                    }
+                }
+                
+                verifyConn.disconnect();
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error pairing device with QR", e);
+                if (callback != null) {
+                    callback.onError("Network error: " + e.getMessage());
+                }
+            }
+        });
+    }
+    
     public void shutdown() {
         if (executor != null && !executor.isShutdown()) {
             executor.shutdown();

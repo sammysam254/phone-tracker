@@ -119,7 +119,20 @@
                     android:textColor="#666666"
                     android:textSize="14sp"
                     android:background="@android:color/transparent"
-                    android:minHeight="48dp" />
+                    android:minHeight="48dp"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Pair Device Button -->
+                <Button
+                    android:id="@+id/pairDeviceButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="📷 Pair Child Device (QR Code)"
+                    android:textColor="#ffffff"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:background="#48bb78"
+                    android:minHeight="56dp" />
 
             </LinearLayout>
 

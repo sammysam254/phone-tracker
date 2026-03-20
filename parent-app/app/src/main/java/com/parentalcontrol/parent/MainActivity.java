@@ -13,6 +13,7 @@ public class MainActivity extends AppCompatActivity {
     private Button loginButton;
     private Button registerButton;
     private Button quickAccessButton;
+    private Button pairDeviceButton;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.loginButton);
         registerButton = findViewById(R.id.registerButton);
         quickAccessButton = findViewById(R.id.quickAccessButton);
+        pairDeviceButton = findViewById(R.id.pairDeviceButton);
     }
     
     private void setupClickListeners() {
@@ -45,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
         
         quickAccessButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, DashboardActivity.class);
+            startActivity(intent);
+        });
+        
+        pairDeviceButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, QRGeneratorActivity.class);
             startActivity(intent);
         });
     }

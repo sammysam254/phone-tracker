@@ -35,6 +35,12 @@
             android:name=".DashboardActivity"
             android:exported="false"
             android:parentActivityName=".LoginActivity" />
+            
+        <activity
+            android:name=".QRGeneratorActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".MainActivity" />
 
     </application>
 </manifest>

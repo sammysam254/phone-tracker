@@ -1,27 +1,17 @@
 package com.parentalcontrol.monitor;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import org.json.JSONObject;
-import java.security.SecureRandom;
 
 public class PairingActivity extends AppCompatActivity {
     
-    private TextView pairingCodeText;
-    private TextView deviceIdText;
     private TextView instructionsText;
-    private Button generateCodeButton;
-    private Button copyDeviceIdButton;
-    private Button checkPairingButton;
-    private SupabaseClient supabaseClient;
+    private Button scanQRButton;
     private String deviceId;
-    private String currentPairingCode;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,375 +20,51 @@ public class PairingActivity extends AppCompatActivity {
         
         initViews();
         setupDevice();
-        generatePairingCode();
         setupClickListeners();
     }
     
     private void initViews() {
-        pairingCodeText = findViewById(R.id.pairingCodeText);
-        deviceIdText = findViewById(R.id.deviceIdText);
         instructionsText = findViewById(R.id.instructionsText);
-        generateCodeButton = findViewById(R.id.generateCodeButton);
-        copyDeviceIdButton = findViewById(R.id.copyDeviceIdButton);
-        checkPairingButton = findViewById(R.id.checkPairingButton);
+        scanQRButton = findViewById(R.id.scanQRButton);
     }
     
     private void setupDevice() {
-        supabaseClient = new SupabaseClient(this);
         deviceId = DeviceUtils.getDeviceId(this);
         
-        // Display device ID with formatting
-        String formattedDeviceId = formatDeviceId(deviceId);
-        deviceIdText.setText(formattedDeviceId);
-        
-        String instructions = "Share this Device ID with your parent/guardian:\\n\\n" +
-            "RECOMMENDED: Use Device ID (more reliable)\\n" +
-            "1. Parent opens the web dashboard\\n" +
-            "2. Parent clicks 'Add Device'\\n" +
-            "3. Parent enters the Device ID shown above\\n\\n" +
-            "ALTERNATIVE: Use Pairing Code\\n" +
-            "1. Parent enters the 6-digit pairing code\\n" +
-            "2. Click 'Check Pairing Status' below\\n\\n" +
+        String instructions = "📱 Connect to Parent's Account\n\n" +
+            "To start monitoring, you need to pair this device with your parent's account.\n\n" +
+            "Steps:\n" +
+            "1. Your parent opens their monitoring app\n" +
+            "2. Parent generates a QR code for pairing\n" +
+            "3. Tap 'Scan QR Code' below\n" +
+            "4. Point camera at parent's QR code\n" +
+            "5. Pairing completes automatically!\n\n" +
             "Device ID: " + deviceId;
         
         instructionsText.setText(instructions);
     }
     
-    private String formatDeviceId(String deviceId) {
-        // Format device ID as XXXX-XXXX-XXXX-XXXX for better readability
-        if (deviceId.length() >= 16) {
-            return deviceId.substring(0, 4) + "-" + 
-                   deviceId.substring(4, 8) + "-" + 
-                   deviceId.substring(8, 12) + "-" + 
-                   deviceId.substring(12, 16) +
-                   (deviceId.length() > 16 ? "-" + deviceId.substring(16) : "");
-        }
-        return deviceId;
-    }
-    
-    private void generatePairingCode() {
-        currentPairingCode = generateSecureCode();
-        pairingCodeText.setText(currentPairingCode);
-        
-        // Check if device is already registered
-        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
-        boolean isDeviceRegistered = prefs.getBoolean("device_registered", false);
-        
-        if (isDeviceRegistered) {
-            // Device already registered, just update the pairing code
-            updatePairingCodeOnly();
-        } else {
-            // First time registration
-            registerDeviceWithCode();
-        }
-    }
-    
-    private String generateSecureCode() {
-        SecureRandom random = new SecureRandom();
-        StringBuilder code = new StringBuilder();
-        
-        // Generate 6-digit code
-        for (int i = 0; i < 6; i++) {
-            code.append(random.nextInt(10));
-        }
-        
-        return code.toString();
-    }
-    
-    private void registerDeviceWithCode() {
-        try {
-            JSONObject deviceData = new JSONObject();
-            deviceData.put("device_id", deviceId);
-            deviceData.put("pairing_code", currentPairingCode);
-            deviceData.put("device_name", DeviceUtils.getDeviceModel());
-            deviceData.put("device_brand", DeviceUtils.getDeviceBrand());
-            deviceData.put("android_version", DeviceUtils.getAndroidVersion());
-            deviceData.put("status", "waiting_for_parent");
-            deviceData.put("expires_at", getExpirationTime());
-            
-            supabaseClient.registerDeviceWithCode(deviceData, new SupabaseClient.ApiCallback() {
-                @Override
-                public void onSuccess(String response) {
-                    runOnUiThread(() -> {
-                        // Mark device as registered for the first time
-                        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
-                        SharedPreferences.Editor editor = prefs.edit();
-                        editor.putBoolean("device_registered", true);
-                        editor.putBoolean("device_paired", false);
-                        editor.remove("parent_name");
-                        
-                        // Check if this is offline mode
-                        if (response.contains("offline mode")) {
-                            editor.putBoolean("offline_pairing", true);
-                            editor.putString("pending_pairing_code", currentPairingCode);
-                            editor.apply();
-                            
-                            Toast.makeText(PairingActivity.this, "Device registered (offline mode). Will sync when connection is restored.", Toast.LENGTH_LONG).show();
-                        } else {
-                            editor.putBoolean("offline_pairing", false);
-                            editor.remove("pending_pairing_code");
-                            editor.apply();
-                            
-                            Toast.makeText(PairingActivity.this, "Device registered successfully. Ready for pairing.", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-                
-                @Override
-                public void onError(String error) {
-                    runOnUiThread(() -> {
-                        // Check if error is due to device already existing
-                        if (error.contains("duplicate") || error.contains("already exists") || 
-                            error.contains("conflict") || error.contains("409")) {
-                            
-                            // Device already exists, try to update it instead
-                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
-                            builder.setTitle("🔄 Device Already Registered")
-                                    .setMessage("This device ID is already registered. Would you like to update it with a new pairing code?")
-                                    .setPositiveButton("Yes, Update", (dialog, which) -> {
-                                        // Mark as registered and update code only
-                                        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
-                                        SharedPreferences.Editor editor = prefs.edit();
-                                        editor.putBoolean("device_registered", true);
-                                        editor.apply();
-                                        
-                                        // Update pairing code only
-                                        updatePairingCodeOnly();
-                                        Toast.makeText(PairingActivity.this, "Device updated with new pairing code", Toast.LENGTH_SHORT).show();
-                                    })
-                                    .setNegativeButton("Cancel", null)
-                                    .show();
-                        } else {
-                            String userFriendlyError = getUserFriendlyError(error);
-                            
-                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
-                            builder.setTitle("❌ Registration Error")
-                                    .setMessage(userFriendlyError + "\n\nWould you like to try again?")
-                                    .setPositiveButton("Retry", (dialog, which) -> {
-                                        // Generate new code and retry
-                                        generatePairingCode();
-                                    })
-                                    .setNegativeButton("Cancel", null)
-                                    .show();
-                        }
-                    });
-                }
-            });
-            
-        } catch (Exception e) {
-            Toast.makeText(this, "Error generating pairing code: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void updatePairingCodeOnly() {
-        try {
-            JSONObject updateData = new JSONObject();
-            updateData.put("device_id", deviceId);
-            updateData.put("pairing_code", currentPairingCode);
-            updateData.put("expires_at", getExpirationTime());
-            
-            supabaseClient.updatePairingCode(deviceId, updateData, new SupabaseClient.ApiCallback() {
-                @Override
-                public void onSuccess(String response) {
-                    runOnUiThread(() -> {
-                        // Clear pairing status but keep device registration
-                        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
-                        SharedPreferences.Editor editor = prefs.edit();
-                        editor.putBoolean("device_paired", false);
-                        editor.remove("parent_name");
-                        
-                        // Check if this is offline mode
-                        if (response.contains("offline mode")) {
-                            editor.putBoolean("offline_pairing", true);
-                            editor.putString("pending_pairing_code", currentPairingCode);
-                            editor.apply();
-                            
-                            Toast.makeText(PairingActivity.this, "New pairing code generated (offline mode). Will sync when connection is restored.", Toast.LENGTH_LONG).show();
-                        } else {
-                            editor.putBoolean("offline_pairing", false);
-                            editor.remove("pending_pairing_code");
-                            editor.apply();
-                            
-                            Toast.makeText(PairingActivity.this, "New pairing code generated. Ready for pairing.", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-                
-                @Override
-                public void onError(String error) {
-                    runOnUiThread(() -> {
-                        String userFriendlyError = getUserFriendlyError(error);
-                        
-                        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
-                        builder.setTitle("❌ Code Update Error")
-                                .setMessage(userFriendlyError + "\n\nWould you like to try again?")
-                                .setPositiveButton("Retry", (dialog, which) -> {
-                                    // Try updating code again
-                                    updatePairingCodeOnly();
-                                })
-                                .setNegativeButton("Cancel", null)
-                                .show();
-                    });
-                }
-            });
-            
-        } catch (Exception e) {
-            Toast.makeText(this, "Error updating pairing code: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private String getExpirationTime() {
-        // Set expiration to 24 hours from now
-        long expirationTime = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
-        return new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US)
-                .format(new java.util.Date(expirationTime));
-    }
-    
-    private String getUserFriendlyError(String error) {
-        if (error.contains("No internet connection") || error.contains("Network unavailable")) {
-            return "No internet connection detected. Please check your WiFi or mobile data and try again.";
-        } else if (error.contains("Connection timeout") || error.contains("timeout")) {
-            return "Connection is taking too long. Please check your internet speed and try again.";
-        } else if (error.contains("Cannot connect to server") || error.contains("ConnectException")) {
-            return "Unable to reach the server. Please check your internet connection and try again.";
-        } else if (error.contains("HTTP 400") || error.contains("pgrst204")) {
-            return "Database connection issue. Please check your internet connection and try again.";
-        } else if (error.contains("HTTP 401") || error.contains("unauthorized")) {
-            return "Authentication error. Please restart the app and try again.";
-        } else if (error.contains("HTTP 409") || error.contains("conflict") || error.contains("duplicate")) {
-            return "Device already has a pairing code. Generating new code for re-pairing...";
-        } else if (error.contains("HTTP 403") || error.contains("forbidden")) {
-            return "Access denied. Please check your internet connection and try again.";
-        } else if (error.contains("HTTP 5")) {
-            return "Server is temporarily unavailable. Please try again in a few moments.";
-        } else if (error.contains("Failed to register device after") && error.contains("attempts")) {
-            return "Multiple connection attempts failed. Please check your internet connection and try again.";
-        } else if (error.contains("Network error") || error.contains("UnknownHostException")) {
-            return "Network connection problem. Please check your internet connection.";
-        } else if (error.contains("JSON") || error.contains("parse")) {
-            return "Data format error. Please try again.";
-        } else {
-            return "Registration failed. Please ensure you have a stable internet connection and try again.\n\nTechnical details: " + error;
-        }
-    }
-    
     private void setupClickListeners() {
-        generateCodeButton.setOnClickListener(v -> {
-            // Show confirmation dialog for re-pairing
-            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-            builder.setTitle("🔄 Generate New Pairing Code")
-                    .setMessage("This will generate a new pairing code and allow re-pairing with a parent account.\n\nAny existing pairing will be reset. Continue?")
-                    .setPositiveButton("Yes, Generate New Code", (dialog, which) -> {
-                        generatePairingCode();
-                        Toast.makeText(PairingActivity.this, "New pairing code generated", Toast.LENGTH_SHORT).show();
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        });
-        
-        copyDeviceIdButton.setOnClickListener(v -> {
-            // Copy device ID to clipboard
-            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            android.content.ClipData clip = android.content.ClipData.newPlainText("Device ID", deviceId);
-            clipboard.setPrimaryClip(clip);
-            
-            // Show confirmation
-            Toast.makeText(this, "Device ID copied to clipboard!", Toast.LENGTH_SHORT).show();
-            
-            // Optional: Show formatted version in a dialog
-            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-            builder.setTitle("📋 Device ID Copied")
-                    .setMessage("Device ID has been copied to clipboard:\n\n" + formatDeviceId(deviceId) + "\n\nShare this with your parent to pair the device.")
-                    .setPositiveButton("OK", null)
-                    .show();
-        });
-        
-        checkPairingButton.setOnClickListener(v -> checkPairingStatus());
-    }
-    
-    private void checkPairingStatus() {
-        // Disable button during check to prevent multiple requests
-        checkPairingButton.setEnabled(false);
-        checkPairingButton.setText("Checking...");
-        
-        supabaseClient.checkPairingStatus(deviceId, new SupabaseClient.ApiCallback() {
-            @Override
-            public void onSuccess(String response) {
-                try {
-                    JSONObject result = new JSONObject(response);
-                    boolean isPaired = result.optBoolean("is_paired", false);
-                    String parentName = result.optString("parent_name", "");
-                    
-                    runOnUiThread(() -> {
-                        // Re-enable button
-                        checkPairingButton.setEnabled(true);
-                        checkPairingButton.setText("Check Pairing Status");
-                        
-                        if (isPaired) {
-                            // Save pairing info
-                            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
-                            SharedPreferences.Editor editor = prefs.edit();
-                            editor.putBoolean("device_paired", true);
-                            editor.putString("parent_name", parentName);
-                            editor.apply();
-                            
-                            // Show success dialog
-                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
-                            builder.setTitle("✅ Pairing Successful!")
-                                    .setMessage("Your device has been successfully paired with " + parentName + "'s account.\n\nYou will now proceed to the consent screen.")
-                                    .setPositiveButton("Continue", (dialog, which) -> {
-                                        Intent intent = new Intent(PairingActivity.this, ConsentActivity.class);
-                                        startActivity(intent);
-                                        finish();
-                                    })
-                                    .setCancelable(false)
-                                    .show();
-                        } else {
-                            // Show waiting message with helpful tips
-                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
-                            builder.setTitle("⏳ Waiting for Parent")
-                                    .setMessage("Your device is not paired yet. Please ensure:\n\n" +
-                                            "• Your parent has opened the web dashboard\n" +
-                                            "• They have entered the pairing code: " + currentPairingCode + "\n" +
-                                            "• Both devices have internet connection\n\n" +
-                                            "Try checking again in a few moments.")
-                                    .setPositiveButton("OK", null)
-                                    .show();
-                        }
-                    });
-                    
-                } catch (Exception e) {
-                    runOnUiThread(() -> {
-                        checkPairingButton.setEnabled(true);
-                        checkPairingButton.setText("Check Pairing Status");
-                        Toast.makeText(PairingActivity.this, "Error checking pairing status. Please try again.", Toast.LENGTH_SHORT).show();
-                    });
-                }
-            }
-            
-            @Override
-            public void onError(String error) {
-                runOnUiThread(() -> {
-                    checkPairingButton.setEnabled(true);
-                    checkPairingButton.setText("Check Pairing Status");
-                    
-                    // Show error dialog with retry option
-                    android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(PairingActivity.this);
-                    builder.setTitle("❌ Connection Error")
-                            .setMessage("Unable to check pairing status:\n" + error + "\n\nPlease check your internet connection and try again.")
-                            .setPositiveButton("Retry", (dialog, which) -> checkPairingStatus())
-                            .setNegativeButton("Cancel", null)
-                            .show();
-                });
-            }
+        scanQRButton.setOnClickListener(v -> {
+            // Launch QR scanner
+            Intent intent = new Intent(PairingActivity.this, QRScannerActivity.class);
+            startActivity(intent);
         });
     }
     
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (supabaseClient != null) {
-            supabaseClient.shutdown();
+    protected void onResume() {
+        super.onResume();
+        
+        // Check if device is already paired
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        boolean isPaired = prefs.getBoolean("device_paired", false);
+        
+        if (isPaired) {
+            // Already paired, go to consent
+            Intent intent = new Intent(this, ConsentActivity.class);
+            startActivity(intent);
+            finish();
         }
     }
 }

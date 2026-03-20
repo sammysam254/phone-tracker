@@ -12,4 +12,7 @@
     <color name="danger">#dc3545</color>
     <color name="warning">#ffc107</color>
     <color name="info">#17a2b8</color>
+    <color name="primary">#667eea</color>
+    <color name="background">#f7fafc</color>
+    <color name="viewfinder_mask">#60000000</color>
 </resources>
