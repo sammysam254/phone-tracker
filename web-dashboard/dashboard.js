@@ -836,31 +836,11 @@ function getCurrentTab() {
     return activeTab ? activeTab.id : 'overview';
 }
 
-// Device pairing
+// Device pairing (legacy function - no longer used with device ID system)
 function moveToNext(input, index) {
-    // Auto-advance to next input
-    if (input.value.length === 1 && index < 5) {
-        const nextInput = document.querySelectorAll('.code-digit')[index + 1];
-        if (nextInput) {
-            nextInput.focus();
-            nextInput.select(); // Select content for easy replacement
-        }
-    }
-    
-    // Auto-submit when all digits are entered
-    if (index === 5 && input.value.length === 1) {
-        const allInputs = document.querySelectorAll('.code-digit');
-        const allFilled = Array.from(allInputs).every(inp => inp.value.length === 1);
-        if (allFilled) {
-            // Small delay to allow user to see the complete code
-            setTimeout(() => {
-                const pairBtn = document.getElementById('pairDeviceBtn');
-                if (pairBtn && !pairBtn.disabled) {
-                    pairBtn.click();
-                }
-            }, 500);
-        }
-    }
+    // This function is no longer used since we switched to device ID input
+    // Keeping for backward compatibility but functionality is disabled
+    console.log('moveToNext called but no longer used with device ID system');
 }
 
 async function pairDevice() {
@@ -1269,9 +1249,9 @@ async function pairDeviceWithSupabase(pairingCode) {
         if (pairResult && pairResult.success) {
             showSuccess(`Device "${pairResult.device_name || device.device_name || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
             
-            // Clear pairing code inputs
-            const codeInputs = document.querySelectorAll('.code-digit');
-            codeInputs.forEach(input => input.value = '');
+            // Clear device ID input
+            const deviceIdInput = document.getElementById('deviceIdInput');
+            if (deviceIdInput) deviceIdInput.value = '';
             
             // Reload devices to show the new paired device
             await loadDevices();
@@ -1363,9 +1343,9 @@ async function pairDeviceWithBackend(pairingCode, authToken) {
         
         showSuccess(`Device "${result.deviceName || 'Unknown'}" paired successfully! The child can now proceed with consent.`);
         
-        // Clear pairing code inputs
-        const codeInputs = document.querySelectorAll('.code-digit');
-        codeInputs.forEach(input => input.value = '');
+        // Clear device ID input
+        const deviceIdInput = document.getElementById('deviceIdInput');
+        if (deviceIdInput) deviceIdInput.value = '';
         
         // Reload devices to show the new paired device
         await loadDevices();

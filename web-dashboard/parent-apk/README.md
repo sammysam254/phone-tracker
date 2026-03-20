@@ -6,12 +6,12 @@ This directory contains the Android APK files for the Parent Dashboard applicati
 
 ### Parent App - Release APK (Latest)
 - **File:** `app-release.apk`
-- **Version:** 1.1.1
-- **Size:** 4.4 MB
+- **Version:** 1.2.0
+- **Size:** 4.6 MB
 - **Purpose:** Parent dashboard access (Production ready)
 - **Optimized:** Yes (ProGuard enabled)
 - **Signed:** Release certificate
-- **Latest Fixes:** Authentication hanging & dashboard loading
+- **Latest Fixes:** Device ID pairing & enhanced clipboard support
 
 ## Installation Requirements
 
@@ -29,23 +29,29 @@ When deployed, these files are accessible at:
 
 ## Version History
 
-### v1.1.1 (March 20, 2026) - Current
+### v1.2.0 (March 20, 2026) - Current
+- ✅ Device ID pairing system support
+- ✅ Enhanced clipboard integration for easy device ID sharing
+- ✅ Improved WebView authentication flow
+- ✅ Better mobile dashboard experience
+- ✅ JavaScript interface for enhanced app-web communication
+
+### v1.1.1 (Previous)
 - ✅ Fixed authentication hanging issues
 - ✅ Added parent app detection for faster loading
 - ✅ Improved dashboard access and timeout handling
 - ✅ Enhanced mobile WebView compatibility
 
-### v1.1.0 (Previous)
-- Initial authentication and web dashboard fixes
-- Basic mobile optimization
-
 ## Features
 
+- **Device ID Pairing:** New reliable pairing system using unique device identifiers
+- **Clipboard Integration:** One-tap paste functionality for device IDs
 - **Fast Authentication:** Simplified login process for mobile devices
 - **Dashboard Access:** Full web dashboard functionality in mobile app
 - **Device Management:** Pair and manage multiple child devices
 - **Real-time Monitoring:** Live updates from connected child devices
 - **Remote Controls:** Camera, audio, location, and emergency features
+- **Enhanced WebView:** Better integration between app and web dashboard
 
 ## Security Notes
 
@@ -57,7 +63,7 @@ When deployed, these files are accessible at:
 2. **Enable Unknown Sources:** Settings → Security → Install unknown apps
 3. **Install:** Tap the APK file and follow installation prompts
 4. **Login:** Use your existing account or create a new one
-5. **Pair Devices:** Enter pairing codes from child devices
+5. **Pair Devices:** Use Device ID (recommended) or pairing codes from child devices
 
 ## File Verification
 
@@ -93,5 +99,5 @@ For issues with APK downloads or installation:
 ---
 
 **Last Updated:** March 20, 2026  
-**Version:** 1.1.1  
+**Version:** 1.2.0  
 **Build Date:** March 20, 2026

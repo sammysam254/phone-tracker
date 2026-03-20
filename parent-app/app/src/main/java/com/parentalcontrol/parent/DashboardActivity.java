@@ -1,8 +1,12 @@
 package com.parentalcontrol.parent;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -53,8 +57,8 @@ public class DashboardActivity extends AppCompatActivity {
         // Enable local storage
         webSettings.setDatabaseEnabled(true);
         
-        // Set user agent for mobile
-        webSettings.setUserAgentString(webSettings.getUserAgentString() + " ParentalControlParentApp/1.0.0");
+        // Set user agent for mobile with updated version
+        webSettings.setUserAgentString(webSettings.getUserAgentString() + " ParentalControlParentApp/1.2.0");
         
         // Enable zoom controls
         webSettings.setSupportZoom(true);
@@ -67,6 +71,9 @@ public class DashboardActivity extends AppCompatActivity {
         
         // Enable mixed content (HTTP and HTTPS)
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        
+        // Add JavaScript interface for device ID sharing
+        webView.addJavascriptInterface(new DeviceIdInterface(), "AndroidInterface");
         
         // Set WebView client
         webView.setWebViewClient(new WebViewClient() {
@@ -167,7 +174,7 @@ public class DashboardActivity extends AppCompatActivity {
         if (!userEmail.isEmpty() && !userPassword.isEmpty()) {
             // Wait a bit for the page to load, then try auto-login with simplified flow
             webView.postDelayed(() -> {
-                // JavaScript to bypass authentication checking and go straight to login
+                    // JavaScript to bypass authentication checking and go straight to login
                 String javascript = String.format(
                     "javascript:(function(){" +
                     "console.log('Parent app attempting simplified auto-login...');" +
@@ -200,6 +207,35 @@ public class DashboardActivity extends AppCompatActivity {
                     "  email: '%s'," +
                     "  user_metadata: { name: 'Parent User' }" +
                     "}));" +
+                    
+                    // Enhance device ID input functionality for parent app
+                    "setTimeout(function(){" +
+                    "  var deviceIdInput = document.getElementById('deviceIdInput');" +
+                    "  if(deviceIdInput && window.AndroidInterface) {" +
+                    "    console.log('Enhanced device ID input for parent app');" +
+                    "    " +
+                    "    // Add paste button functionality" +
+                    "    var pasteBtn = document.createElement('button');" +
+                    "    pasteBtn.textContent = '📋 Paste';" +
+                    "    pasteBtn.style.cssText = 'margin-left: 10px; padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;';" +
+                    "    pasteBtn.onclick = function() {" +
+                    "      var clipboardText = window.AndroidInterface.getFromClipboard();" +
+                    "      if(clipboardText && clipboardText.length >= 16) {" +
+                    "        deviceIdInput.value = clipboardText.toUpperCase();" +
+                    "        deviceIdInput.dispatchEvent(new Event('input', { bubbles: true }));" +
+                    "        window.AndroidInterface.showToast('Device ID pasted from clipboard');" +
+                    "      } else {" +
+                    "        window.AndroidInterface.showToast('No valid Device ID found in clipboard');" +
+                    "      }" +
+                    "    };" +
+                    "    " +
+                    "    // Insert paste button after device ID input" +
+                    "    var inputContainer = deviceIdInput.parentElement;" +
+                    "    if(inputContainer) {" +
+                    "      inputContainer.appendChild(pasteBtn);" +
+                    "    }" +
+                    "  }" +
+                    "}, 500);" +
                     
                     // Try to find and fill login form as backup
                     "setTimeout(function(){" +
@@ -395,5 +431,55 @@ public class DashboardActivity extends AppCompatActivity {
             webView.destroy();
         }
         super.onDestroy();
+    }
+    
+    // JavaScript interface for device ID sharing and clipboard operations
+    public class DeviceIdInterface {
+        
+        @JavascriptInterface
+        public void copyToClipboard(String text, String label) {
+            runOnUiThread(() -> {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText(label != null ? label : "Device ID", text);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(DashboardActivity.this, "Copied to clipboard: " + text, Toast.LENGTH_SHORT).show();
+            });
+        }
+        
+        @JavascriptInterface
+        public String getFromClipboard() {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard.hasPrimaryClip() && clipboard.getPrimaryClip().getItemCount() > 0) {
+                CharSequence text = clipboard.getPrimaryClip().getItemAt(0).getText();
+                return text != null ? text.toString() : "";
+            }
+            return "";
+        }
+        
+        @JavascriptInterface
+        public void showToast(String message) {
+            runOnUiThread(() -> {
+                Toast.makeText(DashboardActivity.this, message, Toast.LENGTH_SHORT).show();
+            });
+        }
+        
+        @JavascriptInterface
+        public void saveCredentials(String email, String password) {
+            SharedPreferences prefs = getSharedPreferences("ParentApp", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("user_email", email);
+            editor.putString("user_password", password);
+            editor.apply();
+        }
+        
+        @JavascriptInterface
+        public boolean isParentApp() {
+            return true;
+        }
+        
+        @JavascriptInterface
+        public String getAppVersion() {
+            return "1.2.0";
+        }
     }
 }
