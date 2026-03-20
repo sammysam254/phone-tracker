@@ -496,9 +496,9 @@
                     Email Support
                 </a>
                 
-                <a href="#" class="download-btn" style="min-width: auto; padding: 15px 25px; font-size: 16px; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);">
-                    <span class="icon">📚</span>
-                    User Guide
+                <a href="apk-fallback.html" class="download-btn" style="min-width: auto; padding: 15px 25px; font-size: 16px; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);">
+                    <span class="icon">🔄</span>
+                    Alternative Downloads
                 </a>
                 
                 <a href="#" class="download-btn" style="min-width: auto; padding: 15px 25px; font-size: 16px; background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);">
@@ -531,8 +531,54 @@
             const releaseBtn = document.querySelector('a[href="apk/app-release.apk"]');
             const debugBtn = document.querySelector('a[href="apk/app-debug.apk"]');
             
-            // You can add fetch requests here to check if files exist
-            // For now, we'll assume they're available
+            // Test if release APK is available
+            fetch('apk/app-release.apk', { method: 'HEAD' })
+                .then(response => {
+                    if (!response.ok) {
+                        // APK not available, show alternative
+                        if (releaseBtn) {
+                            releaseBtn.style.background = 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)';
+                            releaseBtn.innerHTML = `
+                                <span class="icon">⚠️</span>
+                                <div class="download-info">
+                                    <span class="title">Download from GitHub</span>
+                                    <span class="subtitle">Primary link unavailable</span>
+                                </div>
+                            `;
+                            releaseBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/app-release.apk';
+                            releaseBtn.target = '_blank';
+                        }
+                    }
+                })
+                .catch(() => {
+                    // Network error or file not found
+                    if (releaseBtn) {
+                        releaseBtn.href = 'apk-fallback.html';
+                        releaseBtn.removeAttribute('download');
+                        releaseBtn.innerHTML = `
+                            <span class="icon">🔄</span>
+                            <div class="download-info">
+                                <span class="title">Alternative Downloads</span>
+                                <span class="subtitle">Multiple options available</span>
+                            </div>
+                        `;
+                    }
+                });
+
+            // Test debug APK similarly
+            fetch('apk/app-debug.apk', { method: 'HEAD' })
+                .then(response => {
+                    if (!response.ok && debugBtn) {
+                        debugBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/app-debug.apk';
+                        debugBtn.target = '_blank';
+                    }
+                })
+                .catch(() => {
+                    if (debugBtn) {
+                        debugBtn.href = 'apk-fallback.html';
+                        debugBtn.removeAttribute('download');
+                    }
+                });
         }
 
         // Initialize page
