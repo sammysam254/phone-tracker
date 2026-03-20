@@ -2,8 +2,8 @@
 const SUPABASE_URL = 'https://gejzprqznycnbfzeaxza.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlanpwcnF6bnljbmJmemVheHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTM2MTQsImV4cCI6MjA4OTU2OTYxNH0.zl9tfulUKL3aDbz4NjQOgOTk5JdMd8_Pf1YvHHN0SOQ';
 
-// Load Supabase from CDN
-let supabase = null;
+// Global variables
+let supabaseClient = null;
 let currentUser = null;
 let selectedDevice = null;
 let refreshInterval = null;
@@ -11,12 +11,26 @@ let refreshInterval = null;
 // Initialize Supabase when script loads
 async function initializeSupabase() {
     try {
-        // Load Supabase from CDN
+        // Check if Supabase is already loaded globally
+        if (window.supabase && window.supabase.createClient) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase initialized from global');
+            return;
+        }
+        
+        // Load Supabase from CDN if not available
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        script.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
         script.onload = () => {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('Supabase initialized');
+            if (window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase initialized from CDN');
+            } else {
+                console.error('Supabase failed to load');
+            }
+        };
+        script.onerror = () => {
+            console.error('Failed to load Supabase script');
         };
         document.head.appendChild(script);
     } catch (error) {
@@ -60,10 +74,27 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSupabase();
     setupEventListeners();
     
-    // Wait a bit for Supabase to load, then check auth
+    // Wait longer for Supabase to load, then check auth
     setTimeout(() => {
         checkAuthState();
-    }, 1000);
+    }, 2000);
+    
+    // Also try checking auth periodically until Supabase loads
+    const authCheckInterval = setInterval(() => {
+        if (supabaseClient) {
+            clearInterval(authCheckInterval);
+            checkAuthState();
+        }
+    }, 500);
+    
+    // Stop trying after 10 seconds
+    setTimeout(() => {
+        clearInterval(authCheckInterval);
+        if (!supabaseClient) {
+            console.log('Supabase failed to load, using backend-only authentication');
+            checkAuthState();
+        }
+    }, 10000);
 });
 
 function setupEventListeners() {
@@ -122,7 +153,7 @@ function setupEventListeners() {
 // Authentication state management
 async function checkAuthState() {
     // Check if Supabase is loaded
-    if (!supabase) {
+    if (!supabaseClient) {
         console.log('Supabase not loaded yet, showing auth form');
         showAuth();
         return;
@@ -130,7 +161,7 @@ async function checkAuthState() {
     
     try {
         // First check Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabaseClient.auth.getSession();
         
         if (session) {
             currentUser = session.user;
@@ -208,23 +239,26 @@ async function login() {
     }
     
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
-        
-        if (error) {
-            // If Supabase login fails, try backend API
-            console.log('Supabase login failed, trying backend API:', error.message);
-            await loginViaBackend(email, password);
-            return;
+        if (supabaseClient) {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email,
+                password
+            });
+            
+            if (!error && data.user) {
+                currentUser = data.user;
+                showSuccess('Login successful!');
+                showDashboard();
+                loadDevices();
+                startAutoRefresh();
+                return;
+            }
+            
+            console.log('Supabase login failed:', error?.message);
         }
         
-        currentUser = data.user;
-        showSuccess('Login successful!');
-        showDashboard();
-        loadDevices();
-        startAutoRefresh();
+        // Try backend API as fallback
+        await loginViaBackend(email, password);
     } catch (error) {
         console.log('Login error, trying backend API:', error.message);
         await loginViaBackend(email, password);
@@ -292,77 +326,57 @@ async function register() {
     try {
         console.log('Trying Supabase registration...');
         
-        // Try direct Supabase registration first
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    name: name
-                }
-            }
-        });
-        
-        console.log('Supabase registration response:', { data, error });
-        
-        if (error) {
-            console.log('Supabase registration failed:', error.message);
-            // Try backend API as fallback
-            await registerViaBackend(name, email, password);
-            return;
-        }
-        
-        // Check if user was created successfully
-        if (data.user) {
-            if (data.session) {
-                // User is automatically logged in
-                console.log('User registered and logged in automatically');
-                currentUser = data.user;
-                showSuccess('Registration successful! Welcome to the dashboard.');
-                showDashboard();
-                loadDevices();
-                startAutoRefresh();
-            } else {
-                // User created but not logged in - try to sign in
-                console.log('User created, attempting automatic login...');
-                try {
-                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                        email,
-                        password
-                    });
-                    
-                    if (signInError) {
-                        console.log('Auto-login failed:', signInError.message);
-                        showSuccess('Registration successful! Please login with your credentials.');
-                        
-                        // Auto-fill login form
-                        document.getElementById('loginEmail').value = email;
-                        document.getElementById('loginPassword').value = password;
-                        
-                        showLogin();
-                    } else {
-                        console.log('Auto-login successful');
-                        currentUser = signInData.user;
-                        showSuccess('Registration and login successful!');
-                        showDashboard();
-                        loadDevices();
-                        startAutoRefresh();
+        if (supabaseClient) {
+            // Try direct Supabase registration first
+            const { data, error } = await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        name: name
                     }
-                } catch (loginError) {
-                    console.log('Auto-login error:', loginError);
-                    showSuccess('Registration successful! Please login with your credentials.');
-                    
-                    // Auto-fill login form
-                    document.getElementById('loginEmail').value = email;
-                    document.getElementById('loginPassword').value = password;
-                    
-                    showLogin();
+                }
+            });
+            
+            console.log('Supabase registration response:', { data, error });
+            
+            if (!error && data.user) {
+                if (data.session) {
+                    // User is automatically logged in
+                    console.log('User registered and logged in automatically');
+                    currentUser = data.user;
+                    showSuccess('Registration successful! Welcome to the dashboard.');
+                    showDashboard();
+                    loadDevices();
+                    startAutoRefresh();
+                    return;
+                } else {
+                    // User created but not logged in - try to sign in
+                    console.log('User created, attempting automatic login...');
+                    try {
+                        const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
+                            email,
+                            password
+                        });
+                        
+                        if (!signInError && signInData.user) {
+                            console.log('Auto-login successful');
+                            currentUser = signInData.user;
+                            showSuccess('Registration and login successful!');
+                            showDashboard();
+                            loadDevices();
+                            startAutoRefresh();
+                            return;
+                        }
+                    } catch (loginError) {
+                        console.log('Auto-login error:', loginError);
+                    }
                 }
             }
-        } else {
-            console.log('No user data returned from Supabase');
-            await registerViaBackend(name, email, password);
         }
+        
+        console.log('Supabase registration failed or unavailable, trying backend API');
+        await registerViaBackend(name, email, password);
     } catch (error) {
         console.error('Registration error:', error);
         await registerViaBackend(name, email, password);
@@ -414,7 +428,9 @@ async function registerViaBackend(name, email, password) {
 
 async function logout() {
     // Sign out from Supabase
-    await supabase.auth.signOut();
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
     
     // Remove backend auth token
     localStorage.removeItem('authToken');
@@ -476,8 +492,10 @@ function showTab(tabName, buttonElement) {
 
 // Device management
 async function loadDevices() {
+    if (!supabaseClient || !currentUser) return;
+    
     try {
-        const { data: devices, error } = await supabase
+        const { data: devices, error } = await supabaseClient
             .from('devices')
             .select('*')
             .eq('parent_id', currentUser.id);
@@ -538,8 +556,13 @@ async function pairDevice() {
         return;
     }
     
+    if (!supabaseClient || !currentUser) {
+        showError('Authentication required. Please login first.');
+        return;
+    }
+    
     try {
-        const { data, error } = await supabase.rpc('pair_device_with_parent', {
+        const { data, error } = await supabaseClient.rpc('pair_device_with_parent', {
             pairing_code_input: pairingCode,
             parent_user_id: currentUser.id
         });
@@ -549,14 +572,14 @@ async function pairDevice() {
             return;
         }
         
-        if (data.success) {
+        if (data && data.success) {
             showSuccess(`Device "${data.device_name}" paired successfully!`);
             // Clear pairing code inputs
             codeInputs.forEach(input => input.value = '');
             // Reload devices
             loadDevices();
         } else {
-            showError(data.error || 'Pairing failed');
+            showError(data?.error || 'Pairing failed');
         }
     } catch (error) {
         showError('Pairing error: ' + error.message);
