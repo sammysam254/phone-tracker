@@ -891,6 +891,129 @@ async function pairDevice() {
     document.body.appendChild(errorDiv);
 }
 
+// QR Code Generation for Device Pairing
+let qrCodeInstance = null;
+let qrExpiryTimer = null;
+
+async function generateQRCode() {
+    try {
+        // Get current user email (if logged in)
+        const userEmail = currentUser?.email || 'web-dashboard-user';
+        
+        // Generate pairing token
+        const pairingToken = generatePairingToken();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+        
+        // Create pairing data
+        const pairingData = {
+            token: pairingToken,
+            parent_email: userEmail,
+            expires_at: expiresAt.toISOString(),
+            created_at: new Date().toISOString()
+        };
+        
+        // Store pairing token in Supabase (optional - for validation)
+        if (supabaseClient) {
+            try {
+                const { error } = await supabaseClient
+                    .from('qr_pairing_tokens')
+                    .insert([pairingData]);
+                
+                if (error) {
+                    console.warn('Could not store QR token in database:', error);
+                    // Continue anyway - QR code can still work
+                }
+            } catch (dbError) {
+                console.warn('Database error storing QR token:', dbError);
+                // Continue anyway
+            }
+        }
+        
+        // Clear previous QR code
+        const qrCanvas = document.getElementById('qrCanvas');
+        if (qrCanvas) {
+            qrCanvas.innerHTML = '';
+        }
+        
+        // Generate QR code
+        const qrData = JSON.stringify(pairingData);
+        
+        if (typeof QRCode !== 'undefined') {
+            qrCodeInstance = new QRCode(qrCanvas, {
+                text: qrData,
+                width: 256,
+                height: 256,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        } else {
+            throw new Error('QRCode library not loaded');
+        }
+        
+        // Show QR code display, hide placeholder
+        document.getElementById('qrCodeDisplay').style.display = 'flex';
+        document.getElementById('qrPlaceholder').style.display = 'none';
+        
+        // Update expiry timer
+        updateQRExpiry(expiresAt);
+        
+        // Set timer to clear QR code after expiry
+        if (qrExpiryTimer) clearTimeout(qrExpiryTimer);
+        qrExpiryTimer = setTimeout(() => {
+            qrCanvas.innerHTML = '<div style="color: #e53e3e; padding: 20px; text-align: center;">QR Code Expired<br><small>Click Regenerate</small></div>';
+            document.getElementById('qrExpiry').textContent = 'Expired - Generate a new code';
+        }, 10 * 60 * 1000);
+        
+        console.log('QR Code generated successfully');
+        
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        showError('Failed to generate QR code: ' + error.message);
+    }
+}
+
+function generatePairingToken() {
+    // Generate a secure random token
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function updateQRExpiry(expiresAt) {
+    const qrExpiry = document.getElementById('qrExpiry');
+    if (!qrExpiry) return;
+    
+    function updateTimer() {
+        const now = new Date();
+        const diff = expiresAt - now;
+        
+        if (diff <= 0) {
+            qrExpiry.textContent = 'Expired';
+            return;
+        }
+        
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        qrExpiry.textContent = `Expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        setTimeout(updateTimer, 1000);
+    }
+    
+    updateTimer();
+}
+
+// Initialize QR code placeholder on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const qrCodeDisplay = document.getElementById('qrCodeDisplay');
+    const qrPlaceholder = document.getElementById('qrPlaceholder');
+    
+    if (qrCodeDisplay && qrPlaceholder) {
+        qrCodeDisplay.style.display = 'none';
+        qrPlaceholder.style.display = 'block';
+    }
+});
+
 // Legacy pairing functions - DEPRECATED
 /*
 async function pairDevice_OLD() {
@@ -2091,6 +2214,7 @@ window.showTab = showTab;
 window.switchDevice = switchDevice;
 window.moveToNext = moveToNext;
 window.pairDevice = pairDevice;
+window.generateQRCode = generateQRCode;
 window.activateCamera = activateCamera;
 window.startAudioRecording = startAudioRecording;
 window.requestLocation = requestLocation;

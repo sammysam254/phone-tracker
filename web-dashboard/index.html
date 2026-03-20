@@ -791,26 +791,47 @@
                 </p>
             </div>
 
-            <!-- Device Pairing - QR Code Only -->
+            <!-- Device Pairing - QR Code Generation -->
             <div class="pairing-section" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none;">
                 <h3>📱 Device Pairing via QR Code</h3>
-                <p style="margin: 15px 0; font-size: 1.1em;">Use the Parent Mobile App to pair devices instantly with QR codes!</p>
+                <p style="margin: 15px 0; font-size: 1.1em;">Generate a QR code to pair child devices instantly!</p>
+                
+                <!-- QR Code Generator -->
+                <div id="qrCodeContainer" style="background: white; padding: 30px; border-radius: 15px; margin: 20px auto; max-width: 400px;">
+                    <div id="qrCodeDisplay" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                        <div id="qrCanvas" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                        <div style="text-align: center; color: #4a5568;">
+                            <p style="font-weight: bold; font-size: 1.1em; margin-bottom: 5px;">Scan with Child App</p>
+                            <p id="qrExpiry" style="font-size: 0.9em; color: #718096;"></p>
+                        </div>
+                        <button onclick="generateQRCode()" class="btn" style="background: #38a169; color: white; border: none; padding: 12px 30px; font-weight: bold;">
+                            🔄 Regenerate QR Code
+                        </button>
+                    </div>
+                    <div id="qrPlaceholder" style="display: none; text-align: center; color: #718096;">
+                        <div style="font-size: 4em; margin-bottom: 15px;">📷</div>
+                        <p style="font-size: 1.1em; margin-bottom: 20px;">Click below to generate a QR code</p>
+                        <button onclick="generateQRCode()" class="btn" style="background: #38a169; color: white; border: none; padding: 12px 30px; font-weight: bold;">
+                            ✨ Generate QR Code
+                        </button>
+                    </div>
+                </div>
                 
                 <div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 10px; margin: 20px 0; backdrop-filter: blur(10px);">
                     <h4 style="margin-bottom: 15px;">🚀 How to Pair:</h4>
                     <ol style="text-align: left; margin: 0 auto; max-width: 500px; line-height: 1.8;">
-                        <li>Download and install the <strong>Parent App</strong> on your phone</li>
+                        <li>Click <strong>"Generate QR Code"</strong> above</li>
                         <li>Install the <strong>Child App</strong> on your child's device</li>
-                        <li>Open Parent App and tap <strong>"Pair Child Device"</strong></li>
-                        <li>A QR code will appear on your screen</li>
-                        <li>On child's device, tap <strong>"Scan QR Code"</strong></li>
-                        <li>Point camera at QR code - <strong>Instant pairing!</strong></li>
+                        <li>Complete permissions setup on child's device</li>
+                        <li>Tap <strong>"Scan QR Code"</strong> in the Child App</li>
+                        <li>Point camera at the QR code above</li>
+                        <li><strong>Instant pairing!</strong> Device will appear in your dashboard</li>
                     </ol>
                 </div>
                 
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 25px;">
                     <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.9); color: #38a169; border: 2px solid rgba(255, 255, 255, 0.3); font-weight: bold;">
-                        📱 Download Parent App
+                        📱 Download Apps
                     </a>
                     <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.5);">
                         📖 View Instructions
@@ -818,7 +839,7 @@
                 </div>
                 
                 <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.9;">
-                    ✨ No typing required • ⚡ Instant connection • 🔒 Secure pairing
+                    ✨ No typing required • ⚡ Instant connection • 🔒 Secure pairing (10 min expiry)
                 </p>
             </div>
 
@@ -1073,6 +1094,8 @@
         </div>
     </div>
 
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>
