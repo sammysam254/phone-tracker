@@ -15,26 +15,45 @@ async function initializeSupabase() {
         if (window.supabase && window.supabase.createClient) {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('Supabase initialized from global');
-            return;
+            return Promise.resolve();
         }
         
         // Load Supabase from CDN if not available
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
-        script.onload = () => {
-            if (window.supabase && window.supabase.createClient) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('Supabase initialized from CDN');
-            } else {
-                console.error('Supabase failed to load');
-            }
-        };
-        script.onerror = () => {
-            console.error('Failed to load Supabase script');
-        };
-        document.head.appendChild(script);
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
+            script.onload = () => {
+                try {
+                    if (window.supabase && window.supabase.createClient) {
+                        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                        console.log('Supabase initialized from CDN');
+                        resolve();
+                    } else {
+                        console.error('Supabase failed to load - createClient not available');
+                        reject(new Error('Supabase createClient not available'));
+                    }
+                } catch (error) {
+                    console.error('Error creating Supabase client:', error);
+                    reject(error);
+                }
+            };
+            script.onerror = () => {
+                console.error('Failed to load Supabase script from CDN');
+                reject(new Error('Failed to load Supabase script'));
+            };
+            document.head.appendChild(script);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                if (!supabaseClient) {
+                    console.error('Supabase initialization timed out');
+                    reject(new Error('Supabase initialization timeout'));
+                }
+            }, 10000);
+        });
     } catch (error) {
         console.error('Failed to initialize Supabase:', error);
+        return Promise.reject(error);
     }
 }
 
@@ -70,7 +89,7 @@ const ACTIVITY_LABELS = {
 };
 
 // Initialize dashboard
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('Dashboard initializing...');
     
     // Check for immediate authentication first
@@ -82,40 +101,53 @@ document.addEventListener('DOMContentLoaded', function() {
             currentUser = JSON.parse(storedUser);
             console.log('Found stored authentication, showing dashboard immediately');
             showDashboard();
-            loadDevices();
-            startAutoRefresh();
-            return;
+            // Don't load devices yet, wait for Supabase to initialize
         } catch (error) {
             console.log('Failed to parse stored user, continuing with full auth check');
         }
+    } else {
+        // Show auth section initially if no stored auth
+        showAuth();
     }
     
-    // Show auth section initially
-    showAuth();
+    // Initialize Supabase first
+    try {
+        console.log('Initializing Supabase...');
+        await initializeSupabase();
+        console.log('Supabase initialization complete');
+    } catch (error) {
+        console.error('Supabase initialization failed:', error);
+        // Continue without Supabase - backend might still work
+    }
     
-    initializeSupabase();
     setupEventListeners();
     
-    // Check authentication
-    checkAuthState();
+    // Check authentication after Supabase is ready
+    await checkAuthState();
     
-    // Also try checking auth periodically until resolved
+    // Load devices if we have a current user
+    if (currentUser) {
+        loadDevices();
+        startAutoRefresh();
+    }
+    
+    // Also try checking auth periodically until resolved (fallback)
     const authCheckInterval = setInterval(() => {
         if (currentUser) {
             clearInterval(authCheckInterval);
         } else {
             checkAuthState();
         }
-    }, 2000);
+    }, 3000);
     
-    // Stop trying after 10 seconds and force redirect
+    // Stop trying after 15 seconds and force redirect if needed
     setTimeout(() => {
         clearInterval(authCheckInterval);
-        if (!currentUser) {
-            console.log('No authentication found after 10 seconds, forcing redirect to login');
+        if (!currentUser && !authToken) {
+            console.log('No authentication found after 15 seconds, forcing redirect to login');
             window.location.href = '/login.html';
         }
-    }, 10000);
+    }, 15000);
 });
 
 function setupEventListeners() {
@@ -185,14 +217,20 @@ async function checkAuthState() {
     if (authToken && storedUser) {
         try {
             console.log('Verifying token with backend...');
-            // Verify token with backend
+            
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
             const response = await fetch('/api/verify-token', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
-                }
+                },
+                signal: controller.signal
             });
             
+            clearTimeout(timeoutId);
             console.log('Token verification response:', response.status);
             
             if (response.ok) {
@@ -212,11 +250,12 @@ async function checkAuthState() {
             }
         } catch (error) {
             console.log('Token verification failed:', error);
-            // If verification fails, try using stored user anyway
-            if (storedUser) {
+            
+            // If verification fails due to network issues, try using stored user anyway
+            if (storedUser && (error.name === 'AbortError' || error.message.includes('fetch'))) {
                 try {
                     currentUser = JSON.parse(storedUser);
-                    console.log('Using stored user data, showing dashboard');
+                    console.log('Using stored user data due to network issues, showing dashboard');
                     hideAuthError(); // Hide any auth error messages
                     showDashboard();
                     loadDevices();
@@ -227,6 +266,10 @@ async function checkAuthState() {
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('currentUser');
                 }
+            } else {
+                // Clear invalid stored data
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
             }
         }
     }
@@ -589,34 +632,69 @@ async function loadDevices() {
     if (authToken) {
         try {
             console.log('Attempting to load devices from backend API...');
+            
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
             const response = await fetch('/api/devices', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
-                }
+                },
+                signal: controller.signal
             });
             
+            clearTimeout(timeoutId);
+            
             if (response.ok) {
-                const devices = await response.json();
-                console.log('Loaded devices from backend:', devices);
-                populateDeviceSelect(devices);
-                return;
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const devices = await response.json();
+                    console.log('Loaded devices from backend:', devices);
+                    populateDeviceSelect(devices);
+                    return;
+                } else {
+                    console.log('Backend returned non-JSON response for devices');
+                }
+            } else if (response.status === 403) {
+                console.log('Backend API returned 403 - authentication issue, trying Supabase...');
+            } else if (response.status === 404) {
+                console.log('Backend API not found (404), trying Supabase...');
             } else {
-                console.log('Backend API failed, trying Supabase...');
+                console.log('Backend API failed with status:', response.status);
             }
         } catch (error) {
-            console.log('Backend API error, trying Supabase:', error);
+            console.log('Backend API error:', error);
+            if (error.name === 'AbortError') {
+                console.log('Backend API request timed out');
+            }
         }
     }
     
     // Fallback to Supabase
     if (!supabaseClient) {
         console.log('Supabase not available, showing empty device list');
-        deviceSelect.innerHTML = '<option value="">No devices found (Service unavailable)</option>';
+        deviceSelect.innerHTML = '<option value="">No devices found - Please pair a device first</option>';
         return;
     }
     
     try {
         console.log('Loading devices from Supabase...');
+        
+        // Try to get devices from device_pairing table first (more likely to exist)
+        const { data: pairingDevices, error: pairingError } = await supabaseClient
+            .from('device_pairing')
+            .select('*')
+            .eq('parent_id', currentUser.id)
+            .eq('status', 'paired');
+        
+        if (!pairingError && pairingDevices && pairingDevices.length > 0) {
+            console.log('Loaded devices from device_pairing table:', pairingDevices);
+            populateDeviceSelect(pairingDevices);
+            return;
+        }
+        
+        // Fallback to devices table
         const { data: devices, error } = await supabaseClient
             .from('devices')
             .select('*')
@@ -624,16 +702,16 @@ async function loadDevices() {
         
         if (error) {
             console.error('Error loading devices from Supabase:', error);
-            deviceSelect.innerHTML = '<option value="">Error loading devices</option>';
+            deviceSelect.innerHTML = '<option value="">Error loading devices - Please try refreshing</option>';
             return;
         }
         
-        console.log('Loaded devices from Supabase:', devices);
-        populateDeviceSelect(devices);
+        console.log('Loaded devices from devices table:', devices);
+        populateDeviceSelect(devices || []);
         
     } catch (error) {
         console.error('Error loading devices:', error);
-        deviceSelect.innerHTML = '<option value="">Error loading devices</option>';
+        deviceSelect.innerHTML = '<option value="">Error loading devices - Please try refreshing</option>';
     }
 }
 
@@ -646,21 +724,25 @@ function populateDeviceSelect(devices) {
     if (devices && devices.length > 0) {
         devices.forEach(device => {
             const option = document.createElement('option');
-            option.value = device.device_id;
-            option.textContent = `${device.device_name || 'Unknown Device'} (${device.device_id})`;
+            // Handle both device_pairing and devices table formats
+            const deviceId = device.device_id || device.id;
+            const deviceName = device.device_name || device.name || 'Unknown Device';
+            
+            option.value = deviceId;
+            option.textContent = `${deviceName} (${deviceId})`;
             deviceSelect.appendChild(option);
         });
         
         // Auto-select first device if available
         if (!selectedDevice) {
-            selectedDevice = devices[0].device_id;
+            selectedDevice = devices[0].device_id || devices[0].id;
             deviceSelect.value = selectedDevice;
             loadOverviewData();
         }
     } else {
         const option = document.createElement('option');
         option.value = '';
-        option.textContent = 'No devices paired yet';
+        option.textContent = 'No devices paired yet - Use the pairing section below';
         deviceSelect.appendChild(option);
     }
 }
@@ -740,46 +822,124 @@ async function pairDevice() {
     pairBtn.classList.add('btn-loading');
     pairBtn.innerHTML = `<span class="spinner"></span>Pairing...`;
     
+    let pairingSuccessful = false;
+    let lastError = null;
+    
     try {
-        // Always try backend API first for more reliable pairing
-        console.log('Attempting pairing with backend API...');
-        await pairDeviceWithBackend(pairingCode, authToken);
-    } catch (error) {
-        console.error('Backend pairing failed, trying Supabase...', error);
-        
-        // Fallback to Supabase if backend fails
+        // Try Supabase first if available
         if (supabaseClient) {
+            console.log('Attempting Supabase pairing first...');
             try {
                 await pairDeviceWithSupabase(pairingCode);
+                pairingSuccessful = true;
+                console.log('Supabase pairing successful');
             } catch (supabaseError) {
-                console.error('Supabase pairing also failed:', supabaseError);
-                handlePairingError(supabaseError);
+                console.log('Supabase pairing failed:', supabaseError.message);
+                lastError = supabaseError;
+                
+                // Try backend as fallback for specific errors
+                if (authToken && (
+                    supabaseError.message.includes('Invalid') || 
+                    supabaseError.message.includes('not found') ||
+                    supabaseError.message.includes('expired') ||
+                    supabaseError.message.includes('PGRST')
+                )) {
+                    console.log('Trying backend API as fallback...');
+                    try {
+                        await pairDeviceWithBackend(pairingCode, authToken);
+                        pairingSuccessful = true;
+                        console.log('Backend pairing successful after Supabase failure');
+                    } catch (backendError) {
+                        console.error('Backend pairing also failed:', backendError.message);
+                        lastError = backendError; // Use backend error as it might be more specific
+                    }
+                }
             }
         } else {
-            console.error('No Supabase client available');
-            handlePairingError(error);
+            // No Supabase available, try backend directly
+            console.log('Supabase not available, attempting backend pairing...');
+            if (authToken) {
+                try {
+                    await pairDeviceWithBackend(pairingCode, authToken);
+                    pairingSuccessful = true;
+                } catch (backendError) {
+                    console.error('Backend pairing failed and no Supabase available');
+                    lastError = backendError;
+                }
+            } else {
+                lastError = new Error('No pairing service available. Please ensure you are logged in and try again.');
+            }
         }
+        
+        // If both methods failed, show appropriate error
+        if (!pairingSuccessful && lastError) {
+            throw lastError;
+        } else if (!pairingSuccessful) {
+            throw new Error('Pairing failed. Both Supabase and backend services are currently unavailable.');
+        }
+        
+    } catch (error) {
+        console.error('All pairing methods failed:', error);
+        handlePairingError(error);
     } finally {
         // Reset button state
         pairBtn.disabled = false;
         pairBtn.classList.remove('btn-loading');
         pairBtn.innerHTML = originalText;
+        
+        // If pairing was successful, clear the code inputs
+        if (pairingSuccessful) {
+            codeInputs.forEach(input => input.value = '');
+        }
     }
 }
 
 function handlePairingError(error) {
     let errorMessage = 'Pairing failed. Please try again.';
     
-    if (error.message && error.message.includes('fetch')) {
-        errorMessage = 'Network connection error. Please check your internet connection and try again.';
-    } else if (error.message && error.message.includes('timeout')) {
-        errorMessage = 'Request timed out. Please check your connection and try again.';
-    } else if (error.message && error.message.includes('CORS')) {
-        errorMessage = 'Connection blocked. Please refresh the page and try again.';
-    } else if (error.message && error.message.includes('404')) {
-        errorMessage = 'Pairing service not available. Please try again later.';
-    } else if (error.message && error.message.includes('JSON')) {
-        errorMessage = 'Invalid server response. Please refresh the page and try again.';
+    console.error('Pairing error details:', error);
+    
+    // Handle specific error types
+    if (error.message) {
+        if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('connection')) {
+            errorMessage = 'Network connection error. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout') || error.message.includes('timed out')) {
+            errorMessage = 'Request timed out. Please check your connection and try again.';
+        } else if (error.message.includes('CORS')) {
+            errorMessage = 'Connection blocked. Please refresh the page and try again.';
+        } else if (error.message.includes('404') || error.message.includes('not found')) {
+            errorMessage = 'Pairing service not available. Please ensure the child app is open with a valid pairing code.';
+        } else if (error.message.includes('403')) {
+            errorMessage = 'Access denied. Please login again and ensure you have proper permissions.';
+        } else if (error.message.includes('JSON') || error.message.includes('parse')) {
+            errorMessage = 'Invalid server response. Please refresh the page and try again.';
+        } else if (error.message.includes('Invalid') || error.message.includes('expired')) {
+            errorMessage = 'Invalid or expired pairing code. Please generate a new code on the child device.';
+        } else if (error.message.includes('already paired') || error.message.includes('409')) {
+            errorMessage = 'This device is already paired with another parent account.';
+        } else if (error.message.includes('Authentication') || error.message.includes('401')) {
+            errorMessage = 'Authentication expired. Please login again.';
+        } else if (error.message.includes('Backend service unavailable') || error.message.includes('services are currently unavailable')) {
+            errorMessage = 'Pairing services are temporarily unavailable. Please try again in a few moments.';
+        } else if (error.message.includes('No pairing service available')) {
+            errorMessage = 'Pairing services are not accessible. Please check your internet connection and login status.';
+        } else {
+            // Use the original error message if it's user-friendly
+            errorMessage = error.message;
+        }
+    }
+    
+    // Add helpful suggestions based on error type
+    if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+        errorMessage += ' Make sure you have a stable internet connection.';
+    } else if (errorMessage.includes('Invalid') || errorMessage.includes('expired')) {
+        errorMessage += ' Open the child app and generate a new 6-digit code.';
+    } else if (errorMessage.includes('not available') || errorMessage.includes('unavailable')) {
+        errorMessage += ' You can also try refreshing this page and attempting again.';
+    } else if (errorMessage.includes('login') || errorMessage.includes('Authentication')) {
+        errorMessage += ' Please go to the login page and sign in again.';
+    } else if (errorMessage.includes('services are')) {
+        errorMessage += ' The system may be under maintenance. Please try again later.';
     }
     
     showError(errorMessage);
@@ -872,6 +1032,10 @@ async function pairDeviceWithBackend(pairingCode, authToken) {
     }
     
     try {
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
         const response = await fetch('/api/pair-device', {
             method: 'POST',
             headers: {
@@ -881,23 +1045,42 @@ async function pairDeviceWithBackend(pairingCode, authToken) {
             body: JSON.stringify({
                 pairingCode: pairingCode,
                 parentId: currentUser.id || currentUser.user_id
-            })
+            }),
+            signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
         console.log('Backend pairing response status:', response.status);
         
-        // Check if response is HTML (error page) instead of JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            console.error('Backend returned non-JSON response:', contentType);
-            throw new Error('Backend service unavailable. Please try again later.');
+        // Handle different response types more gracefully
+        let result;
+        const contentType = response.headers.get('content-type') || '';
+        
+        if (contentType.includes('application/json')) {
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                console.error('Failed to parse JSON response:', jsonError);
+                throw new Error('Invalid server response format. Please try again.');
+            }
+        } else {
+            // Handle non-JSON responses (likely error pages)
+            const textResponse = await response.text();
+            console.error('Backend returned non-JSON response:', contentType, textResponse.substring(0, 200));
+            
+            if (response.status === 404) {
+                throw new Error('Pairing service not found. Please try using Supabase pairing or contact support.');
+            } else if (response.status >= 500) {
+                throw new Error('Server error. Please try again in a few moments.');
+            } else {
+                throw new Error('Backend service unavailable. Trying alternative pairing method...');
+            }
         }
         
-        const result = await response.json();
         console.log('Backend pairing result:', result);
         
         if (!response.ok) {
-            let errorMessage = result.error || 'Pairing failed';
+            let errorMessage = result?.error || 'Pairing failed';
             
             if (response.status === 404) {
                 errorMessage = 'Invalid pairing code. Please check the 6-digit code from your child\'s device.';
@@ -905,6 +1088,8 @@ async function pairDeviceWithBackend(pairingCode, authToken) {
                 errorMessage = 'This device is already paired with another parent account.';
             } else if (response.status === 401) {
                 errorMessage = 'Authentication expired. Please login again.';
+            } else if (response.status === 400) {
+                errorMessage = result?.error || 'Invalid pairing request. Please check the code and try again.';
             }
             
             throw new Error(errorMessage);
@@ -922,7 +1107,9 @@ async function pairDeviceWithBackend(pairingCode, authToken) {
     } catch (fetchError) {
         console.error('Backend pairing fetch error:', fetchError);
         
-        if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
+        if (fetchError.name === 'AbortError') {
+            throw new Error('Request timed out. Please check your connection and try again.');
+        } else if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
             throw new Error('Cannot connect to pairing service. Please check your internet connection.');
         } else if (fetchError.message.includes('JSON')) {
             throw new Error('Invalid server response. The pairing service may be temporarily unavailable.');

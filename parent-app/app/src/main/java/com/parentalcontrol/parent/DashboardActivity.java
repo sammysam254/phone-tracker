@@ -79,10 +79,34 @@ public class DashboardActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                hideLoading();
                 
-                // Auto-fill login if credentials are stored
-                autoFillLoginIfAvailable();
+                // Set a timeout for authentication checking
+                webView.postDelayed(() -> {
+                    // Check if still showing "Checking Authentication"
+                    String checkScript = 
+                        "javascript:(function(){" +
+                        "var h2Elements = document.querySelectorAll('h2');" +
+                        "for(var i = 0; i < h2Elements.length; i++) {" +
+                        "  if(h2Elements[i].textContent.includes('Checking Authentication')) {" +
+                        "    return 'stuck_auth';" +
+                        "  }" +
+                        "}" +
+                        "return 'ok';" +
+                        "})()";
+                    
+                    webView.evaluateJavascript(checkScript, result -> {
+                        if (result != null && result.contains("stuck_auth")) {
+                            runOnUiThread(() -> {
+                                statusText.setText("Authentication timeout. Tap refresh to try again.");
+                                statusText.setVisibility(View.VISIBLE);
+                                progressBar.setVisibility(View.GONE);
+                            });
+                        } else {
+                            // Auto-fill login if credentials are stored
+                            autoFillLoginIfAvailable();
+                        }
+                    });
+                }, 8000); // 8 second timeout for auth check
             }
             
             @Override
@@ -107,6 +131,27 @@ public class DashboardActivity extends AppCompatActivity {
                 finish();
             }
         });
+        
+        // Add click listener to status text for manual intervention
+        statusText.setOnClickListener(v -> {
+            if (statusText.getText().toString().contains("timeout") || 
+                statusText.getText().toString().contains("taking too long")) {
+                // Force show login form
+                String forceLoginScript = 
+                    "javascript:(function(){" +
+                    "console.log('Forcing login form display...');" +
+                    "var authSection = document.getElementById('authSection');" +
+                    "var dashboardSection = document.getElementById('dashboardSection');" +
+                    "if(authSection) {" +
+                    "  authSection.style.display = 'block';" +
+                    "  if(dashboardSection) dashboardSection.style.display = 'none';" +
+                    "}" +
+                    "})()";
+                
+                webView.evaluateJavascript(forceLoginScript, null);
+                statusText.setText("Login form should now be visible");
+            }
+        });
     }
     
     private void loadDashboard() {
@@ -120,25 +165,114 @@ public class DashboardActivity extends AppCompatActivity {
         String userPassword = prefs.getString("user_password", "");
         
         if (!userEmail.isEmpty() && !userPassword.isEmpty()) {
-            // JavaScript to auto-fill login form
-            String javascript = String.format(
-                "javascript:(function(){" +
-                "var emailField = document.getElementById('loginEmail') || document.querySelector('input[type=\"email\"]');" +
-                "var passwordField = document.getElementById('loginPassword') || document.querySelector('input[type=\"password\"]');" +
-                "if(emailField && passwordField) {" +
-                "  emailField.value = '%s';" +
-                "  passwordField.value = '%s';" +
-                "  var loginBtn = document.getElementById('loginBtn') || document.querySelector('button[type=\"submit\"]');" +
-                "  if(loginBtn) {" +
-                "    setTimeout(function(){ loginBtn.click(); }, 1000);" +
-                "  }" +
-                "}" +
-                "})()",
-                userEmail, userPassword
-            );
-            
-            webView.evaluateJavascript(javascript, null);
+            // Wait a bit longer for the page to fully load, then try auto-login
+            webView.postDelayed(() -> {
+                // JavaScript to auto-fill login form and handle authentication timeout
+                String javascript = String.format(
+                    "javascript:(function(){" +
+                    "console.log('Parent app attempting auto-login...');" +
+                    
+                    // First, try to hide any persistent auth checking messages
+                    "var authSection = document.getElementById('authSection');" +
+                    "var authError = document.getElementById('authError');" +
+                    "if(authError) authError.style.display = 'none';" +
+                    
+                    // Check if we're stuck on auth checking and force show login
+                    "var checkingAuth = document.querySelector('h2');" +
+                    "if(checkingAuth && checkingAuth.textContent.includes('Checking Authentication')) {" +
+                    "  console.log('Detected stuck auth check, forcing login form...');" +
+                    "  if(authSection) {" +
+                    "    authSection.style.display = 'block';" +
+                    "    var dashboardSection = document.getElementById('dashboardSection');" +
+                    "    if(dashboardSection) dashboardSection.style.display = 'none';" +
+                    "  }" +
+                    "}" +
+                    
+                    // Try to find and fill login form
+                    "setTimeout(function(){" +
+                    "  var emailField = document.getElementById('loginEmail') || document.querySelector('input[type=\"email\"]');" +
+                    "  var passwordField = document.getElementById('loginPassword') || document.querySelector('input[type=\"password\"]');" +
+                    "  if(emailField && passwordField) {" +
+                    "    console.log('Found login fields, filling...');" +
+                    "    emailField.value = '%s';" +
+                    "    passwordField.value = '%s';" +
+                    "    var loginBtn = document.getElementById('loginBtn') || document.querySelector('button[type=\"submit\"]');" +
+                    "    if(loginBtn) {" +
+                    "      console.log('Clicking login button...');" +
+                    "      setTimeout(function(){ loginBtn.click(); }, 500);" +
+                    "    }" +
+                    "  } else {" +
+                    "    console.log('Login fields not found, checking if already logged in...');" +
+                    "    var dashboardSection = document.getElementById('dashboardSection');" +
+                    "    var userEmail = document.getElementById('userEmail');" +
+                    "    if(dashboardSection && userEmail) {" +
+                    "      console.log('Already logged in, showing dashboard...');" +
+                    "      dashboardSection.style.display = 'block';" +
+                    "      if(authSection) authSection.style.display = 'none';" +
+                    "    }" +
+                    "  }" +
+                    "}, 1000);" +
+                    
+                    "})()",
+                    userEmail, userPassword
+                );
+                
+                webView.evaluateJavascript(javascript, null);
+                
+                // Set a timeout to check if login was successful
+                webView.postDelayed(() -> {
+                    checkLoginStatus();
+                }, 5000);
+                
+            }, 2000); // Wait 2 seconds for page to load
+        } else {
+            // No saved credentials, just try to show login form if stuck
+            webView.postDelayed(() -> {
+                String javascript = 
+                    "javascript:(function(){" +
+                    "var checkingAuth = document.querySelector('h2');" +
+                    "if(checkingAuth && checkingAuth.textContent.includes('Checking Authentication')) {" +
+                    "  console.log('No saved credentials, forcing login form...');" +
+                    "  var authSection = document.getElementById('authSection');" +
+                    "  if(authSection) {" +
+                    "    authSection.style.display = 'block';" +
+                    "    var dashboardSection = document.getElementById('dashboardSection');" +
+                    "    if(dashboardSection) dashboardSection.style.display = 'none';" +
+                    "  }" +
+                    "}" +
+                    "})()";
+                
+                webView.evaluateJavascript(javascript, null);
+            }, 3000);
         }
+    }
+    
+    private void checkLoginStatus() {
+        String javascript = 
+            "javascript:(function(){" +
+            "var dashboardSection = document.getElementById('dashboardSection');" +
+            "var authSection = document.getElementById('authSection');" +
+            "if(dashboardSection && dashboardSection.style.display !== 'none') {" +
+            "  return 'logged_in';" +
+            "} else if(authSection && authSection.style.display !== 'none') {" +
+            "  return 'login_form';" +
+            "} else {" +
+            "  return 'checking';" +
+            "}" +
+            "})()";
+        
+        webView.evaluateJavascript(javascript, result -> {
+            if (result != null) {
+                if (result.contains("checking")) {
+                    // Still stuck, show error and refresh option
+                    showError("Authentication taking too long. Tap refresh to try again.");
+                } else if (result.contains("login_form")) {
+                    hideLoading();
+                    statusText.setText("Please login to continue");
+                    statusText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
     
     private void showLoading(String message) {
