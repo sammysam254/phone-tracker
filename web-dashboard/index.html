@@ -463,10 +463,26 @@
             </div>
         </div>
 
-        <!-- Authentication Section - Hidden by default -->
-        <div id="authSection" class="auth-section" style="display: none;">
-            <div class="loading">Checking authentication...</div>
+        <!-- Authentication Section - Shows while checking auth -->
+        <div id="authSection" class="auth-section">
+            <div style="text-align: center; padding: 40px;">
+                <h2>🔍 Checking Authentication...</h2>
+                <p>Please wait while we verify your login status.</p>
+                <div style="margin-top: 20px;">
+                    <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                </div>
+                <p style="margin-top: 20px; color: #718096;">
+                    If this takes too long, <a href="/login.html" style="color: #667eea; text-decoration: none;">click here to login</a>.
+                </p>
+            </div>
         </div>
+
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
 
         <!-- Dashboard Section -->
         <div id="dashboardSection" class="dashboard-section">

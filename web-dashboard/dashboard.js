@@ -71,30 +71,34 @@ const ACTIVITY_LABELS = {
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard initializing...');
+    
+    // Show auth section initially
+    showAuth();
+    
     initializeSupabase();
     setupEventListeners();
     
-    // Wait longer for Supabase to load, then check auth
-    setTimeout(() => {
-        checkAuthState();
-    }, 2000);
+    // Check authentication immediately
+    checkAuthState();
     
-    // Also try checking auth periodically until Supabase loads
+    // Also try checking auth periodically until resolved
     const authCheckInterval = setInterval(() => {
-        if (supabaseClient) {
+        if (currentUser) {
             clearInterval(authCheckInterval);
+        } else {
             checkAuthState();
         }
-    }, 500);
+    }, 1000);
     
-    // Stop trying after 10 seconds
+    // Stop trying after 5 seconds and force redirect
     setTimeout(() => {
         clearInterval(authCheckInterval);
-        if (!supabaseClient) {
-            console.log('Supabase failed to load, using backend-only authentication');
-            checkAuthState();
+        if (!currentUser) {
+            console.log('No authentication found after 5 seconds, forcing redirect to login');
+            window.location.href = '/login.html';
         }
-    }, 10000);
+    }, 5000);
 });
 
 function setupEventListeners() {
@@ -152,12 +156,18 @@ function setupEventListeners() {
 
 // Authentication state management
 async function checkAuthState() {
+    console.log('Checking authentication state...');
+    
     // Check for stored auth token first (backend authentication)
     const authToken = localStorage.getItem('authToken');
     const storedUser = localStorage.getItem('currentUser');
     
+    console.log('Auth token exists:', !!authToken);
+    console.log('Stored user exists:', !!storedUser);
+    
     if (authToken && storedUser) {
         try {
+            console.log('Verifying token with backend...');
             // Verify token with backend
             const response = await fetch('/api/verify-token', {
                 method: 'GET',
@@ -166,14 +176,18 @@ async function checkAuthState() {
                 }
             });
             
+            console.log('Token verification response:', response.status);
+            
             if (response.ok) {
                 const result = await response.json();
                 currentUser = result.user || JSON.parse(storedUser);
+                console.log('Authentication successful, showing dashboard');
                 showDashboard();
                 loadDevices();
                 startAutoRefresh();
                 return;
             } else {
+                console.log('Token invalid, removing stored auth');
                 // Token is invalid, remove it
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('currentUser');
@@ -188,9 +202,11 @@ async function checkAuthState() {
     // Check Supabase session if available
     if (supabaseClient) {
         try {
+            console.log('Checking Supabase session...');
             const { data: { session } } = await supabaseClient.auth.getSession();
             
             if (session) {
+                console.log('Supabase session found, showing dashboard');
                 currentUser = session.user;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 showDashboard();
@@ -447,11 +463,13 @@ async function logout() {
 
 // UI Navigation
 function showAuth() {
+    console.log('Showing auth section');
     document.getElementById('authSection').style.display = 'block';
     document.getElementById('dashboardSection').style.display = 'none';
 }
 
 function showDashboard() {
+    console.log('Showing dashboard section');
     document.getElementById('authSection').style.display = 'none';
     document.getElementById('dashboardSection').style.display = 'block';
     document.getElementById('userEmail').textContent = currentUser?.email || '';
