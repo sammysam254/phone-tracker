@@ -479,7 +479,7 @@
             </p>
 
             <div class="download-buttons">
-                <a href="apk/child-app-v1.5.3.apk" class="download-btn" download="ParentalControl-Child-v1.5.3.apk">
+                <a href="apk/child-app-v1.1.4.apk" class="download-btn" download="ParentalControl-Child-v1.1.4.apk">
                     <span class="icon">📱</span>
                     <div class="download-info">
                         <span class="title">Child Monitoring App (Latest)</span>
@@ -774,11 +774,11 @@
 
         // Check if APK files exist and update download links accordingly
         function checkAPKAvailability() {
-            const releaseBtn = document.querySelector('a[href="apk/child-app-v1.5.3.apk"]');
+            const releaseBtn = document.querySelector('a[href="apk/child-app-v1.1.4.apk"]');
             const parentBtn = document.querySelector('a[href="parent-apk/parent-monitor-v1.3.1-qr.apk"]');
             
             // Test if child APK is available
-            fetch('apk/child-app-v1.5.3.apk', { method: 'HEAD' })
+            fetch('apk/child-app-v1.1.4.apk', { method: 'HEAD' })
                 .then(response => {
                     if (!response.ok) {
                         // APK not available, show alternative
@@ -791,7 +791,7 @@
                                     <span class="subtitle">Primary link unavailable</span>
                                 </div>
                             `;
-                            releaseBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/child-app-v1.5.3.apk';
+                            releaseBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/child-app-v1.1.4.apk';
                             releaseBtn.target = '_blank';
                         }
                     }

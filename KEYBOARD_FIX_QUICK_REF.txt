@@ -1,0 +1,97 @@
+╔══════════════════════════════════════════════════════════════╗
+║         KEYBOARD INPUT FIX - QUICK REFERENCE v1.1.4          ║
+╚══════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────┐
+│ PROBLEM                                                      │
+├──────────────────────────────────────────────────────────────┤
+│ Keyboard inputs captured but NOT showing in dashboard       │
+│ Cause: Field name mismatch (inputText vs text)              │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ SOLUTION                                                     │
+├──────────────────────────────────────────────────────────────┤
+│ ✓ Fixed dashboard to read correct field name                │
+│ ✓ Added appName for all apps                                │
+│ ✓ Enhanced logging for debugging                            │
+│ ✓ Version bumped to 1.1.4                                   │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ QUICK DEPLOY                                                 │
+├──────────────────────────────────────────────────────────────┤
+│ 1. cd android-app                                            │
+│ 2. ./rebuild-child-app.bat (Windows)                         │
+│    ./rebuild-child-app.sh (Linux/Mac)                        │
+│ 3. Install APK on child device                               │
+│ 4. Test: Type in any app → Check dashboard Keyboard tab     │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ TEST COMMANDS                                                │
+├──────────────────────────────────────────────────────────────┤
+│ Build:    cd android-app && ./rebuild-child-app.bat         │
+│ Install:  adb install -r app/build/outputs/.../app-*.apk    │
+│ Monitor:  cd android-app && ./test-keyboard-monitoring.bat  │
+│ Logs:     adb logcat | grep KeyboardMonitor                  │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ WHAT TO EXPECT                                               │
+├──────────────────────────────────────────────────────────────┤
+│ Dashboard Keyboard Tab:                                      │
+│   ⌨️ Keyboard Input                    2:45 PM              │
+│   App: WhatsApp - Input: Hello, how are you?                │
+│                                                              │
+│ Android Logs:                                                │
+│   ✓ Keyboard input logged successfully for: com.whatsapp    │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ TROUBLESHOOTING                                              │
+├──────────────────────────────────────────────────────────────┤
+│ Still not showing?                                           │
+│   1. Check accessibility service enabled                     │
+│   2. Verify app version is 1.1.4                            │
+│   3. Check logs: adb logcat | grep KeyboardMonitor          │
+│   4. Check Supabase for keyboard_input entries              │
+│   5. Clear browser cache and reload dashboard               │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ FILES CHANGED                                                │
+├──────────────────────────────────────────────────────────────┤
+│ Android:                                                     │
+│   • KeyboardMonitor.java (field names, logging)             │
+│   • build.gradle (version 1.1.4)                            │
+│                                                              │
+│ Dashboard:                                                   │
+│   • dashboard.js (field name fix)                           │
+│   • dashboard-enhanced.js (field name fix)                  │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ SUCCESS INDICATORS                                           │
+├──────────────────────────────────────────────────────────────┤
+│ ✓ Build successful                                           │
+│ ✓ APK installs without errors                               │
+│ ✓ Logs show: "✓ Keyboard input logged successfully"         │
+│ ✓ Dashboard shows keyboard inputs with app names            │
+│ ✓ Text content is visible                                   │
+│ ✓ Works in multiple apps (WhatsApp, Chrome, Notes, etc.)    │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ DOCUMENTATION                                                │
+├──────────────────────────────────────────────────────────────┤
+│ • KEYBOARD_FIX_SUMMARY.md - Quick overview                   │
+│ • KEYBOARD_INPUT_FIX.md - Technical details                  │
+│ • KEYBOARD_FIX_VISUAL_GUIDE.md - Before/after visuals        │
+│ • DEPLOY_KEYBOARD_FIX.md - Complete deployment guide         │
+│ • KEYBOARD_FIX_QUICK_REF.txt - This file                     │
+└──────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════╗
+║ Version: 1.1.4 | Date: 2026-03-21 | Status: ✅ READY        ║
+╚══════════════════════════════════════════════════════════════╝

