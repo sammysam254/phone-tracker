@@ -124,6 +124,7 @@ parent-app/gradlew.bat
 !web-dashboard/apk/app-release.apk
 !web-dashboard/apk/child-app-v1.3.0.apk
 !web-dashboard/apk/child-app-v1.5.0.apk
+!web-dashboard/apk/child-app-v1.5.1.apk
 !web-dashboard/parent-apk/app-release.apk
 !web-dashboard/parent-apk/parent-app-v1.4.0.apk
 !web-dashboard/parent-apk/parent-monitor-v1.3.1-qr.apk

@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.CallLog;
+import android.provider.ContactsContract;
 import android.util.Log;
 import androidx.core.content.ContextCompat;
 import org.json.JSONObject;
@@ -72,6 +73,7 @@ public class CallLogMonitor {
                 CallLog.Calls.CONTENT_URI,
                 new String[]{
                     CallLog.Calls.NUMBER,
+                    CallLog.Calls.CACHED_NAME,
                     CallLog.Calls.TYPE,
                     CallLog.Calls.DATE,
                     CallLog.Calls.DURATION
@@ -83,17 +85,38 @@ public class CallLogMonitor {
             
             if (cursor != null && cursor.moveToFirst()) {
                 try {
+                    // Get phone number - handle null/empty cases
                     String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
+                    String cachedName = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME));
                     int type = cursor.getInt(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
                     long date = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
                     long duration = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION));
                     
+                    // Handle different number scenarios
+                    String displayNumber = number;
+                    String contactName = cachedName;
+                    
+                    if (number == null || number.isEmpty() || number.equals("-1") || number.equals("-2")) {
+                        // Private/blocked/unknown number
+                        displayNumber = "Private Number";
+                    } else if (number.equals("-3")) {
+                        displayNumber = "Payphone";
+                    } else {
+                        // Valid number - try to get contact name if not cached
+                        if (contactName == null || contactName.isEmpty()) {
+                            contactName = getContactName(number);
+                        }
+                    }
+                    
                     // Create activity data
                     JSONObject activityData = new JSONObject();
-                    activityData.put("number", number != null ? number : "Unknown");
+                    activityData.put("number", displayNumber);
+                    activityData.put("contact_name", contactName != null ? contactName : "");
                     activityData.put("type", getCallTypeString(type));
                     activityData.put("date", date);
                     activityData.put("duration", duration);
+                    
+                    Log.d(TAG, "Call logged - Number: " + displayNumber + ", Contact: " + contactName + ", Type: " + getCallTypeString(type));
                     
                     // Log to Supabase
                     supabaseClient.logActivity(deviceId, "call", activityData, new SupabaseClient.ApiCallback() {
@@ -115,6 +138,44 @@ public class CallLogMonitor {
                 }
             }
         }
+    }
+    
+    private String getContactName(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return null;
+        }
+        
+        // Check if we have READ_CONTACTS permission
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) 
+            != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
+        
+        try {
+            Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+            Cursor cursor = context.getContentResolver().query(
+                uri,
+                new String[]{ContactsContract.PhoneLookup.DISPLAY_NAME},
+                null,
+                null,
+                null
+            );
+            
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        String name = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.PhoneLookup.DISPLAY_NAME));
+                        return name;
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error looking up contact name", e);
+        }
+        
+        return null;
     }
     
     private String getCallTypeString(int type) {
