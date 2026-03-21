@@ -99,8 +99,10 @@ public class CallLogMonitor {
                     if (number == null || number.isEmpty() || number.equals("-1") || number.equals("-2")) {
                         // Private/blocked/unknown number
                         displayNumber = "Private Number";
+                        contactName = "Hidden";
                     } else if (number.equals("-3")) {
                         displayNumber = "Payphone";
+                        contactName = "Public Phone";
                     } else {
                         // Valid number - try to get contact name if not cached
                         if (contactName == null || contactName.isEmpty()) {
@@ -108,10 +110,12 @@ public class CallLogMonitor {
                         }
                     }
                     
-                    // Create activity data
+                    // Create activity data - ALWAYS include both number and name
                     JSONObject activityData = new JSONObject();
-                    activityData.put("number", displayNumber);
-                    activityData.put("contact_name", contactName != null ? contactName : "");
+                    activityData.put("number", displayNumber); // Always show the phone number
+                    activityData.put("contact_name", contactName != null && !contactName.isEmpty() ? contactName : "Unknown"); // Show contact name or "Unknown"
+                    activityData.put("display_text", contactName != null && !contactName.isEmpty() ? 
+                        contactName + " (" + displayNumber + ")" : displayNumber); // Combined display: "John Doe (+1234567890)"
                     activityData.put("type", getCallTypeString(type));
                     activityData.put("date", date);
                     activityData.put("duration", duration);

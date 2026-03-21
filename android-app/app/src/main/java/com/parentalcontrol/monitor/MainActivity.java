@@ -55,6 +55,15 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
         
+        // Add permission checker button
+        Button checkPermissionsButton = findViewById(R.id.checkPermissionsButton);
+        if (checkPermissionsButton != null) {
+            checkPermissionsButton.setOnClickListener(v -> {
+                Intent intent = new Intent(this, PermissionCheckerActivity.class);
+                startActivity(intent);
+            });
+        }
+        
         startButton.setOnClickListener(v -> {
             if (isFullySetup()) {
                 if (MonitoringService.isServiceRunning(this)) {
