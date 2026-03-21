@@ -48,43 +48,74 @@ public class DashboardActivity extends AppCompatActivity {
     private void setupWebView() {
         WebSettings webSettings = webView.getSettings();
         
-        // Enable JavaScript
+        // Enable JavaScript (required for enhanced dashboard)
         webSettings.setJavaScriptEnabled(true);
         
-        // Enable DOM storage
+        // Enable DOM storage (required for maps and media)
         webSettings.setDomStorageEnabled(true);
         
         // Enable local storage
         webSettings.setDatabaseEnabled(true);
         
-        // Set user agent for mobile with updated version
-        webSettings.setUserAgentString(webSettings.getUserAgentString() + " ParentalControlParentApp/1.2.0");
+        // Enable file access for media viewing
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
         
-        // Enable zoom controls
+        // Enable media playback
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
+        
+        // Set user agent for mobile with updated version
+        webSettings.setUserAgentString(webSettings.getUserAgentString() + " ParentalControlParentApp/1.4.0");
+        
+        // Enable zoom controls for maps and images
         webSettings.setSupportZoom(true);
         webSettings.setBuiltInZoomControls(true);
         webSettings.setDisplayZoomControls(false);
         
-        // Set viewport
+        // Set viewport for responsive design
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
         
-        // Enable mixed content (HTTP and HTTPS)
+        // Enable mixed content (HTTP and HTTPS) for media loading
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         
-        // Web view is for monitoring only - pairing is done via QR code in QRGeneratorActivity
+        // Enable caching for better performance
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        
+        // Enable geolocation for maps
+        webSettings.setGeolocationEnabled(true);
         
         // Set WebView client
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                showLoading("Loading dashboard...");
+                showLoading("Loading enhanced dashboard...");
             }
             
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                
+                // Inject mobile-optimized CSS for enhanced features
+                String mobileOptimizationScript = 
+                    "javascript:(function(){" +
+                    "var style = document.createElement('style');" +
+                    "style.innerHTML = '" +
+                    ".activity-item { padding: 15px !important; }" +
+                    ".expand-indicator { font-size: 14px !important; }" +
+                    ".media-thumbnail { height: 180px !important; }" +
+                    ".image-viewer-content { max-width: 95vw !important; }" +
+                    ".map-container { height: 250px !important; }" +
+                    ".detail-row { flex-direction: column !important; gap: 5px !important; }" +
+                    ".message-text { font-size: 14px !important; line-height: 1.5 !important; }" +
+                    "audio { width: 100% !important; }" +
+                    "';" +
+                    "document.head.appendChild(style);" +
+                    "console.log('Mobile optimizations applied for enhanced dashboard');" +
+                    "})()";
+                
+                webView.evaluateJavascript(mobileOptimizationScript, null);
                 
                 // Set a timeout for authentication checking
                 webView.postDelayed(() -> {
@@ -120,6 +151,22 @@ public class DashboardActivity extends AppCompatActivity {
                 super.onReceivedError(view, errorCode, description, failingUrl);
                 hideLoading();
                 showError("Failed to load dashboard: " + description);
+            }
+        });
+        
+        // Enable Chrome client for better media support
+        webView.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, android.webkit.GeolocationPermissions.Callback callback) {
+                // Allow geolocation for maps
+                callback.invoke(origin, true, false);
+            }
+            
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                if (newProgress == 100) {
+                    hideLoading();
+                }
             }
         });
     }

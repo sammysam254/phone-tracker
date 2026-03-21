@@ -1596,12 +1596,49 @@ async function loadRecentActivities() {
         
         if (error) {
             console.error('Error loading activities:', error);
+            
+            // Show user-friendly error message
+            const container = document.getElementById('recentActivities');
+            if (container) {
+                container.innerHTML = `
+                    <div class="error-message" style="padding: 20px; text-align: center; color: #e74c3c;">
+                        <p>⚠️ Unable to load activities</p>
+                        <p style="font-size: 14px; margin-top: 10px;">
+                            ${error.message || 'Connection error. Please check your internet connection and try again.'}
+                        </p>
+                        <button onclick="loadRecentActivities()" style="margin-top: 15px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
             return;
         }
         
         displayActivitiesEnhanced(activities, 'recentActivities');
     } catch (error) {
         console.error('Error loading recent activities:', error);
+        
+        // Show user-friendly error message
+        const container = document.getElementById('recentActivities');
+        if (container) {
+            container.innerHTML = `
+                <div class="error-message" style="padding: 20px; text-align: center; color: #e74c3c;">
+                    <p>⚠️ Connection Error</p>
+                    <p style="font-size: 14px; margin-top: 10px;">
+                        Unable to connect to the server. Please check:
+                    </p>
+                    <ul style="text-align: left; display: inline-block; margin-top: 10px;">
+                        <li>Your internet connection</li>
+                        <li>Supabase service status</li>
+                        <li>Browser console for details</li>
+                    </ul>
+                    <button onclick="loadRecentActivities()" style="margin-top: 15px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
@@ -1837,12 +1874,44 @@ async function loadRemoteCommandHistory() {
         
         if (error) {
             console.error('Error loading remote commands:', error);
+            
+            // Show user-friendly error message
+            const container = document.getElementById('commandHistory');
+            if (container) {
+                container.innerHTML = `
+                    <div class="error-message" style="padding: 20px; text-align: center; color: #e74c3c;">
+                        <p>⚠️ Unable to load command history</p>
+                        <p style="font-size: 14px; margin-top: 10px;">
+                            ${error.message || 'Connection error'}
+                        </p>
+                        <button onclick="loadRemoteCommandHistory()" style="margin-top: 15px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
             return;
         }
         
         displayRemoteCommands(commands);
     } catch (error) {
         console.error('Error loading remote commands:', error);
+        
+        // Show user-friendly error message
+        const container = document.getElementById('commandHistory');
+        if (container) {
+            container.innerHTML = `
+                <div class="error-message" style="padding: 20px; text-align: center; color: #e74c3c;">
+                    <p>⚠️ Connection Error</p>
+                    <p style="font-size: 14px; margin-top: 10px;">
+                        Unable to load command history
+                    </p>
+                    <button onclick="loadRemoteCommandHistory()" style="margin-top: 15px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 

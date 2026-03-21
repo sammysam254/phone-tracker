@@ -107,8 +107,8 @@ public class RemoteCameraController {
                 return;
             }
             
-            // Set up image reader
-            imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 1);
+            // Set up image reader with HIGHER RESOLUTION for better quality
+            imageReader = ImageReader.newInstance(1920, 1080, ImageFormat.JPEG, 1); // Full HD instead of 640x480
             imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
@@ -207,12 +207,12 @@ public class RemoteCameraController {
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
             
-            // Convert to bitmap and compress if needed
+            // Convert to bitmap and compress with HIGHER QUALITY
             Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             if (bitmap != null) {
-                // Compress image for upload
+                // Compress image with 90% quality instead of 70%
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
                 byte[] compressedBytes = outputStream.toByteArray();
                 
                 // Upload image to Supabase storage

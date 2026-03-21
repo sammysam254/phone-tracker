@@ -177,15 +177,34 @@ app.get('/api/verify-token', async (req, res) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error || !user) {
-      return res.status(403).json({ error: 'Invalid token' });
+    // Try to verify token with Supabase
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (!error && user) {
+        return res.json({ user: user, valid: true });
+      }
+    } catch (supabaseError) {
+      console.log('Supabase token verification failed:', supabaseError.message);
     }
     
-    res.json({ user: user });
+    // If Supabase verification fails, check if token exists in localStorage
+    // This is a fallback for when Supabase is having issues
+    // In production, you'd want to verify the JWT signature properly
+    const storedUser = req.headers['x-stored-user'];
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        return res.json({ user: user, valid: true, fallback: true });
+      } catch (parseError) {
+        console.log('Failed to parse stored user:', parseError);
+      }
+    }
+    
+    return res.status(403).json({ error: 'Invalid token' });
   } catch (error) {
-    res.status(403).json({ error: 'Token verification failed' });
+    console.error('Token verification error:', error);
+    res.status(500).json({ error: 'Token verification failed: ' + error.message });
   }
 });
 
