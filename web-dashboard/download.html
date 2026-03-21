@@ -541,9 +541,13 @@
             </p>
 
             <div class="download-buttons">
-                <a href="parent-apk/parent-app-v1.4.0.apk" class="download-btn" download="ParentalControl-Parent-v1.4.0.apk" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);">
+                <a href="parent-apk/parent-monitor-v1.5.0.apk" class="download-btn" download="ParentalControl-Parent-v1.5.0.apk" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);">
                     <span class="icon">👨‍👩‍👧‍👦</span>
                     <div class="download-info">
+                        <div class="download-title">Parent App v1.5.0</div>
+                        <div class="download-desc">Enhanced with all dashboard features</div>
+                    </div>
+                </a>
                         <span class="title">Parent Dashboard App (Enhanced)</span>
                         <span class="subtitle">For Parent's Device (5.2 MB)</span>
                     </div>
@@ -775,7 +779,7 @@
         // Check if APK files exist and update download links accordingly
         function checkAPKAvailability() {
             const releaseBtn = document.querySelector('a[href="apk/child-app-v1.1.4.apk"]');
-            const parentBtn = document.querySelector('a[href="parent-apk/parent-monitor-v1.3.1-qr.apk"]');
+            const parentBtn = document.querySelector('a[href="parent-apk/parent-monitor-v1.5.0.apk"]');
             
             // Test if child APK is available
             fetch('apk/child-app-v1.1.4.apk', { method: 'HEAD' })
@@ -812,10 +816,10 @@
                 });
 
             // Test parent APK similarly
-            fetch('parent-apk/parent-monitor-v1.3.1-qr.apk', { method: 'HEAD' })
+            fetch('parent-apk/parent-monitor-v1.5.0.apk', { method: 'HEAD' })
                 .then(response => {
                     if (!response.ok && parentBtn) {
-                        parentBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/parent-apk/parent-monitor-v1.3.1-qr.apk';
+                        parentBtn.href = 'https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/parent-apk/parent-monitor-v1.5.0.apk';
                         parentBtn.target = '_blank';
                     }
                 })

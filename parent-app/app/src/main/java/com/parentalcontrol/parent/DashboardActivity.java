@@ -65,7 +65,7 @@ public class DashboardActivity extends AppCompatActivity {
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         
         // Set user agent for mobile with updated version
-        webSettings.setUserAgentString(webSettings.getUserAgentString() + " ParentalControlParentApp/1.4.0");
+        webSettings.setUserAgentString(webSettings.getUserAgentString() + " ParentalControlParentApp/1.5.0");
         
         // Enable zoom controls for maps and images
         webSettings.setSupportZoom(true);
@@ -97,25 +97,158 @@ public class DashboardActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 
-                // Inject mobile-optimized CSS for enhanced features
+                // Inject mobile-optimized CSS and fix for expandable items
                 String mobileOptimizationScript = 
                     "javascript:(function(){" +
+                    "console.log('Applying mobile optimizations and fixes...');" +
+                    
+                    // Add mobile-optimized styles
                     "var style = document.createElement('style');" +
                     "style.innerHTML = '" +
-                    ".activity-item { padding: 15px !important; }" +
-                    ".expand-indicator { font-size: 14px !important; }" +
-                    ".media-thumbnail { height: 180px !important; }" +
-                    ".image-viewer-content { max-width: 95vw !important; }" +
-                    ".map-container { height: 250px !important; }" +
-                    ".detail-row { flex-direction: column !important; gap: 5px !important; }" +
-                    ".message-text { font-size: 14px !important; line-height: 1.5 !important; }" +
-                    "audio { width: 100% !important; }" +
+                    // Make activity items more touch-friendly
+                    ".activity-item { padding: 15px !important; min-height: 60px !important; cursor: pointer !important; }" +
+                    ".activity-item.expandable { background: linear-gradient(to right, #f8f9fa 0%, #ffffff 100%) !important; }" +
+                    ".activity-item.expandable:hover { background: linear-gradient(to right, #e9ecef 0%, #f8f9fa 100%) !important; }" +
+                    ".expand-indicator { font-size: 16px !important; transition: transform 0.3s ease !important; }" +
+                    ".activity-item.expanded .expand-indicator { transform: rotate(180deg) !important; }" +
+                    
+                    // Expanded content styling
+                    ".activity-expanded { padding: 15px !important; background: #f8f9fa !important; border-top: 2px solid #dee2e6 !important; }" +
+                    ".expanded-details { font-size: 14px !important; line-height: 1.6 !important; }" +
+                    ".detail-row { margin: 8px 0 !important; padding: 5px 0 !important; }" +
+                    ".message-content, .notification-content { margin: 12px 0 !important; padding: 12px !important; background: white !important; border-radius: 8px !important; border-left: 4px solid #667eea !important; }" +
+                    ".message-text { font-size: 14px !important; line-height: 1.6 !important; white-space: pre-wrap !important; word-wrap: break-word !important; margin-top: 8px !important; }" +
+                    
+                    // Media thumbnails
+                    ".media-thumbnail { height: 200px !important; border-radius: 8px !important; }" +
+                    ".image-viewer-content { max-width: 95vw !important; max-height: 90vh !important; }" +
+                    
+                    // Map container
+                    ".map-container { height: 300px !important; border-radius: 8px !important; margin: 10px 0 !important; }" +
+                    
+                    // Audio player
+                    "audio { width: 100% !important; margin: 10px 0 !important; }" +
+                    
+                    // Device selector
+                    "#deviceSelector { font-size: 16px !important; padding: 10px !important; min-height: 44px !important; }" +
+                    
+                    // Tab buttons
+                    ".tab-nav button { min-height: 44px !important; font-size: 14px !important; padding: 10px 15px !important; }" +
+                    
+                    // Filter controls
+                    ".filter-controls select, .filter-controls input, .filter-controls button { min-height: 44px !important; font-size: 14px !important; }" +
                     "';" +
                     "document.head.appendChild(style);" +
-                    "console.log('Mobile optimizations applied for enhanced dashboard');" +
+                    
+                    // Fix toggleActivityDetails function to work properly
+                    "window.toggleActivityDetails = function(activityId) {" +
+                    "  console.log('Toggling activity:', activityId);" +
+                    "  var expandedDiv = document.getElementById(activityId);" +
+                    "  var activityItem = expandedDiv ? expandedDiv.previousElementSibling : null;" +
+                    "  " +
+                    "  if (expandedDiv) {" +
+                    "    var isCurrentlyVisible = expandedDiv.style.display !== 'none';" +
+                    "    " +
+                    "    if (isCurrentlyVisible) {" +
+                    "      expandedDiv.style.display = 'none';" +
+                    "      if (activityItem) activityItem.classList.remove('expanded');" +
+                    "      console.log('Collapsed:', activityId);" +
+                    "    } else {" +
+                    "      expandedDiv.style.display = 'block';" +
+                    "      if (activityItem) activityItem.classList.add('expanded');" +
+                    "      console.log('Expanded:', activityId);" +
+                    "      " +
+                    "      // Scroll into view smoothly" +
+                    "      setTimeout(function() {" +
+                    "        expandedDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });" +
+                    "      }, 100);" +
+                    "    }" +
+                    "  } else {" +
+                    "    console.error('Could not find expanded div for:', activityId);" +
+                    "  }" +
+                    "};" +
+                    
+                    // Ensure all expandable items have proper click handlers
+                    "setTimeout(function() {" +
+                    "  var expandableItems = document.querySelectorAll('.activity-item.expandable');" +
+                    "  console.log('Found', expandableItems.length, 'expandable items');" +
+                    "  expandableItems.forEach(function(item) {" +
+                    "    // Remove any existing onclick to avoid duplicates" +
+                    "    item.onclick = null;" +
+                    "    " +
+                    "    // Add new click handler" +
+                    "    item.addEventListener('click', function(e) {" +
+                    "      e.stopPropagation();" +
+                    "      var expandedDiv = this.nextElementSibling;" +
+                    "      if (expandedDiv && expandedDiv.classList.contains('activity-expanded')) {" +
+                    "        var activityId = expandedDiv.id;" +
+                    "        if (activityId) {" +
+                    "          window.toggleActivityDetails(activityId);" +
+                    "        }" +
+                    "      }" +
+                    "    });" +
+                    "    " +
+                    "    // Add visual feedback" +
+                    "    item.style.cursor = 'pointer';" +
+                    "  });" +
+                    "}, 500);" +
+                    
+                    // Fix device selector if it exists
+                    "setTimeout(function() {" +
+                    "  var deviceSelector = document.getElementById('deviceSelector');" +
+                    "  if (deviceSelector) {" +
+                    "    console.log('Device selector found, ensuring it works');" +
+                    "    deviceSelector.style.pointerEvents = 'auto';" +
+                    "    deviceSelector.style.opacity = '1';" +
+                    "    " +
+                    "    // Make sure change event works" +
+                    "    deviceSelector.addEventListener('change', function() {" +
+                    "      console.log('Device changed to:', this.value);" +
+                    "      if (window.selectDevice) {" +
+                    "        window.selectDevice(this.value);" +
+                    "      }" +
+                    "    });" +
+                    "  }" +
+                    "}, 1000);" +
+                    
+                    "console.log('Mobile optimizations and fixes applied successfully');" +
                     "})()";
                 
                 webView.evaluateJavascript(mobileOptimizationScript, null);
+                
+                // Re-apply fixes when content changes (e.g., tab switches)
+                String observerScript = 
+                    "javascript:(function(){" +
+                    "var observer = new MutationObserver(function(mutations) {" +
+                    "  mutations.forEach(function(mutation) {" +
+                    "    if (mutation.addedNodes.length > 0) {" +
+                    "      // Re-attach click handlers to new expandable items" +
+                    "      setTimeout(function() {" +
+                    "        var expandableItems = document.querySelectorAll('.activity-item.expandable');" +
+                    "        expandableItems.forEach(function(item) {" +
+                    "          if (!item.hasAttribute('data-click-attached')) {" +
+                    "            item.setAttribute('data-click-attached', 'true');" +
+                    "            item.addEventListener('click', function(e) {" +
+                    "              e.stopPropagation();" +
+                    "              var expandedDiv = this.nextElementSibling;" +
+                    "              if (expandedDiv && expandedDiv.classList.contains('activity-expanded')) {" +
+                    "                var activityId = expandedDiv.id;" +
+                    "                if (activityId && window.toggleActivityDetails) {" +
+                    "                  window.toggleActivityDetails(activityId);" +
+                    "                }" +
+                    "              }" +
+                    "            });" +
+                    "          }" +
+                    "        });" +
+                    "      }, 300);" +
+                    "    }" +
+                    "  });" +
+                    "});" +
+                    "observer.observe(document.body, { childList: true, subtree: true });" +
+                    "console.log('Mutation observer attached for dynamic content');" +
+                    "})()";
+                
+                webView.evaluateJavascript(observerScript, null);
                 
                 // Set a timeout for authentication checking
                 webView.postDelayed(() -> {
