@@ -900,12 +900,16 @@ async function generateQRCode() {
         // Get current user email (if logged in)
         const userEmail = currentUser?.email || 'web-dashboard-user';
         
-        // Generate pairing token (shorter - 16 bytes = 32 hex chars)
-        const pairingToken = generatePairingToken();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+        // Generate parent ID from email (same logic as parent app)
+        const parentId = userEmail ? `parent_${userEmail.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0)}` : `parent_${Date.now()}`;
         
-        // Create pairing data for database
-        const pairingData = {
+        // Generate pairing token (32 characters for compatibility)
+        const pairingToken = generatePairingToken();
+        const timestamp = Date.now();
+        const expiresAt = new Date(timestamp + 10 * 60 * 1000); // 10 minutes from now
+        
+        // Create pairing data for database storage
+        const dbPairingData = {
             token: pairingToken,
             parent_email: userEmail,
             expires_at: expiresAt.toISOString(),
@@ -917,7 +921,7 @@ async function generateQRCode() {
             try {
                 const { error } = await supabaseClient
                     .from('qr_pairing_tokens')
-                    .insert([pairingData]);
+                    .insert([dbPairingData]);
                 
                 if (error) {
                     console.warn('Could not store QR token in database:', error);
@@ -935,12 +939,15 @@ async function generateQRCode() {
             qrCanvas.innerHTML = '';
         }
         
-        // Create compact QR data (just token and expiry timestamp)
-        // Format: TOKEN|TIMESTAMP|EMAIL
-        const expiryTimestamp = Math.floor(expiresAt.getTime() / 1000); // Unix timestamp
-        const qrData = `${pairingToken}|${expiryTimestamp}|${userEmail}`;
+        // Create QR data in SAME FORMAT as parent app (JSON)
+        const qrData = JSON.stringify({
+            parentId: parentId,
+            pairingToken: pairingToken,
+            timestamp: timestamp
+        });
         
         console.log('QR Data length:', qrData.length, 'characters');
+        console.log('QR Data:', qrData);
         
         if (typeof QRCode !== 'undefined') {
             qrCodeInstance = new QRCode(qrCanvas, {
@@ -949,7 +956,7 @@ async function generateQRCode() {
                 height: 256,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M  // Changed from H to M for smaller data
+                correctLevel: QRCode.CorrectLevel.M
             });
         } else {
             throw new Error('QRCode library not loaded');
@@ -978,8 +985,8 @@ async function generateQRCode() {
 }
 
 function generatePairingToken() {
-    // Generate a secure random token (16 bytes = 32 hex characters)
-    const array = new Uint8Array(16);  // Reduced from 32 to 16 bytes
+    // Generate a secure random token (32 bytes = 64 hex characters, same as parent app)
+    const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
