@@ -134,6 +134,10 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, MonitoringService.class);
         startForegroundService(serviceIntent);
         
+        // Also ensure remote control service is running
+        Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
+        startForegroundService(remoteControlIntent);
+        
         Toast.makeText(this, "Comprehensive monitoring started", Toast.LENGTH_SHORT).show();
         updateMonitoringStatus();
     }

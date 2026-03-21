@@ -1,19 +1,27 @@
 package com.parentalcontrol.monitor;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import androidx.core.app.NotificationCompat;
 import org.json.JSONObject;
 import java.util.concurrent.TimeUnit;
 
 public class RemoteControlService extends Service {
     
     private static final String TAG = "RemoteControlService";
-    private static final long CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10); // Check every 10 seconds
+    private static final long CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(3); // Check every 3 seconds for instant commands
+    private static final String CHANNEL_ID = "RemoteControlChannel";
+    private static final int NOTIFICATION_ID = 2;
     
     private SupabaseClient supabaseClient;
     private Handler handler;
@@ -25,6 +33,8 @@ public class RemoteControlService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        createNotificationChannel();
         
         supabaseClient = new SupabaseClient(this);
         deviceId = DeviceUtils.getDeviceId(this);
@@ -38,8 +48,19 @@ public class RemoteControlService extends Service {
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        startForeground(NOTIFICATION_ID, createNotification());
         startCommandChecking();
+        Log.i(TAG, "Remote control service started in foreground");
         return START_STICKY;
+    }
+    
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // Restart service when task is removed
+        Intent restartServiceIntent = new Intent(getApplicationContext(), this.getClass());
+        restartServiceIntent.setPackage(getPackageName());
+        startForegroundService(restartServiceIntent);
+        super.onTaskRemoved(rootIntent);
     }
     
     @Override
@@ -280,5 +301,42 @@ public class RemoteControlService extends Service {
                 Log.e(TAG, "Failed to mark command completed: " + error);
             }
         });
+    }
+    
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                "Remote Control Service",
+                NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("Handles remote control commands from parent");
+            channel.setShowBadge(false);
+            
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+    
+    private Notification createNotification() {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            this, 
+            0, 
+            notificationIntent, 
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Remote Control Active")
+            .setContentText("Listening for parent commands")
+            .setSmallIcon(R.drawable.ic_shield)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .build();
     }
 }

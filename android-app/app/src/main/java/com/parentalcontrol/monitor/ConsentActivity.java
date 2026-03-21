@@ -64,14 +64,27 @@ public class ConsentActivity extends AppCompatActivity {
         acceptButton.setOnClickListener(v -> {
             saveConsent(true);
             updateSupabaseConsent(true);
-            Toast.makeText(this, "Consent granted", Toast.LENGTH_SHORT).show();
+            
+            // Start monitoring services immediately after consent
+            Intent monitoringIntent = new Intent(this, MonitoringService.class);
+            startForegroundService(monitoringIntent);
+            
+            Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
+            startForegroundService(remoteControlIntent);
+            
+            Toast.makeText(this, "Consent granted - Monitoring started", Toast.LENGTH_SHORT).show();
+            
+            // Go back to main activity
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
             finish();
         });
         
         declineButton.setOnClickListener(v -> {
             saveConsent(false);
             updateSupabaseConsent(false);
-            Toast.makeText(this, "Consent declined", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Consent declined - Monitoring disabled", Toast.LENGTH_SHORT).show();
             finish();
         });
     }

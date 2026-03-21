@@ -66,7 +66,16 @@ public class MonitoringService extends Service {
         startAllMonitors();
         
         Log.i(TAG, "Monitoring service started");
-        return START_STICKY; // Restart if killed
+        return START_STICKY; // Restart if killed by system
+    }
+    
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // Restart service when task is removed
+        Intent restartServiceIntent = new Intent(getApplicationContext(), this.getClass());
+        restartServiceIntent.setPackage(getPackageName());
+        startForegroundService(restartServiceIntent);
+        super.onTaskRemoved(rootIntent);
     }
     
     @Override
@@ -137,9 +146,9 @@ public class MonitoringService extends Service {
                 Log.d(TAG, "Location tracker started");
             }
             
-            // Start remote control service
+            // Start remote control service as foreground service
             Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
-            startService(remoteControlIntent);
+            startForegroundService(remoteControlIntent);
             Log.d(TAG, "Remote control service started");
             
         } catch (Exception e) {

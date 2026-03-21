@@ -28,9 +28,13 @@ public class BootReceiver extends BroadcastReceiver {
                 Intent serviceIntent = new Intent(context, MonitoringService.class);
                 context.startForegroundService(serviceIntent);
                 
-                Log.i(TAG, "Monitoring service auto-started after boot");
+                // Also start remote control service
+                Intent remoteControlIntent = new Intent(context, RemoteControlService.class);
+                context.startForegroundService(remoteControlIntent);
+                
+                Log.i(TAG, "Monitoring and remote control services auto-started after boot");
             } else {
-                Log.i(TAG, "Consent not granted, monitoring service not started");
+                Log.i(TAG, "Consent not granted, services not started");
             }
         }
     }
