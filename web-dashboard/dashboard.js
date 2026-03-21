@@ -900,11 +900,11 @@ async function generateQRCode() {
         // Get current user email (if logged in)
         const userEmail = currentUser?.email || 'web-dashboard-user';
         
-        // Generate pairing token
+        // Generate pairing token (shorter - 16 bytes = 32 hex chars)
         const pairingToken = generatePairingToken();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
         
-        // Create pairing data
+        // Create pairing data for database
         const pairingData = {
             token: pairingToken,
             parent_email: userEmail,
@@ -935,8 +935,12 @@ async function generateQRCode() {
             qrCanvas.innerHTML = '';
         }
         
-        // Generate QR code
-        const qrData = JSON.stringify(pairingData);
+        // Create compact QR data (just token and expiry timestamp)
+        // Format: TOKEN|TIMESTAMP|EMAIL
+        const expiryTimestamp = Math.floor(expiresAt.getTime() / 1000); // Unix timestamp
+        const qrData = `${pairingToken}|${expiryTimestamp}|${userEmail}`;
+        
+        console.log('QR Data length:', qrData.length, 'characters');
         
         if (typeof QRCode !== 'undefined') {
             qrCodeInstance = new QRCode(qrCanvas, {
@@ -945,7 +949,7 @@ async function generateQRCode() {
                 height: 256,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
+                correctLevel: QRCode.CorrectLevel.M  // Changed from H to M for smaller data
             });
         } else {
             throw new Error('QRCode library not loaded');
@@ -974,8 +978,8 @@ async function generateQRCode() {
 }
 
 function generatePairingToken() {
-    // Generate a secure random token
-    const array = new Uint8Array(32);
+    // Generate a secure random token (16 bytes = 32 hex characters)
+    const array = new Uint8Array(16);  // Reduced from 32 to 16 bytes
     crypto.getRandomValues(array);
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
