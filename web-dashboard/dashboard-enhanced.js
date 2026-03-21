@@ -223,6 +223,78 @@ function displayActivitiesEnhanced(activities, containerId) {
                     hasExpandedContent = true;
                     break;
                     
+                case 'screen_interaction':
+                    const eventType = data.eventType || 'interaction';
+                    const interactionApp = data.appName || (data.packageName ? data.packageName.split('.').pop() : 'Unknown');
+                    const interactionText = data.inputText || data.text || '';
+                    
+                    if (eventType === 'text_input' && interactionText) {
+                        details = `${interactionApp} - Typed: ${interactionText.substring(0, 40)}${interactionText.length > 40 ? '...' : ''}`;
+                        expandedContent = `
+                            <div class="expanded-details">
+                                <div class="detail-row"><strong>App:</strong> ${interactionApp}</div>
+                                <div class="detail-row"><strong>Package:</strong> ${data.packageName || 'Unknown'}</div>
+                                <div class="detail-row"><strong>Event:</strong> Text Input</div>
+                                <div class="detail-row"><strong>Time:</strong> ${time}</div>
+                                <div class="message-content">
+                                    <strong>Typed Text:</strong>
+                                    <div class="message-text">${interactionText}</div>
+                                </div>
+                                ${data.hint ? `<div class="detail-row"><strong>Field:</strong> ${data.hint}</div>` : ''}
+                                ${data.contentDescription ? `<div class="detail-row"><strong>Context:</strong> ${data.contentDescription}</div>` : ''}
+                                ${data.className ? `<div class="detail-row"><strong>Field Type:</strong> ${data.className.split('.').pop()}</div>` : ''}
+                            </div>
+                        `;
+                    } else if (eventType === 'click') {
+                        details = `${interactionApp} - Clicked: ${data.text || data.description || 'button/element'}`;
+                        expandedContent = `
+                            <div class="expanded-details">
+                                <div class="detail-row"><strong>App:</strong> ${interactionApp}</div>
+                                <div class="detail-row"><strong>Package:</strong> ${data.packageName || 'Unknown'}</div>
+                                <div class="detail-row"><strong>Event:</strong> Click</div>
+                                <div class="detail-row"><strong>Time:</strong> ${time}</div>
+                                ${data.text ? `<div class="detail-row"><strong>Element Text:</strong> ${data.text}</div>` : ''}
+                                ${data.description ? `<div class="detail-row"><strong>Description:</strong> ${data.description}</div>` : ''}
+                                ${data.className ? `<div class="detail-row"><strong>Element Type:</strong> ${data.className.split('.').pop()}</div>` : ''}
+                            </div>
+                        `;
+                    } else if (eventType === 'window_change') {
+                        details = `${interactionApp} - Opened/Switched`;
+                        expandedContent = `
+                            <div class="expanded-details">
+                                <div class="detail-row"><strong>App:</strong> ${interactionApp}</div>
+                                <div class="detail-row"><strong>Package:</strong> ${data.packageName || 'Unknown'}</div>
+                                <div class="detail-row"><strong>Event:</strong> Window Change</div>
+                                <div class="detail-row"><strong>Time:</strong> ${time}</div>
+                                ${data.className ? `<div class="detail-row"><strong>Screen:</strong> ${data.className.split('.').pop()}</div>` : ''}
+                            </div>
+                        `;
+                    } else if (eventType === 'scroll') {
+                        details = `${interactionApp} - Scrolled`;
+                        expandedContent = `
+                            <div class="expanded-details">
+                                <div class="detail-row"><strong>App:</strong> ${interactionApp}</div>
+                                <div class="detail-row"><strong>Package:</strong> ${data.packageName || 'Unknown'}</div>
+                                <div class="detail-row"><strong>Event:</strong> Scroll</div>
+                                <div class="detail-row"><strong>Time:</strong> ${time}</div>
+                                ${data.scrollX !== undefined ? `<div class="detail-row"><strong>Scroll X:</strong> ${data.scrollX}</div>` : ''}
+                                ${data.scrollY !== undefined ? `<div class="detail-row"><strong>Scroll Y:</strong> ${data.scrollY}</div>` : ''}
+                            </div>
+                        `;
+                    } else {
+                        details = `${interactionApp} - ${eventType}`;
+                        expandedContent = `
+                            <div class="expanded-details">
+                                <div class="detail-row"><strong>App:</strong> ${interactionApp}</div>
+                                <div class="detail-row"><strong>Package:</strong> ${data.packageName || 'Unknown'}</div>
+                                <div class="detail-row"><strong>Event:</strong> ${eventType}</div>
+                                <div class="detail-row"><strong>Time:</strong> ${time}</div>
+                            </div>
+                        `;
+                    }
+                    hasExpandedContent = true;
+                    break;
+                    
                 default:
                     details = JSON.stringify(data).substring(0, 100) + '...';
                     expandedContent = `

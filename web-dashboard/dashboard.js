@@ -1962,6 +1962,21 @@ function displayActivities(activities, containerId) {
                 case 'notification':
                     details = `App: ${data.appName || 'Unknown'} - ${data.title || ''}: ${data.text || ''}`;
                     break;
+                case 'screen_interaction':
+                    const eventType = data.eventType || 'interaction';
+                    const appName = data.appName || (data.packageName ? data.packageName.split('.').pop() : 'Unknown');
+                    if (eventType === 'text_input' && (data.inputText || data.text)) {
+                        details = `${appName} - Typed: ${(data.inputText || data.text).substring(0, 40)}...`;
+                    } else if (eventType === 'click') {
+                        details = `${appName} - Clicked: ${data.text || data.description || 'element'}`;
+                    } else if (eventType === 'window_change') {
+                        details = `${appName} - Opened/Switched`;
+                    } else if (eventType === 'scroll') {
+                        details = `${appName} - Scrolled`;
+                    } else {
+                        details = `${appName} - ${eventType}`;
+                    }
+                    break;
                 default:
                     details = JSON.stringify(data).substring(0, 100) + '...';
             }
