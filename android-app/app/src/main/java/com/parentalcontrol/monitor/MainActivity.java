@@ -75,6 +75,26 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please complete setup first", Toast.LENGTH_SHORT).show();
             }
         });
+        
+        // Terms and Privacy links
+        TextView termsLink = findViewById(R.id.termsLink);
+        TextView privacyLink = findViewById(R.id.privacyLink);
+        
+        if (termsLink != null) {
+            termsLink.setOnClickListener(v -> {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, 
+                    android.net.Uri.parse("https://your-domain.com/terms.html"));
+                startActivity(browserIntent);
+            });
+        }
+        
+        if (privacyLink != null) {
+            privacyLink.setOnClickListener(v -> {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, 
+                    android.net.Uri.parse("https://your-domain.com/privacy.html"));
+                startActivity(browserIntent);
+            });
+        }
     }
     
     private void checkSetupStatus() {

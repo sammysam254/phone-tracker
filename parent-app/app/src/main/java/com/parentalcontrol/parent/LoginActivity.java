@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +15,8 @@ public class LoginActivity extends AppCompatActivity {
     private TextView titleText;
     private EditText emailEditText;
     private EditText passwordEditText;
+    private CheckBox termsCheckbox;
+    private CheckBox privacyCheckbox;
     private Button actionButton;
     private Button switchModeButton;
     private boolean isRegisterMode = false;
@@ -32,6 +35,8 @@ public class LoginActivity extends AppCompatActivity {
         titleText = findViewById(R.id.titleText);
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
+        termsCheckbox = findViewById(R.id.termsCheckbox);
+        privacyCheckbox = findViewById(R.id.privacyCheckbox);
         actionButton = findViewById(R.id.actionButton);
         switchModeButton = findViewById(R.id.switchModeButton);
     }
@@ -66,6 +71,26 @@ public class LoginActivity extends AppCompatActivity {
             isRegisterMode = !isRegisterMode;
             updateUI();
         });
+        
+        // Terms and Privacy links
+        TextView termsLink = findViewById(R.id.termsLink);
+        TextView privacyLink = findViewById(R.id.privacyLink);
+        
+        if (termsLink != null) {
+            termsLink.setOnClickListener(v -> {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, 
+                    android.net.Uri.parse("https://your-domain.com/terms.html"));
+                startActivity(browserIntent);
+            });
+        }
+        
+        if (privacyLink != null) {
+            privacyLink.setOnClickListener(v -> {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, 
+                    android.net.Uri.parse("https://your-domain.com/privacy.html"));
+                startActivity(browserIntent);
+            });
+        }
     }
     
     private void handleLogin() {
@@ -74,6 +99,17 @@ public class LoginActivity extends AppCompatActivity {
         
         if (email.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Check Terms and Privacy checkboxes
+        if (termsCheckbox != null && !termsCheckbox.isChecked()) {
+            Toast.makeText(this, "Please agree to the Terms of Service", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        if (privacyCheckbox != null && !privacyCheckbox.isChecked()) {
+            Toast.makeText(this, "Please agree to the Privacy Policy", Toast.LENGTH_SHORT).show();
             return;
         }
         
@@ -100,6 +136,17 @@ public class LoginActivity extends AppCompatActivity {
         
         if (password.length() < 6) {
             Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Check Terms and Privacy checkboxes
+        if (termsCheckbox != null && !termsCheckbox.isChecked()) {
+            Toast.makeText(this, "Please agree to the Terms of Service", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        if (privacyCheckbox != null && !privacyCheckbox.isChecked()) {
+            Toast.makeText(this, "Please agree to the Privacy Policy", Toast.LENGTH_SHORT).show();
             return;
         }
         
