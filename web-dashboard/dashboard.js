@@ -1599,7 +1599,7 @@ async function loadRecentActivities() {
             return;
         }
         
-        displayActivities(activities, 'recentActivities');
+        displayActivitiesEnhanced(activities, 'recentActivities');
     } catch (error) {
         console.error('Error loading recent activities:', error);
     }
@@ -1656,7 +1656,7 @@ async function loadCallData() {
             return;
         }
         
-        displayActivities(activities, 'callsList');
+        displayActivitiesEnhanced(activities, 'callsList');
     } catch (error) {
         console.error('Error loading call data:', error);
     }
@@ -1679,7 +1679,7 @@ async function loadMessageData() {
             return;
         }
         
-        displayActivities(activities, 'messagesList');
+        displayActivitiesEnhanced(activities, 'messagesList');
     } catch (error) {
         console.error('Error loading message data:', error);
     }
@@ -1702,7 +1702,7 @@ async function loadAppData() {
             return;
         }
         
-        displayActivities(activities, 'appsList');
+        displayActivitiesEnhanced(activities, 'appsList');
     } catch (error) {
         console.error('Error loading app data:', error);
     }
@@ -1725,7 +1725,7 @@ async function loadWebData() {
             return;
         }
         
-        displayActivities(activities, 'webList');
+        displayActivitiesEnhanced(activities, 'webList');
     } catch (error) {
         console.error('Error loading web data:', error);
     }
@@ -1748,7 +1748,7 @@ async function loadLocationData() {
             return;
         }
         
-        displayActivities(activities, 'locationList');
+        displayActivitiesEnhanced(activities, 'locationList');
     } catch (error) {
         console.error('Error loading location data:', error);
     }
@@ -1771,7 +1771,7 @@ async function loadKeyboardData() {
             return;
         }
         
-        displayActivities(activities, 'keyboardList');
+        displayActivitiesEnhanced(activities, 'keyboardList');
     } catch (error) {
         console.error('Error loading keyboard data:', error);
     }
@@ -1794,7 +1794,7 @@ async function loadMediaData() {
             return;
         }
         
-        displayMediaGallery(activities);
+        displayMediaGalleryEnhanced(activities);
     } catch (error) {
         console.error('Error loading media data:', error);
     }
@@ -1817,7 +1817,7 @@ async function loadNotificationData() {
             return;
         }
         
-        displayActivities(activities, 'notificationsList');
+        displayActivitiesEnhanced(activities, 'notificationsList');
     } catch (error) {
         console.error('Error loading notification data:', error);
     }
