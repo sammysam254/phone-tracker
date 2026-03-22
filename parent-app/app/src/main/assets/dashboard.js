@@ -272,23 +272,7 @@ async function checkAuthState() {
     console.log('User agent:', userAgent);
     console.log('Is parent app:', isParentApp);
     
-    if (isParentApp) {
-        console.log('Parent app detected, using simplified authentication');
-        
-        // For parent app, create a simplified user object and show dashboard immediately
-        currentUser = {
-            id: 'parent-app-user',
-            email: 'parent@app.local',
-            user_metadata: { name: 'Parent User' }
-        };
-        
-        console.log('Parent app authentication complete, showing dashboard');
-        hideAuthError();
-        showDashboard();
-        loadDevices();
-        startAutoRefresh();
-        return;
-    }
+    // NOTE: parent app now goes through real auth to get a real user ID for device queries
     
     // Check for stored auth token first (backend authentication)
     const authToken = localStorage.getItem('authToken');
@@ -305,7 +289,7 @@ async function checkAuthState() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 second timeout for parent app
             
-            const response = await fetch('https://phonetracker-0a26.onrender.com/api/verify-token', {
+            const response = await fetch('/api/verify-token', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
@@ -446,7 +430,7 @@ async function login() {
 // Fallback login via backend API
 async function loginViaBackend(email, password) {
     try {
-        const response = await fetch('https://phonetracker-0a26.onrender.com/api/login', {
+        const response = await fetch('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -566,7 +550,7 @@ async function registerViaBackend(name, email, password) {
     try {
         console.log('Attempting backend registration for:', email);
         
-        const response = await fetch('https://phonetracker-0a26.onrender.com/api/register', {
+        const response = await fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -696,13 +680,6 @@ async function loadDevices() {
     const isParentApp = userAgent.includes('ParentalControlParentApp') || 
                        userAgent.includes('ParentalControlParent');
     
-    if (isParentApp) {
-        console.log('Parent app detected, using simplified device loading');
-        // For parent app, show a generic device option
-        deviceSelect.innerHTML = '<option value="parent-device">Child Device</option>';
-        return;
-    }
-    
     // Try backend API first
     const authToken = localStorage.getItem('authToken');
     if (authToken) {
@@ -713,7 +690,7 @@ async function loadDevices() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
             
-            const response = await fetch('https://phonetracker-0a26.onrender.com/api/devices', {
+            const response = await fetch('/api/devices', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 },
@@ -758,11 +735,12 @@ async function loadDevices() {
         console.log('Loading devices from Supabase...');
         
         // Try to get devices from device_pairing table first (more likely to exist)
+        // Only load ACTIVE devices (not replaced, inactive, or old pairings)
         const { data: pairingDevices, error: pairingError } = await supabaseClient
             .from('device_pairing')
             .select('*')
             .eq('parent_id', currentUser.id)
-            .in('status', ['paired', 'active', 'registered'])
+            .eq('status', 'active')  // Only active devices
             .order('paired_at', { ascending: false });
         
         if (!pairingError && pairingDevices && pairingDevices.length > 0) {
@@ -1315,7 +1293,7 @@ async function pairDeviceWithBackendById(deviceId, authToken) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
         
-        const response = await fetch('https://phonetracker-0a26.onrender.com/api/pair-device-by-id', {
+        const response = await fetch('/api/pair-device-by-id', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1491,7 +1469,7 @@ async function pairDeviceWithBackend(pairingCode, authToken) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
         
-        const response = await fetch('https://phonetracker-0a26.onrender.com/api/pair-device', {
+        const response = await fetch('/api/pair-device', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1584,7 +1562,7 @@ async function loadOverviewData() {
         // Load statistics using backend API as fallback
         const authToken = localStorage.getItem('authToken');
         if (authToken) {
-            const response = await fetch(`https://phonetracker-0a26.onrender.com/api/stats/${selectedDevice}`, {
+            const response = await fetch(`/api/stats/${selectedDevice}`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -2589,7 +2567,7 @@ async function checkForNewDevicePairings() {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
                 
-                const response = await fetch('https://phonetracker-0a26.onrender.com/api/devices', {
+                const response = await fetch('/api/devices', {
                     headers: {
                         'Authorization': `Bearer ${authToken}`
                     },
@@ -2613,12 +2591,12 @@ async function checkForNewDevicePairings() {
         // Fallback to Supabase if backend failed
         if (newDevices.length === 0 && supabaseClient) {
             try {
-                // Check device_pairing table
+                // Check device_pairing table - only active devices
                 const { data: pairingDevices, error: pairingError } = await supabaseClient
                     .from('device_pairing')
                     .select('*')
                     .eq('parent_id', currentUser.id)
-                    .eq('status', 'paired');
+                    .eq('status', 'active');  // Only active devices
                 
                 if (!pairingError && pairingDevices) {
                     newDevices = pairingDevices;
