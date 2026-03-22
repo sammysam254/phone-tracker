@@ -59,12 +59,12 @@ if exist "app\build\outputs\apk\release\app-release.apk" (
     copy /Y "app\build\outputs\apk\release\app-release.apk" "%ORIGINAL_DIR%app\build\outputs\apk\release\app-release.apk"
     
     REM Also copy to web-dashboard
-    copy /Y "app\build\outputs\apk\release\app-release.apk" "%ORIGINAL_DIR%..\web-dashboard\apk\child-app-v1.2.1.apk"
+    copy /Y "app\build\outputs\apk\release\app-release.apk" "%ORIGINAL_DIR%..\web-dashboard\apk\child-app-v1.8.3.apk"
     
     echo.
     echo APK copied to:
     echo - %ORIGINAL_DIR%app\build\outputs\apk\release\app-release.apk
-    echo - %ORIGINAL_DIR%..\web-dashboard\apk\child-app-v1.2.1.apk
+    echo - %ORIGINAL_DIR%..\web-dashboard\apk\child-app-v1.8.3.apk
     echo.
     
     REM Clean up temp directory

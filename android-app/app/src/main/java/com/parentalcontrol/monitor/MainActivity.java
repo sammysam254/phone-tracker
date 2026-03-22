@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private Button startButton;
     private String deviceId;
     private RemoteDeviceController deviceController;
+    private SupabaseClient supabaseClient;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         
         deviceController = new RemoteDeviceController(this);
+        supabaseClient = new SupabaseClient(this);
         
         // Clear old pairing data for fresh start (v1.7.0)
         clearOldPairingData();
@@ -107,6 +109,21 @@ public class MainActivity extends AppCompatActivity {
                         .setNegativeButton("Cancel", null)
                         .show();
                 }
+            });
+        }
+        
+        // Add re-pair device button
+        Button rePairDeviceButton = findViewById(R.id.rePairDeviceButton);
+        if (rePairDeviceButton != null) {
+            rePairDeviceButton.setOnClickListener(v -> {
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("Re-Pair Device")
+                    .setMessage("This will:\n\n• Clear all local pairing data\n• Clear all server data (activities, pairing records)\n• Stop monitoring service\n• Allow you to scan a new QR code\n\nAre you sure you want to continue?")
+                    .setPositiveButton("Yes, Re-Pair", (dialog, which) -> {
+                        rePairDevice();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
             });
         }
         
@@ -279,6 +296,105 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (supabaseClient != null) {
+            supabaseClient.shutdown();
+        }
+    }
+    
+    /**
+     * Re-pair device - clears all local and server data, then starts fresh pairing
+     */
+    private void rePairDevice() {
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        String parentId = prefs.getString("parent_id", null);
+        
+        // Show progress dialog
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Clearing pairing data...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        // Stop monitoring service first
+        stopMonitoringService();
+        Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
+        stopService(remoteControlIntent);
+        
+        // If we have a parent_id, clear server data first
+        if (parentId != null && !parentId.isEmpty()) {
+            supabaseClient.clearDevicePairing(deviceId, parentId, new SupabaseClient.ApiCallback() {
+                @Override
+                public void onSuccess(String response) {
+                    runOnUiThread(() -> {
+                        Log.i("MainActivity", "Server data cleared: " + response);
+                        clearLocalPairingData();
+                        progressDialog.dismiss();
+                        
+                        Toast.makeText(MainActivity.this, "✅ Pairing data cleared! Starting fresh setup...", Toast.LENGTH_LONG).show();
+                        
+                        // Navigate to QR scanner for fresh pairing
+                        Intent intent = new Intent(MainActivity.this, QRScannerActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    });
+                }
+                
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        Log.w("MainActivity", "Server clear failed, clearing local data anyway: " + error);
+                        clearLocalPairingData();
+                        progressDialog.dismiss();
+                        
+                        Toast.makeText(MainActivity.this, "⚠️ Server clear failed, but local data cleared. Starting fresh setup...", Toast.LENGTH_LONG).show();
+                        
+                        // Navigate to QR scanner anyway
+                        Intent intent = new Intent(MainActivity.this, QRScannerActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    });
+                }
+            });
+        } else {
+            // No parent_id, just clear local data
+            clearLocalPairingData();
+            progressDialog.dismiss();
+            
+            Toast.makeText(this, "✅ Local data cleared! Starting fresh setup...", Toast.LENGTH_SHORT).show();
+            
+            // Navigate to QR scanner
+            Intent intent = new Intent(this, QRScannerActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        }
+    }
+    
+    /**
+     * Clear all local pairing data from SharedPreferences
+     */
+    private void clearLocalPairingData() {
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        
+        // Clear all pairing and setup data
+        editor.remove("device_paired");
+        editor.remove("device_registered");
+        editor.remove("consent_granted");
+        editor.remove("parent_id");
+        editor.remove("parent_name");
+        editor.remove("device_admin_prompted");
+        
+        // Keep device_id - it should persist
+        editor.apply();
+        
+        Log.i("MainActivity", "Local pairing data cleared");
+    }
+    
     /**
      * Clear old pairing data to force fresh pairing and permission setup
      * This ensures users re-scan QR code and grant all permissions again
@@ -288,7 +404,7 @@ public class MainActivity extends AppCompatActivity {
         
         // Check if this is a fresh install or update that needs clearing
         int lastVersionCode = prefs.getInt("last_version_code", 0);
-        int currentVersionCode = 17; // v1.7.0
+        int currentVersionCode = 21; // v1.8.3
         
         if (lastVersionCode < currentVersionCode) {
             Log.i("MainActivity", "Clearing old pairing data for v1.7.0 update");

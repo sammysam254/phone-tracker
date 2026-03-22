@@ -122,6 +122,7 @@ parent-app/gradlew.bat
 *.aab
 # Allow only the latest release APKs in web-dashboard for downloads
 !web-dashboard/apk/child-monitor-v*.apk
+!web-dashboard/apk/child-app-v*.apk
 !web-dashboard/parent-apk/parent-monitor-v*.apk
 # Exclude debug APKs from being committed
 web-dashboard/apk/app-debug.apk

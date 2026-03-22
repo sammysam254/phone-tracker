@@ -888,6 +888,71 @@ public class SupabaseClient {
         });
     }
     
+    public void clearDevicePairing(String deviceId, String parentId, ApiCallback callback) {
+        executor.execute(() -> {
+            try {
+                URL url = new URL(SUPABASE_URL + "/rest/v1/rpc/clear_device_pairing");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                conn.setRequestProperty("Prefer", "return=representation");
+                conn.setDoOutput(true);
+                
+                // Create request payload
+                JSONObject payload = new JSONObject();
+                payload.put("p_device_id", deviceId);
+                payload.put("p_parent_id", parentId);
+                
+                OutputStream os = conn.getOutputStream();
+                os.write(payload.toString().getBytes("UTF-8"));
+                os.flush();
+                os.close();
+                
+                int responseCode = conn.getResponseCode();
+                
+                if (responseCode >= 200 && responseCode < 300) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line);
+                    }
+                    br.close();
+                    
+                    if (callback != null) {
+                        callback.onSuccess(response.toString());
+                    }
+                } else {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                        conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                    br.close();
+                    
+                    if (callback != null) {
+                        callback.onError("Failed to clear pairing (HTTP " + responseCode + "): " + errorResponse.toString());
+                    }
+                }
+                
+                conn.disconnect();
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error clearing device pairing", e);
+                if (callback != null) {
+                    callback.onError("Network error: " + e.getMessage());
+                }
+            }
+        });
+    }
+    
     public void shutdown() {
         if (executor != null && !executor.isShutdown()) {
             executor.shutdown();
