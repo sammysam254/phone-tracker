@@ -21,6 +21,17 @@ REM Copy project files
 echo Copying project files...
 xcopy /E /I /Y "%~dp0" "%TEMP_BUILD_DIR%\android-app"
 
+REM Copy keystore files if they exist
+if exist "%~dp0parental-control-release.keystore" (
+    echo Copying keystore to root...
+    copy /Y "%~dp0parental-control-release.keystore" "%TEMP_BUILD_DIR%\android-app\"
+    echo Copying keystore to app directory...
+    copy /Y "%~dp0parental-control-release.keystore" "%TEMP_BUILD_DIR%\android-app\app\"
+)
+if exist "%~dp0keystore.properties" (
+    copy /Y "%~dp0keystore.properties" "%TEMP_BUILD_DIR%\android-app\"
+)
+
 REM Navigate to temp directory
 cd /d "%TEMP_BUILD_DIR%\android-app"
 
