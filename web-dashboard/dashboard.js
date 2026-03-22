@@ -758,11 +758,12 @@ async function loadDevices() {
         console.log('Loading devices from Supabase...');
         
         // Try to get devices from device_pairing table first (more likely to exist)
+        // Only load ACTIVE devices (not replaced, inactive, or old pairings)
         const { data: pairingDevices, error: pairingError } = await supabaseClient
             .from('device_pairing')
             .select('*')
             .eq('parent_id', currentUser.id)
-            .in('status', ['paired', 'active', 'registered'])
+            .eq('status', 'active')  // Only active devices
             .order('paired_at', { ascending: false });
         
         if (!pairingError && pairingDevices && pairingDevices.length > 0) {
@@ -2613,12 +2614,12 @@ async function checkForNewDevicePairings() {
         // Fallback to Supabase if backend failed
         if (newDevices.length === 0 && supabaseClient) {
             try {
-                // Check device_pairing table
+                // Check device_pairing table - only active devices
                 const { data: pairingDevices, error: pairingError } = await supabaseClient
                     .from('device_pairing')
                     .select('*')
                     .eq('parent_id', currentUser.id)
-                    .eq('status', 'paired');
+                    .eq('status', 'active');  // Only active devices
                 
                 if (!pairingError && pairingDevices) {
                     newDevices = pairingDevices;

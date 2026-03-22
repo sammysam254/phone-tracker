@@ -30,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
         
         deviceController = new RemoteDeviceController(this);
         
+        // Clear old pairing data for fresh start (v1.7.0)
+        clearOldPairingData();
+        
         initViews();
         setupDeviceInfo();
         checkSetupStatus();
@@ -273,6 +276,37 @@ public class MainActivity extends AppCompatActivity {
                 Log.w("MainActivity", "Device admin not enabled by user");
             }
             checkSetupStatus();
+        }
+    }
+    
+    /**
+     * Clear old pairing data to force fresh pairing and permission setup
+     * This ensures users re-scan QR code and grant all permissions again
+     */
+    private void clearOldPairingData() {
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        
+        // Check if this is a fresh install or update that needs clearing
+        int lastVersionCode = prefs.getInt("last_version_code", 0);
+        int currentVersionCode = 17; // v1.7.0
+        
+        if (lastVersionCode < currentVersionCode) {
+            Log.i("MainActivity", "Clearing old pairing data for v1.7.0 update");
+            
+            // Clear all pairing and setup data
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove("device_paired");
+            editor.remove("device_registered");
+            editor.remove("consent_granted");
+            editor.remove("parent_id");
+            editor.remove("parent_name");
+            
+            // Keep device_id - it should persist
+            // Update version code
+            editor.putInt("last_version_code", currentVersionCode);
+            editor.apply();
+            
+            Log.i("MainActivity", "Old pairing data cleared - user must re-pair and grant permissions");
         }
     }
 }
