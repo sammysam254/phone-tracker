@@ -1942,7 +1942,11 @@ function displayActivities(activities, containerId) {
             
             switch (activity.activity_type) {
                 case 'call':
-                    details = `${data.type || 'Unknown'} call ${data.number ? 'to/from ' + data.number : ''} - Duration: ${data.duration || 'Unknown'}`;
+                    // Show contact name if available, otherwise show number
+                    const callDisplay = data.contact_name && data.contact_name !== 'Unknown' 
+                        ? `${data.contact_name} (${data.number || 'Unknown'})`
+                        : (data.number || data.display_text || 'Unknown');
+                    details = `${data.type || 'Unknown'} call - ${callDisplay} - Duration: ${data.duration || 'Unknown'}`;
                     break;
                 case 'sms':
                     details = `${data.type || 'Unknown'} message ${data.number ? 'to/from ' + data.number : ''}: ${data.body ? data.body.substring(0, 100) + '...' : ''}`;

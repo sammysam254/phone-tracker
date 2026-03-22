@@ -51,7 +51,11 @@ function displayActivitiesEnhanced(activities, containerId) {
             
             switch (activity.activity_type) {
                 case 'call':
-                    details = `${data.type || 'Unknown'} call ${data.number ? 'to/from ' + data.number : ''} - Duration: ${formatDuration(data.duration)}`;
+                    // Show contact name if available, otherwise show number
+                    const callDisplay = data.contact_name && data.contact_name !== 'Unknown' 
+                        ? `${data.contact_name} (${data.number || 'Unknown'})`
+                        : (data.number || data.display_text || 'Unknown');
+                    details = `${data.type || 'Unknown'} call - ${callDisplay} - Duration: ${formatDuration(data.duration)}`;
                     expandedContent = `
                         <div class="expanded-details">
                             <div class="detail-row"><strong>Type:</strong> ${data.type || 'Unknown'}</div>

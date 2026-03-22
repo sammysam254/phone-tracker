@@ -54,18 +54,13 @@ public class CallReceiver extends BroadcastReceiver {
                 callData.put("event", "call_answered");
                 Log.i(TAG, "Call answered: " + phoneNumber);
                 
-                // Start call recording if enabled
-                SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
-                boolean recordCalls = prefs.getBoolean("record_calls", false);
-                
-                if (recordCalls) {
-                    startCallRecording(context, phoneNumber);
-                }
+                // Always start call recording when call is answered
+                startCallRecording(context, phoneNumber);
             } else if (TelephonyManager.EXTRA_STATE_IDLE.equals(state)) {
                 callData.put("event", "call_ended");
                 Log.i(TAG, "Call ended: " + phoneNumber);
                 
-                // Stop call recording
+                // Always stop call recording when call ends
                 stopCallRecording(context);
             }
             
