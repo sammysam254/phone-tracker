@@ -498,7 +498,8 @@ app.get('/api/devices', authenticateUser, async (req, res) => {
       .from('device_pairing')
       .select('*')
       .eq('parent_id', req.user.id)
-      .eq('status', 'paired');
+      .in('status', ['paired', 'active', 'registered'])
+      .order('paired_at', { ascending: false });
     
     if (!pairingError && pairedDevices && pairedDevices.length > 0) {
       // Transform pairing data to match expected device format
@@ -519,7 +520,8 @@ app.get('/api/devices', authenticateUser, async (req, res) => {
     const { data: devices, error } = await supabase
       .from('devices')
       .select('*')
-      .eq('parent_id', req.user.id);
+      .eq('parent_id', req.user.id)
+      .order('last_active', { ascending: false });
     
     if (error) {
       return res.status(500).json({ error: error.message });

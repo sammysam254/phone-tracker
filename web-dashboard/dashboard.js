@@ -762,7 +762,8 @@ async function loadDevices() {
             .from('device_pairing')
             .select('*')
             .eq('parent_id', currentUser.id)
-            .eq('status', 'paired');
+            .in('status', ['paired', 'active', 'registered'])
+            .order('paired_at', { ascending: false });
         
         if (!pairingError && pairingDevices && pairingDevices.length > 0) {
             console.log('Loaded devices from device_pairing table:', pairingDevices);
@@ -774,7 +775,8 @@ async function loadDevices() {
         const { data: devices, error } = await supabaseClient
             .from('devices')
             .select('*')
-            .eq('parent_id', currentUser.id);
+            .eq('parent_id', currentUser.id)
+            .order('last_active', { ascending: false });
         
         if (error) {
             console.error('Error loading devices from Supabase:', error);
