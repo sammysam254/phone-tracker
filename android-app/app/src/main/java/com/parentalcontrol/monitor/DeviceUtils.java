@@ -10,27 +10,45 @@ public class DeviceUtils {
     
     public static String getDeviceId(Context context) {
         try {
+            // CRITICAL: Always check SharedPreferences FIRST to ensure consistency
+            android.content.SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
+            String storedId = prefs.getString("device_id", null);
+            
+            // If we already have a device ID, ALWAYS use it
+            if (storedId != null && !storedId.isEmpty()) {
+                return storedId;
+            }
+            
+            // Generate new device ID only if none exists
             // Use Android ID as primary identifier
             String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+            String generatedId;
             
             if (androidId != null && !androidId.equals("9774d56d682e549c")) {
-                return hashString(androidId);
+                generatedId = hashString(androidId);
+            } else {
+                // Fallback to random UUID
+                String uuid = UUID.randomUUID().toString();
+                generatedId = hashString(uuid);
             }
             
-            // Fallback to random UUID stored in preferences
-            android.content.SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
-            String storedId = prefs.getString("device_uuid", null);
+            // CRITICAL: Store the generated ID permanently
+            prefs.edit().putString("device_id", generatedId).apply();
             
-            if (storedId == null) {
-                storedId = UUID.randomUUID().toString();
-                prefs.edit().putString("device_uuid", storedId).apply();
-            }
-            
-            return hashString(storedId);
+            return generatedId;
             
         } catch (Exception e) {
-            // Final fallback
-            return hashString(UUID.randomUUID().toString());
+            // Final fallback - but try to retrieve stored ID first
+            android.content.SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
+            String storedId = prefs.getString("device_id", null);
+            if (storedId != null) {
+                return storedId;
+            }
+            
+            // Last resort: generate and store
+            String fallbackId = hashString(UUID.randomUUID().toString());
+            prefs.edit().putString("device_id", fallbackId).apply();
+            return fallbackId;
         }
     }
     

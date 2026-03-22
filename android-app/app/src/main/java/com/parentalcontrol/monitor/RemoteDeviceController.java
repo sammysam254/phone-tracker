@@ -38,16 +38,34 @@ public class RemoteDeviceController {
     
     /**
      * Request device admin activation
+     * For Activity contexts, use startActivityForResult with REQUEST_CODE_ENABLE_ADMIN
+     * Returns true if request was initiated, false if already enabled
      */
-    public void requestDeviceAdmin() {
+    public boolean requestDeviceAdmin() {
         if (!isDeviceAdminEnabled()) {
-            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, deviceAdminComponent);
-            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                    "Enable device admin to allow remote device control features");
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
+            try {
+                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, deviceAdminComponent);
+                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                        "Enable device admin to allow remote lock and security features. This is required for parental control functionality.");
+                
+                // If context is an Activity, use startActivityForResult
+                if (context instanceof android.app.Activity) {
+                    ((android.app.Activity) context).startActivityForResult(intent, 1001); // REQUEST_CODE_ENABLE_ADMIN
+                } else {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                }
+                
+                Log.i(TAG, "Device admin request initiated");
+                return true;
+            } catch (Exception e) {
+                Log.e(TAG, "Error requesting device admin", e);
+                return false;
+            }
         }
+        Log.i(TAG, "Device admin already enabled");
+        return false;
     }
     
     /**

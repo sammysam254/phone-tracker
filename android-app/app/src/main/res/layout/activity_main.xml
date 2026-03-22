@@ -135,8 +135,20 @@
             android:id="@+id/checkPermissionsButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="8dp"
             android:text="🔒 Check Permissions"
+            android:textColor="#ffffff"
+            android:textSize="14sp"
+            android:background="@drawable/button_primary"
+            android:minHeight="48dp" />
+
+        <!-- Device Admin Button -->
+        <Button
+            android:id="@+id/enableDeviceAdminButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:text="🛡️ Enable Device Admin"
             android:textColor="#ffffff"
             android:textSize="14sp"
             android:background="@drawable/button_primary"

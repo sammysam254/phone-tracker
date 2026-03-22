@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,16 +14,21 @@ import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
     
+    private static final int REQUEST_CODE_ENABLE_ADMIN = 1001;
+    
     private TextView statusText;
     private TextView deviceIdText;
     private Button setupButton;
     private Button startButton;
     private String deviceId;
+    private RemoteDeviceController deviceController;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        deviceController = new RemoteDeviceController(this);
         
         initViews();
         setupDeviceInfo();
@@ -79,6 +85,28 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         
+        // Add device admin button
+        Button enableDeviceAdminButton = findViewById(R.id.enableDeviceAdminButton);
+        if (enableDeviceAdminButton != null) {
+            enableDeviceAdminButton.setOnClickListener(v -> {
+                if (deviceController.isDeviceAdminEnabled()) {
+                    Toast.makeText(this, "✅ Device admin is already enabled!", Toast.LENGTH_SHORT).show();
+                } else {
+                    new android.app.AlertDialog.Builder(this)
+                        .setTitle("Enable Device Admin")
+                        .setMessage("Device admin permission allows:\n\n• Remote device lock\n• Enhanced security features\n• Parental control functionality\n\nThis is required for full monitoring capabilities.")
+                        .setPositiveButton("Enable", (dialog, which) -> {
+                            boolean requested = deviceController.requestDeviceAdmin();
+                            if (requested) {
+                                Toast.makeText(this, "Please enable device admin on the next screen", Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+                }
+            });
+        }
+        
         startButton.setOnClickListener(v -> {
             if (isFullySetup()) {
                 if (MonitoringService.isServiceRunning(this)) {
@@ -116,28 +144,40 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
         boolean devicePaired = prefs.getBoolean("device_paired", false);
         boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        boolean deviceAdminEnabled = deviceController.isDeviceAdminEnabled();
+        
+        StringBuilder statusBuilder = new StringBuilder();
         
         if (!devicePaired) {
-            statusText.setText("⚠️ Device not paired with parent. Tap 'Start Setup' to pair.");
+            statusBuilder.append("⚠️ Device not paired with parent. Tap 'Start Setup' to pair.");
             setupButton.setEnabled(true);
             setupButton.setText("Start Setup & Pair");
             startButton.setEnabled(false);
         } else if (!consentGranted) {
-            statusText.setText("⚠️ Consent required. Please review and accept consent.");
+            statusBuilder.append("⚠️ Consent required. Please review and accept consent.");
             setupButton.setEnabled(true);
             setupButton.setText("Review Consent");
             startButton.setEnabled(false);
         } else if (!hasAllPermissions()) {
-            statusText.setText("⚠️ Some permissions missing. Grant them for full monitoring.\n\n✅ You can still start monitoring with limited features.");
+            statusBuilder.append("⚠️ Some permissions missing. Grant them for full monitoring.\n\n✅ You can still start monitoring with limited features.");
             setupButton.setEnabled(true);
             setupButton.setText("Grant More Permissions");
             startButton.setEnabled(true); // Allow starting even without all permissions
         } else {
-            statusText.setText("✅ Setup complete. All permissions granted. Ready for full monitoring.");
+            statusBuilder.append("✅ Setup complete. All permissions granted. Ready for full monitoring.");
             setupButton.setEnabled(true);
             setupButton.setText("Review Permissions");
             startButton.setEnabled(true);
         }
+        
+        // Add device admin status
+        if (!deviceAdminEnabled) {
+            statusBuilder.append("\n\n⚠️ Device Admin not enabled. Tap 'Enable Device Admin' button below for remote lock features.");
+        } else {
+            statusBuilder.append("\n\n✅ Device Admin enabled.");
+        }
+        
+        statusText.setText(statusBuilder.toString());
     }
     
     private boolean isFullySetup() {
@@ -199,21 +239,40 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
         boolean deviceAdminPrompted = prefs.getBoolean("device_admin_prompted", false);
         
-        if (!deviceAdminPrompted) {
-            RemoteDeviceController controller = new RemoteDeviceController(this);
-            if (!controller.isDeviceAdminEnabled()) {
-                new android.app.AlertDialog.Builder(this)
-                    .setTitle("Device Admin Required")
-                    .setMessage("Device admin permission is required for remote lock feature. Enable it now?")
-                    .setPositiveButton("Enable", (dialog, which) -> {
-                        controller.requestDeviceAdmin();
-                        prefs.edit().putBoolean("device_admin_prompted", true).apply();
-                    })
-                    .setNegativeButton("Later", (dialog, which) -> {
-                        prefs.edit().putBoolean("device_admin_prompted", true).apply();
-                    })
-                    .show();
+        // Only prompt once per app installation
+        if (!deviceAdminPrompted && !deviceController.isDeviceAdminEnabled()) {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("Device Admin Required")
+                .setMessage("Device admin permission is required for remote lock and security features.\n\nThis is essential for parental control functionality.\n\nEnable it now?")
+                .setPositiveButton("Enable Now", (dialog, which) -> {
+                    boolean requested = deviceController.requestDeviceAdmin();
+                    if (requested) {
+                        Toast.makeText(this, "Please enable device admin on the next screen", Toast.LENGTH_LONG).show();
+                    }
+                    prefs.edit().putBoolean("device_admin_prompted", true).apply();
+                })
+                .setNegativeButton("Later", (dialog, which) -> {
+                    prefs.edit().putBoolean("device_admin_prompted", true).apply();
+                    Toast.makeText(this, "You can enable device admin later from Settings", Toast.LENGTH_SHORT).show();
+                })
+                .setCancelable(false)
+                .show();
+        }
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        if (requestCode == REQUEST_CODE_ENABLE_ADMIN) {
+            if (resultCode == RESULT_OK) {
+                Toast.makeText(this, "✅ Device admin enabled successfully!", Toast.LENGTH_LONG).show();
+                Log.i("MainActivity", "Device admin enabled successfully");
+            } else {
+                Toast.makeText(this, "⚠️ Device admin was not enabled. Some features may not work.", Toast.LENGTH_LONG).show();
+                Log.w("MainActivity", "Device admin not enabled by user");
             }
+            checkSetupStatus();
         }
     }
 }

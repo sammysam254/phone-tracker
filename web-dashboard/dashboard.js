@@ -798,6 +798,9 @@ function populateDeviceSelect(devices) {
     deviceSelect.innerHTML = '<option value="">Select a device...</option>';
     
     if (devices && devices.length > 0) {
+        // Store devices for comparison in pairing check
+        lastKnownDevices = devices;
+        
         devices.forEach(device => {
             const option = document.createElement('option');
             // Handle both device_pairing and devices table formats
@@ -820,6 +823,9 @@ function populateDeviceSelect(devices) {
         option.value = '';
         option.textContent = 'No devices paired yet - Use the pairing section below';
         deviceSelect.appendChild(option);
+        
+        // Clear last known devices
+        lastKnownDevices = [];
     }
 }
 
@@ -2514,16 +2520,162 @@ function filterNotifications() {
     loadNotificationData();
 }
 
-// Auto-refresh functionality
+// Auto-refresh functionality with device pairing check
+let deviceCheckInterval = null;
+let lastKnownDevices = [];
+
 function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
+    if (deviceCheckInterval) clearInterval(deviceCheckInterval);
     
+    // Refresh current device data every 30 seconds
     refreshInterval = setInterval(() => {
         if (selectedDevice) {
             loadOverviewData();
             loadTabData(getCurrentTab());
         }
     }, 30000); // Refresh every 30 seconds
+    
+    // Check for new device pairings every 1 minute
+    deviceCheckInterval = setInterval(async () => {
+        console.log('Checking for new device pairings...');
+        await checkForNewDevicePairings();
+    }, 60000); // Check every 1 minute (60 seconds)
+    
+    // Also do an initial check immediately
+    setTimeout(() => checkForNewDevicePairings(), 5000); // Check after 5 seconds
+}
+
+async function checkForNewDevicePairings() {
+    if (!currentUser) {
+        console.log('No current user, skipping pairing check');
+        return;
+    }
+    
+    try {
+        const authToken = localStorage.getItem('authToken');
+        let newDevices = [];
+        
+        // Try backend API first
+        if (authToken) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                
+                const response = await fetch('/api/devices', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        newDevices = await response.json();
+                        console.log('Fetched devices from backend:', newDevices.length);
+                    }
+                }
+            } catch (error) {
+                console.log('Backend device check failed:', error.message);
+            }
+        }
+        
+        // Fallback to Supabase if backend failed
+        if (newDevices.length === 0 && supabaseClient) {
+            try {
+                // Check device_pairing table
+                const { data: pairingDevices, error: pairingError } = await supabaseClient
+                    .from('device_pairing')
+                    .select('*')
+                    .eq('parent_id', currentUser.id)
+                    .eq('status', 'paired');
+                
+                if (!pairingError && pairingDevices) {
+                    newDevices = pairingDevices;
+                    console.log('Fetched devices from Supabase device_pairing:', newDevices.length);
+                } else {
+                    // Fallback to devices table
+                    const { data: devices, error } = await supabaseClient
+                        .from('devices')
+                        .select('*')
+                        .eq('parent_id', currentUser.id);
+                    
+                    if (!error && devices) {
+                        newDevices = devices;
+                        console.log('Fetched devices from Supabase devices:', newDevices.length);
+                    }
+                }
+            } catch (error) {
+                console.log('Supabase device check failed:', error.message);
+            }
+        }
+        
+        // Compare with last known devices
+        if (newDevices.length > 0) {
+            const newDeviceIds = newDevices.map(d => d.device_id || d.id).sort();
+            const lastDeviceIds = lastKnownDevices.map(d => d.device_id || d.id).sort();
+            
+            // Check if devices have changed
+            const devicesChanged = JSON.stringify(newDeviceIds) !== JSON.stringify(lastDeviceIds);
+            
+            if (devicesChanged) {
+                console.log('🔄 Device list changed! Updating dashboard...');
+                console.log('Previous devices:', lastDeviceIds);
+                console.log('New devices:', newDeviceIds);
+                
+                // Find newly added devices
+                const addedDevices = newDevices.filter(newDev => {
+                    const newId = newDev.device_id || newDev.id;
+                    return !lastKnownDevices.some(oldDev => (oldDev.device_id || oldDev.id) === newId);
+                });
+                
+                if (addedDevices.length > 0) {
+                    console.log('✅ New devices paired:', addedDevices.map(d => d.device_name || d.name));
+                    
+                    // Show notification to user
+                    const deviceNames = addedDevices.map(d => d.device_name || d.name || 'Unknown Device').join(', ');
+                    showSuccess(`🎉 New device(s) paired: ${deviceNames}`);
+                }
+                
+                // Update last known devices
+                lastKnownDevices = newDevices;
+                
+                // Reload device list in dropdown
+                populateDeviceSelect(newDevices);
+                
+                // If no device is currently selected, auto-select the first one
+                if (!selectedDevice && newDevices.length > 0) {
+                    const firstDevice = newDevices[0];
+                    const firstDeviceId = firstDevice.device_id || firstDevice.id;
+                    selectedDevice = firstDeviceId;
+                    
+                    const deviceSelect = document.getElementById('deviceSelect');
+                    if (deviceSelect) {
+                        deviceSelect.value = firstDeviceId;
+                    }
+                    
+                    console.log('Auto-selected first device:', firstDeviceId);
+                    loadOverviewData();
+                    loadTabData(getCurrentTab());
+                }
+                
+                // If a device is selected, refresh its data
+                if (selectedDevice) {
+                    loadOverviewData();
+                    loadTabData(getCurrentTab());
+                }
+            } else {
+                console.log('No changes in device list');
+            }
+        } else {
+            console.log('No devices found in check');
+        }
+    } catch (error) {
+        console.error('Error checking for new device pairings:', error);
+    }
 }
 
 function stopAutoRefresh() {
@@ -2531,9 +2683,34 @@ function stopAutoRefresh() {
         clearInterval(refreshInterval);
         refreshInterval = null;
     }
+    if (deviceCheckInterval) {
+        clearInterval(deviceCheckInterval);
+        deviceCheckInterval = null;
+    }
 }
 
 // Utility functions
+async function refreshDeviceList() {
+    console.log('Manual device refresh triggered');
+    const button = event.target;
+    const originalText = button.textContent;
+    
+    try {
+        button.disabled = true;
+        button.textContent = '🔄 Refreshing...';
+        
+        await checkForNewDevicePairings();
+        
+        showSuccess('✅ Device list refreshed successfully!');
+    } catch (error) {
+        console.error('Error refreshing device list:', error);
+        showError('Failed to refresh device list. Please try again.');
+    } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+}
+
 function showError(message) {
     // Remove existing messages
     document.querySelectorAll('.error, .success').forEach(el => el.remove());
@@ -2591,3 +2768,5 @@ window.generateNewUnlockCode = generateNewUnlockCode;
 window.getInstalledApps = getInstalledApps;
 window.uninstallApp = uninstallApp;
 window.installParentApp = installParentApp;
+window.refreshDeviceList = refreshDeviceList;
+window.checkForNewDevicePairings = checkForNewDevicePairings;
