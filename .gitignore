@@ -120,24 +120,8 @@ parent-app/gradlew.bat
 # APK files (except web-dashboard downloads)
 *.apk
 *.aab
-# Allow only release APK files in web-dashboard for downloads
-!web-dashboard/apk/app-release.apk
-!web-dashboard/apk/child-app-v1.3.0.apk
-!web-dashboard/apk/child-app-v1.3.1.apk
-!web-dashboard/apk/child-app-v1.5.0.apk
-!web-dashboard/apk/child-app-v1.5.1.apk
-!web-dashboard/apk/child-app-v1.5.2.apk
-!web-dashboard/apk/child-app-v1.5.3.apk
-!web-dashboard/apk/child-app-v1.1.5.apk
-!web-dashboard/apk/child-app-v1.1.6.apk
-!web-dashboard/apk/child-app-v1.1.7.apk
-!web-dashboard/apk/child-app-v1.1.9.apk
-!web-dashboard/apk/child-app-v1.2.0.apk
-!web-dashboard/apk/child-app-v1.2.1.apk
-!web-dashboard/parent-apk/app-release.apk
-!web-dashboard/parent-apk/parent-app-v1.4.0.apk
-!web-dashboard/parent-apk/parent-monitor-v1.3.1-qr.apk
-!web-dashboard/parent-apk/parent-monitor-v1.5.0.apk
+# Allow only the latest release APK in web-dashboard for downloads
+!web-dashboard/apk/child-app-v1.4.0-*.apk
 !web-dashboard/parent-apk/parent-monitor-v1.5.1.apk
 # Exclude debug APKs from being committed
 web-dashboard/apk/app-debug.apk

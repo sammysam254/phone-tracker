@@ -27,6 +27,7 @@ public class PermissionSetupActivity extends AppCompatActivity {
     private static final int ACCESSIBILITY_REQUEST_CODE = 103;
     private static final int OVERLAY_REQUEST_CODE = 104;
     private static final int STORAGE_REQUEST_CODE = 105;
+    private static final int DEVICE_ADMIN_REQUEST_CODE = 106;
     
     private LinearLayout permissionContainer;
     private Button continueButton;
@@ -96,6 +97,10 @@ public class PermissionSetupActivity extends AppCompatActivity {
         addPermissionItem("Screen Overlay", 
             hasOverlayPermission(), 
             this::requestOverlayPermission);
+            
+        addPermissionItem("Device Admin (for Remote Lock)", 
+            hasDeviceAdminPermission(), 
+            this::requestDeviceAdminPermission);
     }
     
     private void addPermissionItem(String name, boolean granted, Runnable action) {
@@ -184,7 +189,8 @@ public class PermissionSetupActivity extends AppCompatActivity {
                hasUsageStatsPermission() && 
                hasNotificationAccess() && 
                hasAccessibilityPermission() && 
-               hasOverlayPermission();
+               hasOverlayPermission() &&
+               hasDeviceAdminPermission();
     }
     
     private void requestStandardPermissions() {
@@ -292,6 +298,28 @@ public class PermissionSetupActivity extends AppCompatActivity {
                 new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 
                 STORAGE_REQUEST_CODE);
         }
+    }
+    
+    private boolean hasDeviceAdminPermission() {
+        RemoteDeviceController controller = new RemoteDeviceController(this);
+        return controller.isDeviceAdminEnabled();
+    }
+    
+    private void requestDeviceAdminPermission() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Device Admin Required")
+                .setMessage("Device Admin permission is required for the Remote Lock feature.\n\n" +
+                        "This allows parents to:\n" +
+                        "• Lock the device remotely\n" +
+                        "• Generate unlock codes\n" +
+                        "• Ensure child safety\n\n" +
+                        "Please tap 'Activate' on the next screen to enable Device Admin.")
+                .setPositiveButton("Enable Now", (dialog, which) -> {
+                    RemoteDeviceController controller = new RemoteDeviceController(this);
+                    controller.requestDeviceAdmin();
+                })
+                .setNegativeButton("Skip", null)
+                .show();
     }
     
     private String getPermissionName(String permission) {
