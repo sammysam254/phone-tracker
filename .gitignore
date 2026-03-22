@@ -145,6 +145,12 @@ web-dashboard/parent-apk/app-debug.apk
 *.keystore
 keystore.properties
 parental-control-release.keystore
+android-app/keystore.properties
+android-app/parental-control-release.keystore
+android-app/*.keystore
+parent-app/keystore.properties
+parent-app/parental-control-release.keystore
+parent-app/*.keystore
 
 # Proguard
 proguard/

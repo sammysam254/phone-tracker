@@ -103,9 +103,9 @@ public class MainActivity extends AppCompatActivity {
         boolean consentGranted = prefs.getBoolean("consent_granted", false);
         
         if (!devicePaired) {
-            statusText.setText("⚠️ Device not paired with parent. Please complete setup.");
+            statusText.setText("⚠️ Device not paired with parent. Tap 'Start Setup' to pair.");
             setupButton.setEnabled(true);
-            setupButton.setText("Start Setup");
+            setupButton.setText("Start Setup & Pair");
             startButton.setEnabled(false);
         } else if (!consentGranted) {
             statusText.setText("⚠️ Consent required. Please review and accept consent.");
@@ -113,22 +113,23 @@ public class MainActivity extends AppCompatActivity {
             setupButton.setText("Review Consent");
             startButton.setEnabled(false);
         } else if (!hasAllPermissions()) {
-            statusText.setText("⚠️ Additional permissions required for full monitoring.");
+            statusText.setText("⚠️ Some permissions missing. Grant them for full monitoring.\n\n✅ You can still start monitoring with limited features.");
             setupButton.setEnabled(true);
-            setupButton.setText("Grant Permissions");
-            startButton.setEnabled(false);
+            setupButton.setText("Grant More Permissions");
+            startButton.setEnabled(true); // Allow starting even without all permissions
         } else {
-            statusText.setText("✅ Setup complete. Ready for monitoring.");
-            setupButton.setEnabled(false);
+            statusText.setText("✅ Setup complete. All permissions granted. Ready for full monitoring.");
+            setupButton.setEnabled(true);
+            setupButton.setText("Review Permissions");
             startButton.setEnabled(true);
         }
     }
     
     private boolean isFullySetup() {
         SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        // Only require pairing and consent, not all permissions
         return prefs.getBoolean("device_paired", false) &&
-               prefs.getBoolean("consent_granted", false) &&
-               hasAllPermissions();
+               prefs.getBoolean("consent_granted", false);
     }
     
     private boolean hasAllPermissions() {

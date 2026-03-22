@@ -99,13 +99,24 @@
             android:id="@+id/continueButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Grant All Permissions"
+            android:text="Grant All &amp; Continue"
             android:textColor="#ffffff"
             android:background="@drawable/button_success"
             android:padding="16dp"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:enabled="false" />
+            android:layout_marginBottom="12dp" />
+
+        <!-- Skip Button -->
+        <Button
+            android:id="@+id/skipButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Skip &amp; Pair Anyway"
+            android:textColor="#666666"
+            android:background="@android:color/transparent"
+            android:padding="16dp"
+            android:textSize="14sp" />
 
     </LinearLayout>
 

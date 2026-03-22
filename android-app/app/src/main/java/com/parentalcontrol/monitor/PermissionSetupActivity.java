@@ -30,6 +30,7 @@ public class PermissionSetupActivity extends AppCompatActivity {
     
     private LinearLayout permissionContainer;
     private Button continueButton;
+    private Button skipButton;
     
     private String[] requiredPermissions = {
         Manifest.permission.READ_CALL_LOG,
@@ -62,6 +63,7 @@ public class PermissionSetupActivity extends AppCompatActivity {
     private void initViews() {
         permissionContainer = findViewById(R.id.permissionContainer);
         continueButton = findViewById(R.id.continueButton);
+        skipButton = findViewById(R.id.skipButton);
     }
     
     private void setupPermissionList() {
@@ -124,20 +126,48 @@ public class PermissionSetupActivity extends AppCompatActivity {
     
     private void setupContinueButton() {
         continueButton.setOnClickListener(v -> {
-            if (allPermissionsGranted()) {
-                Intent intent = new Intent(this, PairingActivity.class);
-                startActivity(intent);
-                finish();
-            } else {
-                Toast.makeText(this, "Please grant all permissions to continue", Toast.LENGTH_LONG).show();
-            }
+            Intent intent = new Intent(this, PairingActivity.class);
+            startActivity(intent);
+            finish();
         });
+        
+        // Add skip button functionality
+        if (skipButton != null) {
+            skipButton.setOnClickListener(v -> {
+                // Show warning dialog
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("Skip Permissions?")
+                    .setMessage("You can proceed to pairing without granting all permissions now.\n\n" +
+                            "⚠️ Warning: Some monitoring features will not work until you grant the required permissions.\n\n" +
+                            "You can grant permissions later from the main screen.")
+                    .setPositiveButton("Skip & Continue", (dialog, which) -> {
+                        Intent intent = new Intent(this, PairingActivity.class);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .setNegativeButton("Stay Here", null)
+                    .show();
+            });
+        }
     }
     
     private void updatePermissionStatus() {
         setupPermissionList();
-        continueButton.setEnabled(allPermissionsGranted());
-        continueButton.setText(allPermissionsGranted() ? "Continue to Pairing" : "Grant All Permissions");
+        
+        // Always enable continue button - allow proceeding without all permissions
+        continueButton.setEnabled(true);
+        
+        if (allPermissionsGranted()) {
+            continueButton.setText("Continue to Pairing");
+            if (skipButton != null) {
+                skipButton.setVisibility(android.view.View.GONE);
+            }
+        } else {
+            continueButton.setText("Grant All & Continue");
+            if (skipButton != null) {
+                skipButton.setVisibility(android.view.View.VISIBLE);
+            }
+        }
     }
     
     private boolean allPermissionsGranted() {
