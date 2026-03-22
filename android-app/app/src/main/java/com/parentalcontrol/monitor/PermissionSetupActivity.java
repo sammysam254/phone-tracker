@@ -163,9 +163,10 @@ public class PermissionSetupActivity extends AppCompatActivity {
                 skipButton.setVisibility(android.view.View.GONE);
             }
         } else {
-            continueButton.setText("Grant All & Continue");
+            continueButton.setText("Continue Anyway");
             if (skipButton != null) {
                 skipButton.setVisibility(android.view.View.VISIBLE);
+                skipButton.setText("Skip All Permissions");
             }
         }
     }
