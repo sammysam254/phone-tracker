@@ -795,11 +795,16 @@ function populateDeviceSelect(devices) {
     const deviceSelect = document.getElementById('deviceSelect');
     if (!deviceSelect) return;
     
+    // Store currently selected device before clearing
+    const currentlySelected = selectedDevice || deviceSelect.value;
+    
     deviceSelect.innerHTML = '<option value="">Select a device...</option>';
     
     if (devices && devices.length > 0) {
         // Store devices for comparison in pairing check
         lastKnownDevices = devices;
+        
+        let deviceStillExists = false;
         
         devices.forEach(device => {
             const option = document.createElement('option');
@@ -810,12 +815,23 @@ function populateDeviceSelect(devices) {
             option.value = deviceId;
             option.textContent = `${deviceName} (${deviceId})`;
             deviceSelect.appendChild(option);
+            
+            // Check if currently selected device still exists
+            if (deviceId === currentlySelected) {
+                deviceStillExists = true;
+            }
         });
         
-        // Auto-select first device if available
-        if (!selectedDevice) {
+        // Restore selection if device still exists
+        if (deviceStillExists && currentlySelected) {
+            selectedDevice = currentlySelected;
+            deviceSelect.value = currentlySelected;
+            console.log('Preserved selected device:', currentlySelected);
+        } else if (!selectedDevice || !deviceStillExists) {
+            // Auto-select first device if no valid selection
             selectedDevice = devices[0].device_id || devices[0].id;
             deviceSelect.value = selectedDevice;
+            console.log('Auto-selected first device:', selectedDevice);
             loadOverviewData();
         }
     } else {
@@ -824,8 +840,9 @@ function populateDeviceSelect(devices) {
         option.textContent = 'No devices paired yet - Use the pairing section below';
         deviceSelect.appendChild(option);
         
-        // Clear last known devices
+        // Clear last known devices and selection
         lastKnownDevices = [];
+        selectedDevice = null;
     }
 }
 
@@ -2528,9 +2545,12 @@ function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
     if (deviceCheckInterval) clearInterval(deviceCheckInterval);
     
+    console.log('🔄 Starting auto-refresh system...');
+    
     // Refresh current device data every 30 seconds
     refreshInterval = setInterval(() => {
         if (selectedDevice) {
+            console.log('Refreshing data for device:', selectedDevice);
             loadOverviewData();
             loadTabData(getCurrentTab());
         }
@@ -2538,12 +2558,17 @@ function startAutoRefresh() {
     
     // Check for new device pairings every 1 minute
     deviceCheckInterval = setInterval(async () => {
-        console.log('Checking for new device pairings...');
+        console.log('⏰ Running scheduled device pairing check...');
         await checkForNewDevicePairings();
     }, 60000); // Check every 1 minute (60 seconds)
     
-    // Also do an initial check immediately
-    setTimeout(() => checkForNewDevicePairings(), 5000); // Check after 5 seconds
+    // Do an initial check after 5 seconds
+    setTimeout(async () => {
+        console.log('🚀 Running initial device pairing check...');
+        await checkForNewDevicePairings();
+    }, 5000);
+    
+    console.log('✅ Auto-refresh system started');
 }
 
 async function checkForNewDevicePairings() {
@@ -2615,13 +2640,13 @@ async function checkForNewDevicePairings() {
         
         // Compare with last known devices
         if (newDevices.length > 0) {
-            const newDeviceIds = newDevices.map(d => d.device_id || d.id).sort();
-            const lastDeviceIds = lastKnownDevices.map(d => d.device_id || d.id).sort();
+            const newDeviceIds = newDevices.map(d => d.device_id || d.id).filter(id => id).sort();
+            const lastDeviceIds = lastKnownDevices.map(d => d.device_id || d.id).filter(id => id).sort();
             
             // Check if devices have changed
             const devicesChanged = JSON.stringify(newDeviceIds) !== JSON.stringify(lastDeviceIds);
             
-            if (devicesChanged) {
+            if (devicesChanged || lastKnownDevices.length === 0) {
                 console.log('🔄 Device list changed! Updating dashboard...');
                 console.log('Previous devices:', lastDeviceIds);
                 console.log('New devices:', newDeviceIds);
@@ -2629,7 +2654,13 @@ async function checkForNewDevicePairings() {
                 // Find newly added devices
                 const addedDevices = newDevices.filter(newDev => {
                     const newId = newDev.device_id || newDev.id;
-                    return !lastKnownDevices.some(oldDev => (oldDev.device_id || oldDev.id) === newId);
+                    return newId && !lastKnownDevices.some(oldDev => (oldDev.device_id || oldDev.id) === newId);
+                });
+                
+                // Find removed devices
+                const removedDevices = lastKnownDevices.filter(oldDev => {
+                    const oldId = oldDev.device_id || oldDev.id;
+                    return oldId && !newDevices.some(newDev => (newDev.device_id || newDev.id) === oldId);
                 });
                 
                 if (addedDevices.length > 0) {
@@ -2640,14 +2671,23 @@ async function checkForNewDevicePairings() {
                     showSuccess(`🎉 New device(s) paired: ${deviceNames}`);
                 }
                 
-                // Update last known devices
+                if (removedDevices.length > 0) {
+                    console.log('⚠️ Devices removed:', removedDevices.map(d => d.device_name || d.name));
+                }
+                
+                // Update last known devices BEFORE populating select
                 lastKnownDevices = newDevices;
                 
-                // Reload device list in dropdown
+                // Reload device list in dropdown (this will preserve selection if device still exists)
                 populateDeviceSelect(newDevices);
                 
-                // If no device is currently selected, auto-select the first one
-                if (!selectedDevice && newDevices.length > 0) {
+                // Check if currently selected device still exists
+                const currentDeviceStillExists = selectedDevice && newDevices.some(d => 
+                    (d.device_id || d.id) === selectedDevice
+                );
+                
+                if (!currentDeviceStillExists && newDevices.length > 0) {
+                    // Current device was removed or doesn't exist, select first device
                     const firstDevice = newDevices[0];
                     const firstDeviceId = firstDevice.device_id || firstDevice.id;
                     selectedDevice = firstDeviceId;
@@ -2657,13 +2697,12 @@ async function checkForNewDevicePairings() {
                         deviceSelect.value = firstDeviceId;
                     }
                     
-                    console.log('Auto-selected first device:', firstDeviceId);
+                    console.log('Previous device removed, auto-selected first device:', firstDeviceId);
                     loadOverviewData();
                     loadTabData(getCurrentTab());
-                }
-                
-                // If a device is selected, refresh its data
-                if (selectedDevice) {
+                } else if (selectedDevice) {
+                    // Current device still exists, just refresh its data
+                    console.log('Refreshing data for current device:', selectedDevice);
                     loadOverviewData();
                     loadTabData(getCurrentTab());
                 }
@@ -2672,6 +2711,12 @@ async function checkForNewDevicePairings() {
             }
         } else {
             console.log('No devices found in check');
+            // Clear everything if no devices
+            if (lastKnownDevices.length > 0) {
+                lastKnownDevices = [];
+                selectedDevice = null;
+                populateDeviceSelect([]);
+            }
         }
     } catch (error) {
         console.error('Error checking for new device pairings:', error);
