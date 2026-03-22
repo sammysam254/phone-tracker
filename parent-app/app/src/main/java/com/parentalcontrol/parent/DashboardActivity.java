@@ -355,111 +355,49 @@ public class DashboardActivity extends AppCompatActivity {
         if (!userEmail.isEmpty() && !userPassword.isEmpty()) {
             // Wait a bit for the page to load, then try auto-login with simplified flow
             webView.postDelayed(() -> {
-                    // JavaScript to bypass authentication checking and go straight to login
+                    // JavaScript to fill and submit the real login form with stored credentials
                 String javascript = String.format(
                     "javascript:(function(){" +
-                    "console.log('Parent app attempting simplified auto-login...');" +
+                    "console.log('Parent app auto-login: filling credentials...');" +
                     
-                    // Force hide any loading or checking states
-                    "var loadingElements = document.querySelectorAll('[id*=\"loading\"], [class*=\"loading\"], [id*=\"checking\"]');" +
-                    "for(var i = 0; i < loadingElements.length; i++) {" +
-                    "  loadingElements[i].style.display = 'none';" +
-                    "}" +
+                    // Clear any stale fake tokens so real auth can run
+                    "localStorage.removeItem('authToken');" +
+                    "localStorage.removeItem('currentUser');" +
                     
-                    // Force show auth section and hide dashboard
+                    // Show auth form, hide dashboard
                     "var authSection = document.getElementById('authSection');" +
                     "var dashboardSection = document.getElementById('dashboardSection');" +
-                    "if(authSection) {" +
-                    "  authSection.style.display = 'block';" +
-                    "  console.log('Forced auth section visible');" +
-                    "}" +
-                    "if(dashboardSection) {" +
-                    "  dashboardSection.style.display = 'none';" +
-                    "}" +
+                    "if(authSection) authSection.style.display = 'block';" +
+                    "if(dashboardSection) dashboardSection.style.display = 'none';" +
                     
-                    // Hide any error messages
+                    // Hide error messages
                     "var authError = document.getElementById('authError');" +
                     "if(authError) authError.style.display = 'none';" +
                     
-                    // Set stored credentials directly in localStorage to bypass backend auth
-                    "localStorage.setItem('authToken', 'parent-app-token');" +
-                    "localStorage.setItem('currentUser', JSON.stringify({" +
-                    "  id: 'parent-' + Date.now()," +
-                    "  email: '%s'," +
-                    "  user_metadata: { name: 'Parent User' }" +
-                    "}));" +
-                    
-                    // Force show dashboard after login attempt
+                    // Fill and submit the real login form
                     "setTimeout(function(){" +
                     "  var emailField = document.getElementById('loginEmail') || document.querySelector('input[type=\"email\"]');" +
                     "  var passwordField = document.getElementById('loginPassword') || document.querySelector('input[type=\"password\"]');" +
                     "  if(emailField && passwordField) {" +
-                    "    console.log('Found login fields, filling and submitting...');" +
+                    "    console.log('Filling login form...');" +
                     "    emailField.value = '%s';" +
                     "    passwordField.value = '%s';" +
-                    "    " +
-                    "    // Trigger change events" +
                     "    emailField.dispatchEvent(new Event('input', { bubbles: true }));" +
                     "    passwordField.dispatchEvent(new Event('input', { bubbles: true }));" +
-                    "    " +
-                    "    var loginBtn = document.getElementById('loginBtn') || document.querySelector('button[type=\"submit\"]');" +
-                    "    if(loginBtn) {" +
-                    "      console.log('Clicking login button...');" +
-                    "      setTimeout(function(){ " +
-                    "        loginBtn.click();" +
-                    "        // Force show dashboard after login attempt" +
-                    "        setTimeout(function(){" +
-                    "          if(dashboardSection) {" +
-                    "            dashboardSection.style.display = 'block';" +
-                    "            console.log('Forced dashboard visible after login');" +
-                    "          }" +
-                    "          if(authSection) authSection.style.display = 'none';" +
-                    "        }, 2000);" +
-                    "      }, 500);" +
-                    "    }" +
+                    "    var loginBtn = document.getElementById('loginBtn');" +
+                    "    if(loginBtn) { setTimeout(function(){ loginBtn.click(); }, 300); }" +
                     "  } else {" +
-                    "    console.log('No login fields found, forcing dashboard display...');" +
-                    "    // No login form found, just show dashboard directly" +
-                    "    if(dashboardSection) {" +
-                    "      dashboardSection.style.display = 'block';" +
-                    "      console.log('Forced dashboard visible - no login form');" +
-                    "    }" +
-                    "    if(authSection) authSection.style.display = 'none';" +
+                    "    console.log('Login fields not found yet');" +
                     "  }" +
-                    "}, 1000);" +
+                    "}, 800);" +
                     
                     "})()",
-                    userEmail, userEmail, userPassword
+                    userEmail, userPassword
                 );
                 
                 webView.evaluateJavascript(javascript, null);
                 
-                // Set a shorter timeout to force dashboard display
-                webView.postDelayed(() -> {
-                    String forceShowDashboard = 
-                        "javascript:(function(){" +
-                        "console.log('Forcing dashboard display after timeout...');" +
-                        "var dashboardSection = document.getElementById('dashboardSection');" +
-                        "var authSection = document.getElementById('authSection');" +
-                        "if(dashboardSection) {" +
-                        "  dashboardSection.style.display = 'block';" +
-                        "}" +
-                        "if(authSection) {" +
-                        "  authSection.style.display = 'none';" +
-                        "}" +
-                        "// Hide loading indicators" +
-                        "var loadingElements = document.querySelectorAll('[id*=\"loading\"], [class*=\"loading\"]');" +
-                        "for(var i = 0; i < loadingElements.length; i++) {" +
-                        "  loadingElements[i].style.display = 'none';" +
-                        "}" +
-                        "})()";
-                    
-                    webView.evaluateJavascript(forceShowDashboard, null);
-                    hideLoading();
-                    statusText.setText("Dashboard loaded");
-                }, 3000);
-                
-            }, 1500); // Reduced wait time
+            }, 1500); // Wait for page to be ready
         } else {
             // No saved credentials, force show login form
             webView.postDelayed(() -> {

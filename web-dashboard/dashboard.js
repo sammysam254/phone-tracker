@@ -272,23 +272,7 @@ async function checkAuthState() {
     console.log('User agent:', userAgent);
     console.log('Is parent app:', isParentApp);
     
-    if (isParentApp) {
-        console.log('Parent app detected, using simplified authentication');
-        
-        // For parent app, create a simplified user object and show dashboard immediately
-        currentUser = {
-            id: 'parent-app-user',
-            email: 'parent@app.local',
-            user_metadata: { name: 'Parent User' }
-        };
-        
-        console.log('Parent app authentication complete, showing dashboard');
-        hideAuthError();
-        showDashboard();
-        loadDevices();
-        startAutoRefresh();
-        return;
-    }
+    // NOTE: parent app now goes through real auth to get a real user ID for device queries
     
     // Check for stored auth token first (backend authentication)
     const authToken = localStorage.getItem('authToken');
@@ -695,13 +679,6 @@ async function loadDevices() {
     const userAgent = navigator.userAgent || '';
     const isParentApp = userAgent.includes('ParentalControlParentApp') || 
                        userAgent.includes('ParentalControlParent');
-    
-    if (isParentApp) {
-        console.log('Parent app detected, using simplified device loading');
-        // For parent app, show a generic device option
-        deviceSelect.innerHTML = '<option value="parent-device">Child Device</option>';
-        return;
-    }
     
     // Try backend API first
     const authToken = localStorage.getItem('authToken');
