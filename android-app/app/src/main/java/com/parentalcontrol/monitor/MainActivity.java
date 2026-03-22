@@ -52,7 +52,21 @@ public class MainActivity extends AppCompatActivity {
     
     private void setupClickListeners() {
         setupButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, PermissionSetupActivity.class);
+            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+            boolean devicePaired = prefs.getBoolean("device_paired", false);
+            boolean consentGranted = prefs.getBoolean("consent_granted", false);
+            
+            Intent intent;
+            if (!devicePaired) {
+                // Not paired - go to permission setup first
+                intent = new Intent(this, PermissionSetupActivity.class);
+            } else if (!consentGranted) {
+                // Paired but no consent - go to consent
+                intent = new Intent(this, ConsentActivity.class);
+            } else {
+                // Already paired and consented - go to permission setup to review/grant more
+                intent = new Intent(this, PermissionSetupActivity.class);
+            }
             startActivity(intent);
         });
         

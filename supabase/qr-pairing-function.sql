@@ -77,6 +77,32 @@ BEGIN
         paired_at = NOW(),
         updated_at = NOW();
     
+    -- CRITICAL: Also create/update device record in devices table for monitoring
+    INSERT INTO devices (
+        device_id,
+        parent_id,
+        device_name,
+        consent_granted,
+        last_active,
+        created_at,
+        updated_at
+    )
+    VALUES (
+        p_device_id,
+        p_parent_id::UUID,
+        p_device_name,
+        FALSE,
+        NOW(),
+        NOW(),
+        NOW()
+    )
+    ON CONFLICT (device_id)
+    DO UPDATE SET
+        parent_id = p_parent_id::UUID,
+        device_name = p_device_name,
+        last_active = NOW(),
+        updated_at = NOW();
+    
     -- Build result JSON
     v_result := json_build_object(
         'success', true,

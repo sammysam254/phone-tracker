@@ -33,9 +33,9 @@ CREATE POLICY "Users can manage locks for their devices"
     FOR ALL
     USING (
         EXISTS (
-            SELECT 1 FROM monitored_devices 
-            WHERE monitored_devices.device_id = device_locks.device_id
-            AND monitored_devices.parent_id = auth.uid()
+            SELECT 1 FROM devices 
+            WHERE devices.device_id = device_locks.device_id
+            AND devices.parent_id = auth.uid()
         )
     );
 
