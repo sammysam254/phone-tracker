@@ -193,3 +193,49 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- Remote commands table for device control
+CREATE TABLE remote_commands (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    device_id VARCHAR(255) REFERENCES devices(device_id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    command_type VARCHAR(100) NOT NULL,
+    command_data JSONB DEFAULT '{}',
+    status VARCHAR(50) DEFAULT 'pending',
+    result TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+-- Indexes for remote commands
+CREATE INDEX idx_remote_commands_device_id ON remote_commands(device_id);
+CREATE INDEX idx_remote_commands_parent_id ON remote_commands(parent_id);
+CREATE INDEX idx_remote_commands_status ON remote_commands(status);
+CREATE INDEX idx_remote_commands_created_at ON remote_commands(created_at);
+
+-- Remote commands policies
+ALTER TABLE remote_commands ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Parents can view their remote commands" ON remote_commands
+    FOR SELECT USING (auth.uid() = parent_id);
+
+CREATE POLICY "Parents can insert remote commands" ON remote_commands
+    FOR INSERT WITH CHECK (auth.uid() = parent_id);
+
+CREATE POLICY "Parents can update their remote commands" ON remote_commands
+    FOR UPDATE USING (auth.uid() = parent_id);
+
+CREATE POLICY "Allow devices to read pending commands" ON remote_commands
+    FOR SELECT USING (
+        device_id IN (
+            SELECT device_id FROM devices WHERE consent_granted = true
+        ) AND status = 'pending'
+    );
+
+CREATE POLICY "Allow devices to update command status" ON remote_commands
+    FOR UPDATE USING (
+        device_id IN (
+            SELECT device_id FROM devices WHERE consent_granted = true
+        )
+    );

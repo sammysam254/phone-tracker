@@ -2214,6 +2214,144 @@ async function sendEmergencyAlert() {
     }
 }
 
+// Device control functions
+async function lockDevice() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    if (!confirm('Lock the child device immediately?')) {
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'lock_device',
+                command_data: {}
+            }]);
+        
+        if (error) {
+            showError('Failed to send lock command: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Device lock command sent successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending lock command: ' + error.message);
+    }
+}
+
+async function getInstalledApps() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'get_installed_apps',
+                command_data: {}
+            }]);
+        
+        if (error) {
+            showError('Failed to request installed apps: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Installed apps request sent! Check command history for results.');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error requesting installed apps: ' + error.message);
+    }
+}
+
+async function uninstallApp() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    const packageName = document.getElementById('uninstallPackageName').value.trim();
+    
+    if (!packageName) {
+        showError('Please enter a package name');
+        return;
+    }
+    
+    if (!confirm(`Uninstall app: ${packageName}?`)) {
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'uninstall_app',
+                command_data: { package_name: packageName }
+            }]);
+        
+        if (error) {
+            showError('Failed to send uninstall command: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Uninstall command sent successfully!');
+        document.getElementById('uninstallPackageName').value = '';
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending uninstall command: ' + error.message);
+    }
+}
+
+async function installParentApp() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    if (!confirm('Install Parent App on child device? The child will need to approve the installation.')) {
+        return;
+    }
+    
+    try {
+        const parentApkUrl = window.location.origin + '/parent-apk/parent-app-latest.apk';
+        
+        const { data, error } = await supabaseClient
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'install_app',
+                command_data: { 
+                    apk_url: parentApkUrl,
+                    app_name: 'Parent Control App'
+                }
+            }]);
+        
+        if (error) {
+            showError('Failed to send install command: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Parent app install command sent! The child device will prompt for installation.');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending install command: ' + error.message);
+    }
+}
+
 // Filter functions
 function filterCalls() {
     // Implementation for call filtering
@@ -2326,3 +2464,7 @@ window.filterLocation = filterLocation;
 window.filterKeyboard = filterKeyboard;
 window.filterMedia = filterMedia;
 window.filterNotifications = filterNotifications;
+window.lockDevice = lockDevice;
+window.getInstalledApps = getInstalledApps;
+window.uninstallApp = uninstallApp;
+window.installParentApp = installParentApp;

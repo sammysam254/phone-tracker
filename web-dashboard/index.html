@@ -1083,6 +1083,35 @@
                             <p>Send emergency status check</p>
                             <button class="btn btn-danger" onclick="sendEmergencyAlert()">Send Alert</button>
                         </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🔒</span>
+                            <h4>Lock Device</h4>
+                            <p>Lock the child device immediately</p>
+                            <button class="btn btn-danger" onclick="lockDevice()">Lock Device</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">📱</span>
+                            <h4>Installed Apps</h4>
+                            <p>Get list of installed apps</p>
+                            <button class="btn btn-success" onclick="getInstalledApps()">Get Apps List</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🗑️</span>
+                            <h4>Uninstall App</h4>
+                            <p>Remove an app from child device</p>
+                            <input type="text" id="uninstallPackageName" placeholder="com.example.app" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            <button class="btn btn-warning" onclick="uninstallApp()">Uninstall App</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">📲</span>
+                            <h4>Install Parent App</h4>
+                            <p>Install parent app on child device</p>
+                            <button class="btn btn-success" onclick="installParentApp()">Install Parent App</button>
+                        </div>
                     </div>
                     
                     <h4>🕒 Remote Command History</h4>

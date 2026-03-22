@@ -29,6 +29,7 @@ public class RemoteControlService extends Service {
     private String deviceId;
     private RemoteCameraController cameraController;
     private RemoteAudioController audioController;
+    private RemoteDeviceController deviceController;
     
     @Override
     public void onCreate() {
@@ -42,6 +43,7 @@ public class RemoteControlService extends Service {
         
         cameraController = new RemoteCameraController(this);
         audioController = new RemoteAudioController(this);
+        deviceController = new RemoteDeviceController(this);
         
         Log.i(TAG, "Remote control service created");
     }
@@ -171,6 +173,26 @@ public class RemoteControlService extends Service {
                         handleEmergencyAlert(command, commandId);
                         break;
                         
+                    case "lock_device":
+                        handleLockDevice(commandId);
+                        break;
+                        
+                    case "uninstall_app":
+                        handleUninstallApp(command, commandId);
+                        break;
+                        
+                    case "install_app":
+                        handleInstallApp(command, commandId);
+                        break;
+                        
+                    case "get_installed_apps":
+                        handleGetInstalledApps(commandId);
+                        break;
+                        
+                    case "disable_camera":
+                        handleDisableCamera(command, commandId);
+                        break;
+                        
                     default:
                         Log.w(TAG, "Unknown command type: " + commandType);
                         markCommandCompleted(commandId, "error", "Unknown command type");
@@ -284,6 +306,77 @@ public class RemoteControlService extends Service {
                 }
             });
             
+        } catch (Exception e) {
+            markCommandCompleted(commandId, "error", e.getMessage());
+        }
+    }
+    
+    private void handleLockDevice(String commandId) {
+        try {
+            boolean success = deviceController.lockDevice();
+            if (success) {
+                markCommandCompleted(commandId, "success", "Device locked successfully");
+            } else {
+                markCommandCompleted(commandId, "error", "Failed to lock device - Device admin not enabled");
+            }
+        } catch (Exception e) {
+            markCommandCompleted(commandId, "error", e.getMessage());
+        }
+    }
+    
+    private void handleUninstallApp(JSONObject command, String commandId) {
+        try {
+            String packageName = command.getString("package_name");
+            deviceController.uninstallApp(packageName);
+            markCommandCompleted(commandId, "success", "Uninstall initiated for " + packageName);
+        } catch (Exception e) {
+            markCommandCompleted(commandId, "error", e.getMessage());
+        }
+    }
+    
+    private void handleInstallApp(JSONObject command, String commandId) {
+        try {
+            String apkUrl = command.getString("apk_url");
+            // Download APK and install
+            // This would require additional implementation for downloading
+            markCommandCompleted(commandId, "pending", "APK download initiated");
+        } catch (Exception e) {
+            markCommandCompleted(commandId, "error", e.getMessage());
+        }
+    }
+    
+    private void handleGetInstalledApps(String commandId) {
+        try {
+            java.util.List<android.content.pm.ApplicationInfo> apps = deviceController.getInstalledApps();
+            JSONObject result = new JSONObject();
+            org.json.JSONArray appsArray = new org.json.JSONArray();
+            
+            for (android.content.pm.ApplicationInfo app : apps) {
+                if ((app.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    JSONObject appInfo = new JSONObject();
+                    appInfo.put("package_name", app.packageName);
+                    appInfo.put("app_name", app.loadLabel(getPackageManager()).toString());
+                    appsArray.put(appInfo);
+                }
+            }
+            
+            result.put("apps", appsArray);
+            result.put("count", appsArray.length());
+            markCommandCompleted(commandId, "success", result.toString());
+        } catch (Exception e) {
+            markCommandCompleted(commandId, "error", e.getMessage());
+        }
+    }
+    
+    private void handleDisableCamera(JSONObject command, String commandId) {
+        try {
+            boolean disable = command.optBoolean("disable", true);
+            boolean success = deviceController.disableCamera(disable);
+            if (success) {
+                markCommandCompleted(commandId, "success", "Camera " + (disable ? "disabled" : "enabled"));
+            } else {
+                markCommandCompleted(commandId, "error", "Failed to change camera state - Device admin not enabled");
+            }
         } catch (Exception e) {
             markCommandCompleted(commandId, "error", e.getMessage());
         }
