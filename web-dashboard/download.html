@@ -453,12 +453,12 @@
         </div>
 
         <!-- Latest Updates Banner -->
-        <div style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; text-align: center; box-shadow: 0 8px 32px rgba(72, 187, 120, 0.3);">
-            <h3 style="margin: 0 0 15px 0; font-size: 1.5em;">🎉 NEW: Fresh Build - Re-Pairing Required!</h3>
+        <div style="background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; text-align: center; box-shadow: 0 8px 32px rgba(229, 62, 62, 0.3);">
+            <h3 style="margin: 0 0 15px 0; font-size: 1.5em;">🔥 CRITICAL FIX: Monitoring Now Works!</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
                 <div style="background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 10px;">
-                    <h4 style="margin: 0 0 8px 0;">👶 Child App v1.8.0</h4>
-                    <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">🔄 Fresh build - All pairing data reset!</p>
+                    <h4 style="margin: 0 0 8px 0;">👶 Child App v1.8.1</h4>
+                    <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">🔥 Fixed parent_id bug - All monitoring works!</p>
                 </div>
                 <div style="background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 10px;">
                     <h4 style="margin: 0 0 8px 0;">👨‍👩‍👧‍👦 Parent App v1.5.1</h4>
@@ -466,7 +466,7 @@
                 </div>
             </div>
             <p style="margin: 15px 0 0 0; font-size: 0.95em; opacity: 0.9;">
-                ⚠️ IMPORTANT: After installing v1.8.0, you must pair devices again!
+                ⚠️ IMPORTANT: Update to v1.8.1 and re-pair for monitoring to work!
             </p>
         </div>
 
@@ -480,7 +480,7 @@
             </p>
 
             <div class="download-buttons">
-                <a href="apk/child-monitor-v1.8.0.apk" class="download-btn" download="ParentalControl-Child-v1.8.0.apk">
+                <a href="apk/child-monitor-v1.8.1.apk" class="download-btn" download="ParentalControl-Child-v1.8.1.apk">
                     <span class="icon">📱</span>
                     <div class="download-info">
                         <span class="title">Child Monitoring App (Latest)</span>
@@ -494,11 +494,11 @@
                 <div class="version-details">
                     <div class="version-item">
                         <span><strong>Version:</strong></span>
-                        <span>1.8.0</span>
+                        <span>1.8.1</span>
                     </div>
                     <div class="version-item">
                         <span><strong>Build Date:</strong></span>
-                        <span>March 22, 2026 2:50 PM</span>
+                        <span>March 22, 2026 3:32 PM</span>
                     </div>
                     <div class="version-item">
                         <span><strong>Min Android:</strong></span>
@@ -514,21 +514,20 @@
                     </div>
                     <div class="version-item">
                         <span><strong>Latest Feature:</strong></span>
-                        <span>Fresh Build - Pairing Reset</span>
+                        <span>CRITICAL FIX - Monitoring Now Works!</span>
                     </div>
                 </div>
                 
                 <div style="background: #fff5f5; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #e53e3e;">
-                    <h5 style="color: #742a2a; margin-bottom: 10px;">🆕 What's New in v1.8.0</h5>
+                    <h5 style="color: #742a2a; margin-bottom: 10px;">🆕 What's New in v1.8.1 - CRITICAL FIX</h5>
                     <ul style="color: #742a2a; margin: 0; padding-left: 20px;">
-                        <li>🔄 FRESH BUILD: Complete clean build from scratch</li>
-                        <li>⚠️ IMPORTANT: All pairing data has been reset</li>
-                        <li>🔐 You must re-pair all devices after installing</li>
-                        <li>✅ All previous features and fixes included</li>
-                        <li>🎯 Device ID consistency maintained</li>
-                        <li>🔄 Auto-refresh pairing functionality</li>
-                        <li>🔒 Device Lock feature fully functional</li>
-                        <li>📱 All monitoring features operational</li>
+                        <li>🔥 CRITICAL: Fixed parent_id missing in activity logs</li>
+                        <li>✅ Monitoring now works completely!</li>
+                        <li>✅ All activity data now sent to correct parent account</li>
+                        <li>✅ Call logs, SMS, location tracking all functional</li>
+                        <li>✅ Dashboard will now display all monitoring data</li>
+                        <li>🔄 Fresh build with all previous fixes included</li>
+                        <li>⚠️ You must re-pair devices after installing</li>
                     </ul>
                 </div>
                 
@@ -536,11 +535,11 @@
                     <h5 style="color: #7d6608; margin-bottom: 10px;">⚠️ Re-Pairing Instructions</h5>
                     <ol style="color: #7d6608; margin: 0; padding-left: 20px;">
                         <li>Uninstall the old child app from the device</li>
-                        <li>Install the new v1.8.0 APK</li>
+                        <li>Install the new v1.8.1 APK</li>
                         <li>Open the parent app and generate a new QR code</li>
                         <li>Scan the QR code with the child app</li>
                         <li>Grant all permissions when prompted</li>
-                        <li>Pairing complete - monitoring will start!</li>
+                        <li>Monitoring will start working immediately!</li>
                     </ol>
                 </div>
             </div>
@@ -872,11 +871,11 @@
 
         // Check if APK files exist and update download links accordingly
         function checkAPKAvailability() {
-            const releaseBtn = document.querySelector('a[href="apk/child-monitor-v1.8.0.apk"]');
+            const releaseBtn = document.querySelector('a[href="apk/child-monitor-v1.8.1.apk"]');
             const parentBtn = document.querySelector('a[href="parent-apk/parent-monitor-v1.5.1.apk"]');
             
             // Test if child APK is available
-            fetch('apk/child-monitor-v1.8.0.apk', { method: 'HEAD' })
+            fetch('apk/child-monitor-v1.8.1.apk', { method: 'HEAD' })
                 .then(response => {
                     if (!response.ok) {
                         // APK not available, show alternative

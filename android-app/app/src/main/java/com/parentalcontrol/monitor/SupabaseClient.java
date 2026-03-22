@@ -35,6 +35,18 @@ public class SupabaseClient {
     public void logActivity(String deviceId, String activityType, JSONObject data, ApiCallback callback) {
         executor.execute(() -> {
             try {
+                // Get parent_id from SharedPreferences
+                android.content.SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
+                String parentId = prefs.getString("parent_id", null);
+                
+                if (parentId == null || parentId.isEmpty()) {
+                    Log.w(TAG, "No parent_id found - device may not be paired yet");
+                    if (callback != null) {
+                        callback.onError("Device not paired - no parent_id found");
+                    }
+                    return;
+                }
+                
                 URL url = new URL(SUPABASE_URL + "/rest/v1/activities");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 
@@ -46,9 +58,10 @@ public class SupabaseClient {
                 conn.setRequestProperty("Prefer", "return=minimal");
                 conn.setDoOutput(true);
                 
-                // Create request body
+                // Create request body with parent_id
                 JSONObject requestBody = new JSONObject();
                 requestBody.put("device_id", deviceId);
+                requestBody.put("parent_id", parentId);  // Add parent_id
                 requestBody.put("activity_type", activityType);
                 requestBody.put("activity_data", data);
                 requestBody.put("timestamp", java.time.Instant.now().toString());
