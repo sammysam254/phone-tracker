@@ -1088,8 +1088,22 @@
                         <div class="control-card">
                             <span class="icon">🔒</span>
                             <h4>Lock Device</h4>
-                            <p>Lock the child device immediately</p>
-                            <button class="btn btn-danger" onclick="lockDevice()">Lock Device</button>
+                            <p>Lock the child device immediately with unlock code</p>
+                            <button class="btn btn-danger" onclick="lockDevice()">🔒 Lock Device</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🔓</span>
+                            <h4>Unlock Device</h4>
+                            <p>Unlock the child device remotely</p>
+                            <button class="btn btn-success" onclick="unlockDevice()">🔓 Unlock Device</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🔑</span>
+                            <h4>Generate Unlock Code</h4>
+                            <p>Generate a new unlock code (expires in 24h)</p>
+                            <button class="btn btn-warning" onclick="generateNewUnlockCode()">🔑 Generate Code</button>
                         </div>
                         
                         <div class="control-card">

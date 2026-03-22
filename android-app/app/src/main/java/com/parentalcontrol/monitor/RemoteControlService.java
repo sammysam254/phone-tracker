@@ -153,6 +153,14 @@ public class RemoteControlService extends Service {
                         handleActivateCamera(command, commandId);
                         break;
                         
+                    case "lock_device":
+                        handleLockDevice(command, commandId);
+                        break;
+                        
+                    case "unlock_device":
+                        handleUnlockDevice(commandId);
+                        break;
+                        
                     case "deactivate_camera":
                         handleDeactivateCamera(commandId);
                         break;
@@ -171,10 +179,6 @@ public class RemoteControlService extends Service {
                         
                     case "emergency_alert":
                         handleEmergencyAlert(command, commandId);
-                        break;
-                        
-                    case "lock_device":
-                        handleLockDevice(commandId);
                         break;
                         
                     case "uninstall_app":
@@ -311,15 +315,51 @@ public class RemoteControlService extends Service {
         }
     }
     
-    private void handleLockDevice(String commandId) {
+    private void handleLockDevice(JSONObject command, String commandId) {
         try {
-            boolean success = deviceController.lockDevice();
-            if (success) {
-                markCommandCompleted(commandId, "success", "Device locked successfully");
-            } else {
-                markCommandCompleted(commandId, "error", "Failed to lock device - Device admin not enabled");
+            // Get unlock code and message from command data
+            String unlockCode = null;
+            String message = "Device locked by parent";
+            
+            if (command.has("command_data")) {
+                JSONObject commandData = command.getJSONObject("command_data");
+                unlockCode = commandData.optString("unlock_code", null);
+                message = commandData.optString("message", message);
             }
+            
+            // Save lock state with unlock code
+            UnlockCodeManager unlockManager = new UnlockCodeManager(this);
+            if (unlockCode != null && !unlockCode.isEmpty()) {
+                unlockManager.lockDevice(unlockCode, message);
+            }
+            
+            // Show lock screen overlay
+            Intent lockIntent = new Intent(this, DeviceLockActivity.class);
+            lockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(lockIntent);
+            
+            // Also use device admin lock as backup
+            boolean adminLockSuccess = deviceController.lockDevice();
+            
+            Log.i(TAG, "Device locked with unlock code system");
+            markCommandCompleted(commandId, "success", "Device locked successfully");
+            
         } catch (Exception e) {
+            Log.e(TAG, "Error locking device", e);
+            markCommandCompleted(commandId, "error", e.getMessage());
+        }
+    }
+    
+    private void handleUnlockDevice(String commandId) {
+        try {
+            // Unlock via unlock code manager
+            UnlockCodeManager unlockManager = new UnlockCodeManager(this);
+            unlockManager.unlockDevice();
+            
+            Log.i(TAG, "Device unlocked remotely");
+            markCommandCompleted(commandId, "success", "Device unlocked successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error unlocking device", e);
             markCommandCompleted(commandId, "error", e.getMessage());
         }
     }

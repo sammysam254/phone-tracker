@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
         setupDeviceInfo();
         checkSetupStatus();
         setupClickListeners();
+        checkDeviceAdmin();
     }
     
     @Override
@@ -178,5 +179,27 @@ public class MainActivity extends AppCompatActivity {
         
         Toast.makeText(this, "Monitoring stopped", Toast.LENGTH_SHORT).show();
         updateMonitoringStatus();
+    }
+    
+    private void checkDeviceAdmin() {
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        boolean deviceAdminPrompted = prefs.getBoolean("device_admin_prompted", false);
+        
+        if (!deviceAdminPrompted) {
+            RemoteDeviceController controller = new RemoteDeviceController(this);
+            if (!controller.isDeviceAdminEnabled()) {
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("Device Admin Required")
+                    .setMessage("Device admin permission is required for remote lock feature. Enable it now?")
+                    .setPositiveButton("Enable", (dialog, which) -> {
+                        controller.requestDeviceAdmin();
+                        prefs.edit().putBoolean("device_admin_prompted", true).apply();
+                    })
+                    .setNegativeButton("Later", (dialog, which) -> {
+                        prefs.edit().putBoolean("device_admin_prompted", true).apply();
+                    })
+                    .show();
+            }
+        }
     }
 }

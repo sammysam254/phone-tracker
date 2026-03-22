@@ -2247,6 +2247,127 @@ async function lockDevice() {
     }
 }
 
+async function lockDevice() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    if (!confirm('Lock the child device immediately?')) {
+        return;
+    }
+    
+    try {
+        // Generate unlock code
+        const unlockCode = generateUnlockCode();
+        
+        // Insert command into database
+        const { data, error } = await supabaseClient
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'lock_device',
+                command_data: {
+                    unlock_code: unlockCode,
+                    message: 'Device locked by parent'
+                }
+            }]);
+        
+        if (error) {
+            showError('Failed to send lock command: ' + error.message);
+            return;
+        }
+        
+        // Show unlock code to parent
+        alert(`Device locked!\n\nUnlock Code: ${unlockCode}\n\nSave this code - it expires in 24 hours.\nYou can also unlock remotely from the dashboard.`);
+        
+        showSuccess('Device lock command sent successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending lock command: ' + error.message);
+    }
+}
+
+async function unlockDevice() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    if (!confirm('Unlock the child device remotely?')) {
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'unlock_device',
+                command_data: {}
+            }]);
+        
+        if (error) {
+            showError('Failed to send unlock command: ' + error.message);
+            return;
+        }
+        
+        showSuccess('Device unlock command sent successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error sending unlock command: ' + error.message);
+    }
+}
+
+async function generateNewUnlockCode() {
+    if (!selectedDevice) {
+        showError('Please select a device first');
+        return;
+    }
+    
+    if (!confirm('Generate a new unlock code? The old code will stop working.')) {
+        return;
+    }
+    
+    try {
+        // Generate new unlock code
+        const unlockCode = generateUnlockCode();
+        
+        // Send lock command with new code (this updates the code on device)
+        const { data, error } = await supabaseClient
+            .from('remote_commands')
+            .insert([{
+                device_id: selectedDevice,
+                parent_id: currentUser.id,
+                command_type: 'lock_device',
+                command_data: {
+                    unlock_code: unlockCode,
+                    message: 'New unlock code generated'
+                }
+            }]);
+        
+        if (error) {
+            showError('Failed to generate new unlock code: ' + error.message);
+            return;
+        }
+        
+        // Show new unlock code to parent
+        alert(`New Unlock Code: ${unlockCode}\n\nThis code expires in 24 hours.\nThe old code will no longer work.`);
+        
+        showSuccess('New unlock code generated successfully!');
+        loadRemoteCommandHistory();
+    } catch (error) {
+        showError('Error generating unlock code: ' + error.message);
+    }
+}
+
+function generateUnlockCode() {
+    // Generate 6-digit unlock code
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 async function getInstalledApps() {
     if (!selectedDevice) {
         showError('Please select a device first');
@@ -2465,6 +2586,8 @@ window.filterKeyboard = filterKeyboard;
 window.filterMedia = filterMedia;
 window.filterNotifications = filterNotifications;
 window.lockDevice = lockDevice;
+window.unlockDevice = unlockDevice;
+window.generateNewUnlockCode = generateNewUnlockCode;
 window.getInstalledApps = getInstalledApps;
 window.uninstallApp = uninstallApp;
 window.installParentApp = installParentApp;
