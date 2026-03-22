@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation & Permission Guide - Parental Control Monitor</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .tab-button:hover {
+            background: #e9ecef;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        .step-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .step-description {
+            margin-left: 55px;
+            color: #555;
+        }
+
+        .screenshot {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 15px 0;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: transform 0.3s;
+        }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .tab-button {
+                min-width: 100%;
+            }
+
+            .step-number {
+                width: 35px;
+                height: 35px;
+                line-height: 35px;
+                font-size: 1em;
+            }
+
+            .step-description {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Installation & Permission Guide</h1>
+            <p>Complete step-by-step instructions for setting up Parental Control Monitor</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('child-app')">👶 Child App</button>
+            <button class="tab-button" onclick="showTab('parent-app')">👨‍👩‍👧‍👦 Parent App</button>
+            <button class="tab-button" onclick="showTab('permissions')">🔐 Permissions</button>
+            <button class="tab-button" onclick="showTab('troubleshooting')">🔧 Troubleshooting</button>
+        </div>
+
+        <!-- Child App Installation -->
+        <div id="child-app" class="tab-content active">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Child App Installation</h2>
+
+            <div class="info">
+                <strong>📌 Before You Start:</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Download the Child App APK from the dashboard</li>
+                    <li>Ensure the child device has Android 7.0 or higher</li>
+                    <li>Have the parent device ready for QR code pairing</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-title">Download the APK</div>
+                <div class="step-description">
+                    <p>Go to the download page and tap "Download Child App"</p>
+                    <p>The APK file will be saved to your Downloads folder</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-title">Enable Unknown Sources</div>
+                <div class="step-description">
+                    <p>When you try to install, Android will ask for permission:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Tap "Settings" when prompted</li>
+                        <li>Enable "Allow from this source"</li>
+                        <li>Go back to the installer</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <div class="step-title">Install the App</div>
+                <div class="step-description">
+                    <p>Tap "Install" and wait for installation to complete</p>
+                    <p>Tap "Open" when installation finishes</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
+                <div class="step-title">Grant Consent</div>
+                <div class="step-description">
+                    <p>On first launch, you'll see a consent screen:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Read the consent information</li>
+                        <li>Tap "I Understand and Agree"</li>
+                        <li>Tap "Grant Consent"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">5</span>
+                <div class="step-title">Scan QR Code</div>
+                <div class="step-description">
+                    <p>The app will open the QR scanner:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Open the Parent App on parent device</li>
+                        <li>Generate a QR code</li>
+                        <li>Point the child device camera at the QR code</li>
+                        <li>Wait for successful pairing</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">6</span>
+                <div class="step-title">Grant Basic Permissions</div>
+                <div class="step-description">
+                    <p>The app will request essential permissions:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Location - Tap "Allow all the time"</li>
+                        <li>Contacts - Tap "Allow"</li>
+                        <li>Phone - Tap "Allow"</li>
+                        <li>SMS - Tap "Allow"</li>
+                        <li>Storage - Tap "Allow"</li>
+                        <li>Camera - Tap "Allow"</li>
+                        <li>Microphone - Tap "Allow"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">7</span>
+                <div class="step-title">Enable Accessibility Service</div>
+                <div class="step-description">
+                    <p><strong>This is the most important step for screen monitoring!</strong></p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Tap "Grant Accessibility"</li>
+                        <li>Tap "Installed apps" or "Downloaded apps"</li>
+                        <li>Find and tap "Parental Control"</li>
+                        <li>Toggle the switch to ON</li>
+                        <li>Tap "OK" or "Allow" on the confirmation dialog</li>
+                        <li>Tap "Open Settings" if prompted</li>
+                        <li>Go to Apps → Parental Control</li>
+                        <li>Tap the three dots (⋮) at the top right</li>
+                        <li>Select "Allow restricted settings"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Important:</strong> Without accessibility service, screen interactions and keyboard inputs won't be monitored!
+            </div>
+
+            <div class="step">
+                <span class="step-number">8</span>
+                <div class="step-title">Enable Notification Access</div>
+                <div class="step-description">
+                    <p>To monitor notifications:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Tap "Grant Notification Access"</li>
+                        <li>Find "Parental Control" in the list</li>
+                        <li>Toggle it ON</li>
+                        <li>Tap "Allow"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">9</span>
+                <div class="step-title">Disable Battery Optimization</div>
+                <div class="step-description">
+                    <p>To ensure continuous monitoring:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Go to Settings → Apps → Parental Control</li>
+                        <li>Tap "Battery"</li>
+                        <li>Select "Unrestricted" or "Don't optimize"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>✅ Setup Complete!</strong> The child app is now monitoring and sending data to your parent dashboard.
+            </div>
+        </div>
+
+        <!-- Parent App Installation -->
+        <div id="parent-app" class="tab-content">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Parent App Installation</h2>
+
+            <div class="info">
+                <strong>📌 Before You Start:</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Download the Parent App APK from the dashboard</li>
+                    <li>Create an account on the web dashboard first</li>
+                    <li>Have your login credentials ready</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-title">Download & Install</div>
+                <div class="step-description">
+                    <p>Download the Parent App APK and install it (same process as Child App)</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-title">Open the App</div>
+                <div class="step-description">
+                    <p>Launch the Parent App from your app drawer</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <div class="step-title">Login</div>
+                <div class="step-description">
+                    <p>Enter your dashboard credentials:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Enter your email</li>
+                        <li>Enter your password</li>
+                        <li>Tap "Login"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
+                <div class="step-title">Generate QR Code</div>
+                <div class="step-description">
+                    <p>To pair with a child device:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Tap "Add Device" or "Generate QR Code"</li>
+                        <li>A QR code will be displayed</li>
+                        <li>Keep this screen open</li>
+                        <li>Use the child device to scan this code</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">5</span>
+                <div class="step-title">View Dashboard</div>
+                <div class="step-description">
+                    <p>After pairing, you can:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>View all monitoring data</li>
+                        <li>Switch between multiple devices</li>
+                        <li>Access all features from the web dashboard</li>
+                        <li>Receive real-time updates</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>✅ Parent App Ready!</strong> You can now monitor your child's device from your phone.
+            </div>
+        </div>
+
+        <!-- Permissions Guide -->
+        <div id="permissions" class="tab-content">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Detailed Permissions Guide</h2>
+
+            <div class="warning">
+                <strong>⚠️ Critical:</strong> All permissions must be granted for full functionality. Missing permissions will result in incomplete monitoring.
+            </div>
+
+            <div class="step">
+                <span class="step-number">📍</span>
+                <div class="step-title">Location Permission</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Track device location in real-time</p>
+                    <p><strong>How to grant:</strong></p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>When prompted, tap "Allow all the time"</li>
+                        <li>Or: Settings → Apps → Parental Control → Permissions → Location → Allow all the time</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">👥</span>
+                <div class="step-title">Contacts Permission</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Display contact names in call logs and messages</p>
+                    <p><strong>How to grant:</strong> Tap "Allow" when prompted</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">📞</span>
+                <div class="step-title">Phone Permission</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Monitor incoming and outgoing calls</p>
+                    <p><strong>How to grant:</strong> Tap "Allow" when prompted</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">💬</span>
+                <div class="step-title">SMS Permission</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Monitor text messages</p>
+                    <p><strong>How to grant:</strong> Tap "Allow" when prompted</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">📁</span>
+                <div class="step-title">Storage Permission</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Access photos and save monitoring data</p>
+                    <p><strong>How to grant:</strong> Tap "Allow" when prompted</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">📷</span>
+                <div class="step-title">Camera Permission</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Remote camera access and QR scanning</p>
+                    <p><strong>How to grant:</strong> Tap "Allow" when prompted</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">🎤</span>
+                <div class="step-title">Microphone Permission</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Record calls and remote audio</p>
+                    <p><strong>How to grant:</strong> Tap "Allow" when prompted</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">♿</span>
+                <div class="step-title">Accessibility Service (MOST IMPORTANT)</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Monitor screen interactions, keyboard inputs, and app usage</p>
+                    <p><strong>Detailed Steps:</strong></p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Click "Grant"</strong> button in the app</li>
+                        <li><strong>Click "Installed apps"</strong> or "Downloaded apps" in the list</li>
+                        <li><strong>Click "Parental Control"</strong> from the app list</li>
+                        <li><strong>Click "OK"</strong> or toggle the switch to ON</li>
+                        <li><strong>Open Settings</strong> (if prompted)</li>
+                        <li><strong>Go to Apps</strong> → All apps</li>
+                        <li><strong>Open "Parental Control"</strong></li>
+                        <li><strong>Select the three dots (⋮)</strong> at the top right corner</li>
+                        <li><strong>Allow restricted settings</strong> - This is crucial!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Without "Allow restricted settings":</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Screen interactions won't be captured</li>
+                    <li>Keyboard inputs won't be monitored</li>
+                    <li>App usage tracking will be limited</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <span class="step-number">🔔</span>
+                <div class="step-title">Notification Access</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Monitor all notifications</p>
+                    <p><strong>How to grant:</strong></p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Settings → Apps → Special app access → Notification access</li>
+                        <li>Find "Parental Control"</li>
+                        <li>Toggle ON</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">🔋</span>
+                <div class="step-title">Battery Optimization</div>
+                <div class="step-description">
+                    <p><strong>Why needed:</strong> Prevent Android from stopping the monitoring service</p>
+                    <p><strong>How to disable:</strong></p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Settings → Apps → Parental Control</li>
+                        <li>Tap "Battery"</li>
+                        <li>Select "Unrestricted" or "Don't optimize"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div id="troubleshooting" class="tab-content">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Troubleshooting Common Issues</h2>
+
+            <div class="step">
+                <span class="step-number">❌</span>
+                <div class="step-title">App Won't Install</div>
+                <div class="step-description">
+                    <p><strong>Solutions:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Enable "Install unknown apps" for your browser/file manager</li>
+                        <li>Check if you have enough storage space</li>
+                        <li>Try downloading the APK again</li>
+                        <li>Restart your device and try again</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">❌</span>
+                <div class="step-title">QR Code Won't Scan</div>
+                <div class="step-description">
+                    <p><strong>Solutions:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Grant camera permission</li>
+                        <li>Ensure good lighting</li>
+                        <li>Hold the device steady</li>
+                        <li>Try increasing screen brightness on parent device</li>
+                        <li>Make sure QR code is fully visible on screen</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">❌</span>
+                <div class="step-title">No Data Showing in Dashboard</div>
+                <div class="step-description">
+                    <p><strong>Solutions:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Check internet connection on child device</li>
+                        <li>Verify all permissions are granted</li>
+                        <li>Ensure accessibility service is enabled</li>
+                        <li>Check if battery optimization is disabled</li>
+                        <li>Restart the child app</li>
+                        <li>Wait a few minutes for data to sync</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">❌</span>
+                <div class="step-title">Keyboard Inputs Not Showing</div>
+                <div class="step-description">
+                    <p><strong>Solutions:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Verify accessibility service is enabled</li>
+                        <li>Check "Allow restricted settings" is enabled</li>
+                        <li>Go to Settings → Apps → Parental Control → Three dots → Allow restricted settings</li>
+                        <li>Restart the device</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">❌</span>
+                <div class="step-title">Location Not Updating</div>
+                <div class="step-description">
+                    <p><strong>Solutions:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Ensure location permission is set to "Allow all the time"</li>
+                        <li>Enable GPS/Location services on the device</li>
+                        <li>Check if device has internet connection</li>
+                        <li>Disable battery optimization for the app</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">❌</span>
+                <div class="step-title">App Keeps Stopping</div>
+                <div class="step-description">
+                    <p><strong>Solutions:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Disable battery optimization</li>
+                        <li>Add app to "Protected apps" or "Auto-start" list</li>
+                        <li>Check if device has enough RAM</li>
+                        <li>Clear app cache: Settings → Apps → Parental Control → Storage → Clear cache</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info">
+                <strong>📧 Still Need Help?</strong>
+                <p style="margin-top: 10px;">Contact our support team:</p>
+                <p><strong>Email:</strong> sammyseth260@gmail.com</p>
+                <p><strong>Phone:</strong> +254 706 499 848</p>
+                <p><strong>Response Time:</strong> Within 24-48 hours</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="index.html" class="back-link">← Back to Home</a>
+            <a href="download.html" class="back-link" style="margin-left: 10px;">Download Apps →</a>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -24,7 +24,7 @@ public class DashboardActivity extends AppCompatActivity {
     private Button refreshButton;
     private Button backButton;
     
-    private static final String DASHBOARD_URL = "https://phonetracker-0a26.onrender.com";
+    private static final String DASHBOARD_URL = "file:///android_asset/index.html";
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +57,11 @@ public class DashboardActivity extends AppCompatActivity {
         // Enable local storage
         webSettings.setDatabaseEnabled(true);
         
-        // Enable file access for media viewing
+        // Enable file access for media viewing and CORS from file:///
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
+        webSettings.setAllowFileAccessFromFileURLs(true);
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
         
         // Enable media playback
         webSettings.setMediaPlaybackRequiresUserGesture(false);

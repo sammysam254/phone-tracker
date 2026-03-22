@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parental Control Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.2em;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .auth-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 50px auto;
+        }
+
+        .dashboard-section {
+            display: none;
+        }
+
+        .nav-tabs {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .nav-tabs ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .nav-tabs li {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .nav-tabs button {
+            width: 100%;
+            padding: 15px 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            min-height: 44px; /* Touch-friendly */
+            touch-action: manipulation;
+        }
+
+        .nav-tabs button.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            border-bottom-color: #667eea;
+        }
+
+        .nav-tabs button:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2.8em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .device-selector {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .device-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .activity-feed {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .activity-item {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .activity-item:hover {
+            background: #edf2f7;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-info {
+            flex: 1;
+        }
+
+        .activity-type {
+            font-weight: 600;
+            color: #667eea;
+            text-transform: capitalize;
+            margin-bottom: 5px;
+        }
+
+        .activity-details {
+            color: #4a5568;
+            font-size: 0.9em;
+            margin-bottom: 3px;
+        }
+
+        .activity-time {
+            color: #718096;
+            font-size: 0.85em;
+        }
+
+        .activity-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+
+        .remote-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-card {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .control-card h4 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .control-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+            min-height: 44px; /* Touch-friendly minimum size */
+            touch-action: manipulation; /* Prevent zoom on double-tap */
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .pairing-section {
+            background: #e6fffa;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #38b2ac;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .pairing-code-input {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .device-id-input {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .device-id-input input {
+            background: #f8fafc;
+            transition: all 0.3s;
+        }
+
+        .device-id-input input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-controls select, .filter-controls input {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .location-map {
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+        }
+
+        .media-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .media-item {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            background: white;
+        }
+
+        .media-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .media-info {
+            padding: 10px;
+            font-size: 0.9em;
+            color: #718096;
+        }
+
+        .error {
+            color: #e53e3e;
+            background: #fed7d7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .success {
+            color: #22543d;
+            background: #c6f6d5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #38a169;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Loading animation for buttons */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn-loading .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.6em;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+            }
+            
+            .user-info a, .user-info button {
+                width: 100%;
+                text-align: center;
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            .nav-tabs ul {
+                flex-direction: column;
+            }
+            
+            .nav-tabs li {
+                min-width: auto;
+            }
+            
+            .nav-tabs button {
+                padding: 14px 8px;
+                font-size: 13px;
+                min-height: 48px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 16px 12px;
+            }
+            
+            .stat-number {
+                font-size: 2em;
+            }
+            
+            .remote-controls {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .control-card {
+                padding: 16px;
+            }
+            
+            .tab-content {
+                padding: 16px 12px;
+            }
+            
+            .pairing-code-input {
+                flex-wrap: wrap;
+                gap: 6px;
+                justify-content: center;
+            }
+            
+            .code-digit {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1em;
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .filter-controls select, 
+            .filter-controls input {
+                width: 100%;
+                padding: 10px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 12px;
+            }
+            
+            .activity-info {
+                width: 100%;
+            }
+            
+            .media-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 8px;
+            }
+            
+            .media-item img {
+                height: 100px;
+            }
+            
+            .device-selector select {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 12px;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+                width: 100%;
+                margin: 4px 0;
+            }
+            
+            .pairing-section {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            
+            .location-map {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 4px;
+            }
+            
+            .header {
+                padding: 8px;
+                margin-bottom: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.4em;
+            }
+            
+            .tab-content {
+                padding: 12px 8px;
+                min-height: 400px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            
+            .stat-card {
+                padding: 10px 6px;
+            }
+            
+            .stat-number {
+                font-size: 1.4em;
+            }
+            
+            .stat-label {
+                font-size: 0.75em;
+            }
+            
+            .nav-tabs button {
+                padding: 12px 4px;
+                font-size: 10px;
+                min-height: 44px;
+            }
+            
+            .pairing-code-input {
+                gap: 3px;
+            }
+            
+            .code-digit {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9em;
+            }
+            
+            .control-card {
+                padding: 10px;
+            }
+            
+            .control-card .icon {
+                font-size: 1.6em;
+                margin-bottom: 8px;
+            }
+            
+            .control-card h4 {
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+            
+            .activity-item {
+                padding: 8px;
+            }
+            
+            .activity-icon {
+                font-size: 1.1em;
+                margin-right: 8px;
+            }
+            
+            .activity-type {
+                font-size: 0.85em;
+            }
+            
+            .activity-details {
+                font-size: 0.75em;
+            }
+            
+            .activity-time {
+                font-size: 0.7em;
+            }
+            
+            .media-gallery {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .media-item img {
+                height: 80px;
+            }
+            
+            .btn {
+                padding: 10px 12px;
+                font-size: 12px;
+                margin: 2px 0;
+            }
+            
+            .form-group input, 
+            .form-group select {
+                padding: 10px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .device-selector select {
+                font-size: 14px;
+                padding: 10px;
+            }
+            
+            .pairing-section {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .location-map {
+                height: 180px;
+            }
+            
+            .filter-controls select, 
+            .filter-controls input {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+            }
+            
+            .location-map {
+                height: 200px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Authentication Error Message -->
+        <div id="authError" style="display: none; background: #fed7d7; color: #c53030; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #feb2b2;">
+            Authentication required. Please login first.
+        </div>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>🛡️ Parental Control Dashboard</h1>
+            <div class="user-info">
+                <a href="download.html" class="btn" style="background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); margin-right: 15px;">
+                    📱 Download Our App
+                </a>
+                <span id="userEmail"></span>
+                <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Authentication Section - Shows while checking auth -->
+        <div id="authSection" class="auth-section">
+            <div style="text-align: center; padding: 40px;">
+                <h2>🔍 Checking Authentication...</h2>
+                <p>Please wait while we verify your login status.</p>
+                <div style="margin-top: 20px;">
+                    <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                </div>
+                <p style="margin-top: 20px; color: #718096;">
+                    If this takes too long, <a href="/login.html" style="color: #667eea; text-decoration: none;">click here to login</a>.
+                </p>
+            </div>
+        </div>
+
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="dashboard-section">
+            <!-- App Download Promotion -->
+            <div class="pairing-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <h3>📱 Get Started with Our Mobile App</h3>
+                <p style="margin: 15px 0; opacity: 0.9;">Install the Parental Control app on your child's device to begin monitoring their digital activities safely and securely.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 25px 0;">
+                    <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+                        📱 Download APK (2.5 MB)
+                    </a>
+                    <a href="download.html#installation" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+                        📋 Installation Guide
+                    </a>
+                </div>
+                <p style="font-size: 0.9em; opacity: 0.8;">
+                    ✅ Works on Android 7.0+  •  ✅ Secure & Encrypted  •  ✅ Easy Setup
+                </p>
+            </div>
+
+            <!-- Device Pairing - QR Code Generation -->
+            <div class="pairing-section" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none;">
+                <h3>📱 Device Pairing via QR Code</h3>
+                <p style="margin: 15px 0; font-size: 1.1em;">Generate a QR code to pair child devices instantly!</p>
+                
+                <!-- QR Code Generator -->
+                <div id="qrCodeContainer" style="background: white; padding: 30px; border-radius: 15px; margin: 20px auto; max-width: 400px;">
+                    <div id="qrCodeDisplay" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                        <div id="qrCanvas" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                        <div style="text-align: center; color: #4a5568;">
+                            <p style="font-weight: bold; font-size: 1.1em; margin-bottom: 5px;">Scan with Child App</p>
+                            <p id="qrExpiry" style="font-size: 0.9em; color: #718096;"></p>
+                        </div>
+                        <button onclick="generateQRCode()" class="btn" style="background: #38a169; color: white; border: none; padding: 12px 30px; font-weight: bold;">
+                            🔄 Regenerate QR Code
+                        </button>
+                    </div>
+                    <div id="qrPlaceholder" style="display: none; text-align: center; color: #718096;">
+                        <div style="font-size: 4em; margin-bottom: 15px;">📷</div>
+                        <p style="font-size: 1.1em; margin-bottom: 20px;">Click below to generate a QR code</p>
+                        <button onclick="generateQRCode()" class="btn" style="background: #38a169; color: white; border: none; padding: 12px 30px; font-weight: bold;">
+                            ✨ Generate QR Code
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 10px; margin: 20px 0; backdrop-filter: blur(10px);">
+                    <h4 style="margin-bottom: 15px;">🚀 How to Pair:</h4>
+                    <ol style="text-align: left; margin: 0 auto; max-width: 500px; line-height: 1.8;">
+                        <li>Click <strong>"Generate QR Code"</strong> above</li>
+                        <li>Install the <strong>Child App</strong> on your child's device</li>
+                        <li>Complete permissions setup on child's device</li>
+                        <li>Tap <strong>"Scan QR Code"</strong> in the Child App</li>
+                        <li>Point camera at the QR code above</li>
+                        <li><strong>Instant pairing!</strong> Device will appear in your dashboard</li>
+                    </ol>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 25px;">
+                    <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.9); color: #38a169; border: 2px solid rgba(255, 255, 255, 0.3); font-weight: bold;">
+                        📱 Download Apps
+                    </a>
+                    <a href="download.html" class="btn" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.5);">
+                        📖 View Instructions
+                    </a>
+                </div>
+                
+                <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.9;">
+                    ✨ No typing required • ⚡ Instant connection • 🔒 Secure pairing (10 min expiry)
+                </p>
+            </div>
+
+            <!-- Device Selector -->
+            <div class="device-selector">
+                <label for="deviceSelect">📱 Select Device:</label>
+                <select id="deviceSelect" onchange="switchDevice()">
+                    <option value="">Select a device...</option>
+                </select>
+                <button onclick="refreshDeviceList()" class="btn btn-secondary" style="margin-left: 10px; padding: 8px 16px; min-height: 44px;">
+                    🔄 Refresh Devices
+                </button>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <ul>
+                    <li><button class="active" onclick="showTab('overview', this)">📊 Overview</button></li>
+                    <li><button onclick="showTab('calls', this)">📞 Calls</button></li>
+                    <li><button onclick="showTab('messages', this)">💬 Messages</button></li>
+                    <li><button onclick="showTab('apps', this)">📱 Apps</button></li>
+                    <li><button onclick="showTab('web', this)">🌐 Web</button></li>
+                    <li><button onclick="showTab('location', this)">📍 Location</button></li>
+                    <li><button onclick="showTab('keyboard', this)">⌨️ Keyboard</button></li>
+                    <li><button onclick="showTab('media', this)">📷 Media</button></li>
+                    <li><button onclick="showTab('notifications', this)">🔔 Notifications</button></li>
+                    <li><button onclick="showTab('remote', this)">🎛️ Remote Control</button></li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Overview Tab -->
+                <div id="overview" class="tab-pane active">
+                    <h3>📊 Activity Overview</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="callCount">0</div>
+                            <div class="stat-label">📞 Calls Today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="smsCount">0</div>
+                            <div class="stat-label">💬 Messages Today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="appCount">0</div>
+                            <div class="stat-label">📱 Apps Used</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="webCount">0</div>
+                            <div class="stat-label">🌐 Websites Visited</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="locationCount">0</div>
+                            <div class="stat-label">📍 Location Updates</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="keyboardCount">0</div>
+                            <div class="stat-label">⌨️ Text Inputs</div>
+                        </div>
+                    </div>
+                    
+                    <h4>🕒 Recent Activities</h4>
+                    <div id="recentActivities" class="activity-feed">
+                        <div class="loading">Loading recent activities...</div>
+                    </div>
+                </div>
+
+                <!-- Calls Tab -->
+                <div id="calls" class="tab-pane">
+                    <h3>📞 Call Monitoring</h3>
+                    <div class="filter-controls">
+                        <select id="callTypeFilter">
+                            <option value="">All Calls</option>
+                            <option value="incoming">Incoming</option>
+                            <option value="outgoing">Outgoing</option>
+                            <option value="missed">Missed</option>
+                        </select>
+                        <input type="date" id="callDateFilter">
+                        <button class="btn" onclick="filterCalls()">Filter</button>
+                    </div>
+                    <div id="callsList" class="activity-feed">
+                        <div class="loading">Loading call logs...</div>
+                    </div>
+                </div>
+
+                <!-- Messages Tab -->
+                <div id="messages" class="tab-pane">
+                    <h3>💬 Message Monitoring</h3>
+                    <div class="filter-controls">
+                        <select id="messageTypeFilter">
+                            <option value="">All Messages</option>
+                            <option value="sms">SMS</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="notification">App Notifications</option>
+                        </select>
+                        <input type="date" id="messageDateFilter">
+                        <button class="btn" onclick="filterMessages()">Filter</button>
+                    </div>
+                    <div id="messagesList" class="activity-feed">
+                        <div class="loading">Loading messages...</div>
+                    </div>
+                </div>
+
+                <!-- Apps Tab -->
+                <div id="apps" class="tab-pane">
+                    <h3>📱 App Usage Monitoring</h3>
+                    <div class="filter-controls">
+                        <input type="text" id="appSearchFilter" placeholder="Search apps...">
+                        <input type="date" id="appDateFilter">
+                        <button class="btn" onclick="filterApps()">Filter</button>
+                    </div>
+                    <div id="appsList" class="activity-feed">
+                        <div class="loading">Loading app usage...</div>
+                    </div>
+                </div>
+
+                <!-- Web Tab -->
+                <div id="web" class="tab-pane">
+                    <h3>🌐 Web Activity Monitoring</h3>
+                    <div class="filter-controls">
+                        <input type="text" id="webSearchFilter" placeholder="Search websites...">
+                        <input type="date" id="webDateFilter">
+                        <button class="btn" onclick="filterWeb()">Filter</button>
+                    </div>
+                    <div id="webList" class="activity-feed">
+                        <div class="loading">Loading web activity...</div>
+                    </div>
+                </div>
+
+                <!-- Location Tab -->
+                <div id="location" class="tab-pane">
+                    <h3>📍 Location Tracking</h3>
+                    <div class="location-map">
+                        🗺️ Interactive map will be displayed here<br>
+                        <small>Showing real-time and historical locations</small>
+                    </div>
+                    <div class="filter-controls">
+                        <input type="date" id="locationDateFilter">
+                        <button class="btn" onclick="filterLocation()">Filter</button>
+                        <button class="btn btn-warning" onclick="requestLocation()">📍 Get Current Location</button>
+                    </div>
+                    <div id="locationList" class="activity-feed">
+                        <div class="loading">Loading location history...</div>
+                    </div>
+                </div>
+
+                <!-- Keyboard Tab -->
+                <div id="keyboard" class="tab-pane">
+                    <h3>⌨️ Keyboard Input Monitoring</h3>
+                    <div class="filter-controls">
+                        <select id="keyboardAppFilter">
+                            <option value="">All Apps</option>
+                            <option value="messaging">Messaging Apps</option>
+                            <option value="browser">Browser</option>
+                            <option value="social">Social Media</option>
+                        </select>
+                        <input type="date" id="keyboardDateFilter">
+                        <button class="btn" onclick="filterKeyboard()">Filter</button>
+                    </div>
+                    <div id="keyboardList" class="activity-feed">
+                        <div class="loading">Loading keyboard inputs...</div>
+                    </div>
+                </div>
+
+                <!-- Media Tab -->
+                <div id="media" class="tab-pane">
+                    <h3>📷 Media Monitoring</h3>
+                    <div class="filter-controls">
+                        <select id="mediaTypeFilter">
+                            <option value="">All Media</option>
+                            <option value="camera">Camera Photos</option>
+                            <option value="audio">Audio Recordings</option>
+                            <option value="remote_camera">Remote Camera</option>
+                            <option value="remote_audio">Remote Audio</option>
+                        </select>
+                        <input type="date" id="mediaDateFilter">
+                        <button class="btn" onclick="filterMedia()">Filter</button>
+                    </div>
+                    <div id="mediaGallery" class="media-gallery">
+                        <div class="loading">Loading media files...</div>
+                    </div>
+                </div>
+
+                <!-- Notifications Tab -->
+                <div id="notifications" class="tab-pane">
+                    <h3>🔔 Notification Monitoring</h3>
+                    <div class="filter-controls">
+                        <select id="notificationAppFilter">
+                            <option value="">All Apps</option>
+                            <option value="social">Social Media</option>
+                            <option value="messaging">Messaging</option>
+                            <option value="games">Games</option>
+                            <option value="system">System</option>
+                        </select>
+                        <input type="date" id="notificationDateFilter">
+                        <button class="btn" onclick="filterNotifications()">Filter</button>
+                    </div>
+                    <div id="notificationsList" class="activity-feed">
+                        <div class="loading">Loading notifications...</div>
+                    </div>
+                </div>
+
+                <!-- Remote Control Tab -->
+                <div id="remote" class="tab-pane">
+                    <h3>🎛️ Remote Control</h3>
+                    <div class="remote-controls">
+                        <div class="control-card">
+                            <span class="icon">📸</span>
+                            <h4>Remote Camera</h4>
+                            <p>Activate camera to view surroundings</p>
+                            <select id="cameraType">
+                                <option value="back">Back Camera</option>
+                                <option value="front">Front Camera</option>
+                            </select>
+                            <br><br>
+                            <button class="btn btn-warning" onclick="activateCamera()">Activate Camera</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🎤</span>
+                            <h4>Remote Audio</h4>
+                            <p>Record ambient audio for safety</p>
+                            <select id="audioDuration">
+                                <option value="30">30 seconds</option>
+                                <option value="60">1 minute</option>
+                                <option value="120">2 minutes</option>
+                            </select>
+                            <br><br>
+                            <button class="btn btn-danger" onclick="startAudioRecording()">Start Recording</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">📍</span>
+                            <h4>Location Request</h4>
+                            <p>Get immediate location update</p>
+                            <button class="btn btn-success" onclick="requestLocation()">Get Location</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🚨</span>
+                            <h4>Emergency Alert</h4>
+                            <p>Send emergency status check</p>
+                            <button class="btn btn-danger" onclick="sendEmergencyAlert()">Send Alert</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🔒</span>
+                            <h4>Lock Device</h4>
+                            <p>Lock the child device immediately with unlock code</p>
+                            <button class="btn btn-danger" onclick="lockDevice()">🔒 Lock Device</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🔓</span>
+                            <h4>Unlock Device</h4>
+                            <p>Unlock the child device remotely</p>
+                            <button class="btn btn-success" onclick="unlockDevice()">🔓 Unlock Device</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🔑</span>
+                            <h4>Generate Unlock Code</h4>
+                            <p>Generate a new unlock code (expires in 24h)</p>
+                            <button class="btn btn-warning" onclick="generateNewUnlockCode()">🔑 Generate Code</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">📱</span>
+                            <h4>Installed Apps</h4>
+                            <p>Get list of installed apps</p>
+                            <button class="btn btn-success" onclick="getInstalledApps()">Get Apps List</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">🗑️</span>
+                            <h4>Uninstall App</h4>
+                            <p>Remove an app from child device</p>
+                            <input type="text" id="uninstallPackageName" placeholder="com.example.app" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            <button class="btn btn-warning" onclick="uninstallApp()">Uninstall App</button>
+                        </div>
+                        
+                        <div class="control-card">
+                            <span class="icon">📲</span>
+                            <h4>Install Parent App</h4>
+                            <p>Install parent app on child device</p>
+                            <button class="btn btn-success" onclick="installParentApp()">Install Parent App</button>
+                        </div>
+                    </div>
+                    
+                    <h4>🕒 Remote Command History</h4>
+                    <div id="remoteCommandHistory" class="activity-feed">
+                        <div class="loading">Loading command history...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="background: #2d3748; color: white; padding: 60px 20px 20px; margin-top: 60px; border-radius: 15px;">
+        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 40px;">
+            <div>
+                <h3 style="margin-bottom: 20px; color: #667eea;">About</h3>
+                <p style="color: #cbd5e0; line-height: 1.8;">Parental Control Monitor helps parents keep their children safe in the digital world with comprehensive monitoring and protection features.</p>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 20px; color: #667eea;">Quick Links</h3>
+                <ul style="list-style: none;">
+                    <li style="margin-bottom: 10px;"><a href="home.html" style="color: #cbd5e0; text-decoration: none;">Home</a></li>
+                    <li style="margin-bottom: 10px;"><a href="index.html" style="color: #cbd5e0; text-decoration: none;">Dashboard</a></li>
+                    <li style="margin-bottom: 10px;"><a href="download.html" style="color: #cbd5e0; text-decoration: none;">Download Apps</a></li>
+                    <li style="margin-bottom: 10px;"><a href="installation-guide.html" style="color: #cbd5e0; text-decoration: none;">Installation Guide</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 20px; color: #667eea;">Legal</h3>
+                <ul style="list-style: none;">
+                    <li style="margin-bottom: 10px;"><a href="terms.html" style="color: #cbd5e0; text-decoration: none;">Terms of Service</a></li>
+                    <li style="margin-bottom: 10px;"><a href="privacy.html" style="color: #cbd5e0; text-decoration: none;">Privacy Policy</a></li>
+                    <li style="margin-bottom: 10px;"><a href="installation-guide.html" style="color: #cbd5e0; text-decoration: none;">User Guide</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 20px; color: #667eea;">Contact Us</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span>📧</span>
+                        <a href="mailto:sammyseth260@gmail.com" style="color: #cbd5e0; text-decoration: none;">sammyseth260@gmail.com</a>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span>📱</span>
+                        <a href="tel:+254706499848" style="color: #cbd5e0; text-decoration: none;">+254 706 499 848</a>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span>⏰</span>
+                        <span style="color: #cbd5e0;">24/7 Support Available</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); color: #cbd5e0;">
+            <p>&copy; 2026 Parental Control Monitor. All rights reserved.</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Made with ❤️ for parents who care</p>
+        </div>
+    </footer>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Enhanced Dashboard Styles and Scripts -->
+    <link rel="stylesheet" href="dashboard-enhanced.css">
+    <script src="dashboard-enhanced.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

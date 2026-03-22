@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK Download - Alternative Links</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 8px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 15px;
+            min-width: 200px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+            text-align: left;
+        }
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+            text-align: left;
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                margin: 10px auto;
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            h3 {
+                font-size: 1.2em;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+                padding: 10px 20px;
+                font-size: 14px;
+                min-width: auto;
+            }
+            
+            .info, .warning {
+                padding: 12px;
+                margin: 15px 0;
+            }
+            
+            ol {
+                padding-left: 20px;
+            }
+            
+            ol li {
+                margin-bottom: 8px;
+                font-size: 14px;
+            }
+            
+            code {
+                font-size: 12px;
+                word-break: break-all;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.3em;
+            }
+            
+            .btn {
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+            
+            .info h4, .warning h4 {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 APK Download Options</h1>
+        
+        <div class="info">
+            <strong>Primary Download:</strong> Try the main download links first. If they don't work, use the alternative options below.
+        </div>
+
+        <h3>🎯 Primary Downloads</h3>
+        <a href="/apk/app-release.apk" class="btn btn-success" download="ParentalControl.apk">
+            📱 Download Release APK (2.6 MB)
+        </a>
+        <br>
+        <a href="/apk/app-debug.apk" class="btn" download="ParentalControl-Debug.apk">
+            🔧 Download Debug APK (8.4 MB)
+        </a>
+
+        <h3>🔄 Alternative Download Methods</h3>
+        
+        <div class="warning">
+            <strong>If downloads fail:</strong> The APK files might be too large for the hosting platform. Use one of these alternatives:
+        </div>
+
+        <button class="btn" onclick="generateGitHubLink()">
+            📂 Download from GitHub
+        </button>
+        
+        <button class="btn" onclick="showDirectInstructions()">
+            💾 Manual Download Instructions
+        </button>
+
+        <div id="alternativeContent" style="display: none; margin-top: 20px;">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+
+        <h3>📋 Quick Installation Guide</h3>
+        <ol style="text-align: left; max-width: 400px; margin: 0 auto;">
+            <li>Download the APK file</li>
+            <li>Enable "Install unknown apps" in Android settings</li>
+            <li>Open the downloaded APK file</li>
+            <li>Follow installation prompts</li>
+            <li>Grant all requested permissions</li>
+            <li>Complete the setup wizard</li>
+        </ol>
+
+        <div style="margin-top: 30px;">
+            <a href="/download" class="btn">← Back to Download Page</a>
+            <a href="/" class="btn btn-success">Go to Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        function generateGitHubLink() {
+            const content = document.getElementById('alternativeContent');
+            content.style.display = 'block';
+            content.innerHTML = `
+                <div class="info">
+                    <h4>📂 GitHub Direct Download</h4>
+                    <p>Download directly from the GitHub repository:</p>
+                    <a href="https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/app-release.apk" 
+                       class="btn btn-success" target="_blank">
+                        Release APK from GitHub
+                    </a>
+                    <br>
+                    <a href="https://github.com/sammysam254/phone-tracker/raw/main/web-dashboard/apk/app-debug.apk" 
+                       class="btn" target="_blank">
+                        Debug APK from GitHub
+                    </a>
+                    <p><small>These links download directly from the source repository.</small></p>
+                </div>
+            `;
+        }
+
+        function showDirectInstructions() {
+            const content = document.getElementById('alternativeContent');
+            content.style.display = 'block';
+            content.innerHTML = `
+                <div class="info">
+                    <h4>💾 Manual Download Instructions</h4>
+                    <p><strong>If automatic downloads don't work:</strong></p>
+                    <ol style="text-align: left;">
+                        <li>Go to: <a href="https://github.com/sammysam254/phone-tracker" target="_blank">GitHub Repository</a></li>
+                        <li>Navigate to: <code>web-dashboard/apk/</code></li>
+                        <li>Click on <code>app-release.apk</code></li>
+                        <li>Click "Download" button</li>
+                        <li>Save to your device</li>
+                    </ol>
+                    <p><strong>Alternative hosting options:</strong></p>
+                    <ul style="text-align: left;">
+                        <li>Upload to Google Drive and share link</li>
+                        <li>Use Dropbox or OneDrive</li>
+                        <li>Host on Firebase Storage</li>
+                        <li>Use a CDN service</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Test if primary downloads work
+        function testDownloads() {
+            fetch('/apk/app-release.apk', { method: 'HEAD' })
+                .then(response => {
+                    if (!response.ok) {
+                        document.querySelector('.info').innerHTML = `
+                            <strong>⚠️ Primary downloads unavailable.</strong> 
+                            Use the alternative download methods below.
+                        `;
+                        document.querySelector('.info').style.background = '#fff3cd';
+                        document.querySelector('.info').style.borderColor = '#ffc107';
+                    }
+                })
+                .catch(() => {
+                    // Primary downloads not working, show alternatives
+                    generateGitHubLink();
+                });
+        }
+
+        // Test downloads on page load
+        document.addEventListener('DOMContentLoaded', testDownloads);
+    </script>
+</body>
+</html>
