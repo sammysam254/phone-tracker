@@ -152,27 +152,66 @@ public class LoginActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String response) {
                     runOnUiThread(() -> {
-                        // Save login state
-                        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
-                        SharedPreferences.Editor editor = prefs.edit();
-                        editor.putBoolean("device_paired", true);
-                        editor.putString("parent_id", parentId);
-                        editor.putString("parent_email", parentEmail);
-                        editor.putString("device_name", deviceName);
-                        editor.apply();
-                        
-                        setLoading(false);
-                        statusText.setText("✅ Device bound successfully!");
-                        
-                        Toast.makeText(LoginActivity.this, 
-                            "✅ Device bound to " + parentEmail, 
-                            Toast.LENGTH_LONG).show();
-                        
-                        // Navigate to consent activity
-                        Intent intent = new Intent(LoginActivity.this, ConsentActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        finish();
+                        try {
+                            // Parse the response to check if device was merged
+                            JSONObject result = new JSONObject(response);
+                            boolean wasMerged = result.optBoolean("merged", false);
+                            int activitiesMerged = result.optInt("activities_merged", 0);
+                            
+                            // Save login state
+                            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = prefs.edit();
+                            editor.putBoolean("device_paired", true);
+                            editor.putString("parent_id", parentId);
+                            editor.putString("parent_email", parentEmail);
+                            editor.putString("device_name", deviceName);
+                            editor.apply();
+                            
+                            setLoading(false);
+                            
+                            String successMessage;
+                            if (wasMerged && activitiesMerged > 0) {
+                                statusText.setText("✅ Device merged with existing record!");
+                                successMessage = String.format("✅ Welcome back! Merged with existing device (%d activities preserved)", activitiesMerged);
+                                android.util.Log.i("LoginActivity", "Device merged successfully: " + activitiesMerged + " activities preserved");
+                            } else if (wasMerged) {
+                                statusText.setText("✅ Device merged successfully!");
+                                successMessage = "✅ Welcome back! Device merged with existing record";
+                                android.util.Log.i("LoginActivity", "Device merged successfully (no previous activities)");
+                            } else {
+                                statusText.setText("✅ Device bound successfully!");
+                                successMessage = "✅ Device bound to " + parentEmail;
+                                android.util.Log.i("LoginActivity", "New device bound successfully");
+                            }
+                            
+                            Toast.makeText(LoginActivity.this, successMessage, Toast.LENGTH_LONG).show();
+                            
+                            // Navigate to consent activity
+                            Intent intent = new Intent(LoginActivity.this, ConsentActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                            
+                        } catch (Exception e) {
+                            android.util.Log.e("LoginActivity", "Error parsing binding response", e);
+                            // Fall back to generic success message
+                            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = prefs.edit();
+                            editor.putBoolean("device_paired", true);
+                            editor.putString("parent_id", parentId);
+                            editor.putString("parent_email", parentEmail);
+                            editor.putString("device_name", deviceName);
+                            editor.apply();
+                            
+                            setLoading(false);
+                            statusText.setText("✅ Device bound successfully!");
+                            Toast.makeText(LoginActivity.this, "✅ Device bound to " + parentEmail, Toast.LENGTH_LONG).show();
+                            
+                            Intent intent = new Intent(LoginActivity.this, ConsentActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                        }
                     });
                 }
                 

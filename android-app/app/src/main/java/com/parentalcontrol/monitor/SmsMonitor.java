@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -37,30 +38,46 @@ public class SmsMonitor {
     }
     
     public void startMonitoring() {
+        // Check if consent is granted
+        SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
+        boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
+        
+        if (!consentGranted || parentId == null) {
+            Log.w(TAG, "Cannot start SMS monitoring - consent not granted or no parent_id");
+            return;
+        }
+        
         // Check permissions
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) 
             != PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) 
             != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "SMS permissions not granted");
+            Log.w(TAG, "SMS permissions not granted - cannot monitor SMS");
             return;
         }
         
-        // Register broadcast receiver for incoming SMS
-        smsReceiver = new SmsReceiver();
-        IntentFilter filter = new IntentFilter(SMS_RECEIVED);
-        filter.setPriority(1000);
-        context.registerReceiver(smsReceiver, filter);
-        
-        // Register content observer for all SMS (sent and received)
-        smsContentObserver = new SmsContentObserver(new Handler(Looper.getMainLooper()));
-        context.getContentResolver().registerContentObserver(
-            Uri.parse("content://sms/"),
-            true,
-            smsContentObserver
-        );
-        
-        Log.i(TAG, "SMS monitoring started (broadcast + content observer)");
+        try {
+            // Register broadcast receiver for incoming SMS
+            smsReceiver = new SmsReceiver();
+            IntentFilter filter = new IntentFilter(SMS_RECEIVED);
+            filter.setPriority(1000);
+            context.registerReceiver(smsReceiver, filter);
+            Log.d(TAG, "SMS broadcast receiver registered");
+            
+            // Register content observer for all SMS (sent and received)
+            smsContentObserver = new SmsContentObserver(new Handler(Looper.getMainLooper()));
+            context.getContentResolver().registerContentObserver(
+                Uri.parse("content://sms/"),
+                true,
+                smsContentObserver
+            );
+            Log.d(TAG, "SMS content observer registered");
+            
+            Log.i(TAG, "✅ SMS monitoring started successfully (broadcast + content observer)");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Failed to start SMS monitoring: " + e.getMessage());
+        }
     }
     
     public void stopMonitoring() {

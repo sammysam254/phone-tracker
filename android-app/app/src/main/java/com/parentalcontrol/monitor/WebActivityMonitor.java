@@ -35,16 +35,30 @@ public class WebActivityMonitor {
     }
     
     public void startMonitoring() {
-        monitoringRunnable = new Runnable() {
-            @Override
-            public void run() {
-                checkBrowserHistory();
-                handler.postDelayed(this, MONITORING_INTERVAL);
-            }
-        };
+        // Check if consent is granted and parent_id exists
+        SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
+        boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
         
-        handler.post(monitoringRunnable);
-        Log.i(TAG, "Web activity monitoring started");
+        if (!consentGranted || parentId == null) {
+            Log.w(TAG, "Cannot start web activity monitoring - consent not granted or no parent_id");
+            return;
+        }
+        
+        try {
+            monitoringRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    checkBrowserHistory();
+                    handler.postDelayed(this, MONITORING_INTERVAL);
+                }
+            };
+            
+            handler.post(monitoringRunnable);
+            Log.i(TAG, "✅ Web activity monitoring started successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Failed to start web activity monitoring: " + e.getMessage());
+        }
     }
     
     public void stopMonitoring() {

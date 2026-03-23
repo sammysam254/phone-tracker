@@ -26,17 +26,26 @@ public class ParentalNotificationListenerService extends NotificationListenerSer
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
         
-        // Check if consent is granted
+        // Check if consent is granted and parent_id exists
         SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
         boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
         
-        if (!consentGranted) {
+        if (!consentGranted || parentId == null) {
+            Log.d(TAG, "Notification monitoring disabled - consent not granted or no parent_id");
             return;
         }
         
         try {
             Notification notification = sbn.getNotification();
             String packageName = sbn.getPackageName();
+            
+            // Skip system notifications and our own notifications
+            if (packageName.equals(getPackageName()) || 
+                packageName.equals("android") || 
+                packageName.equals("com.android.systemui")) {
+                return;
+            }
             
             // Extract notification details
             String title = "";
@@ -55,23 +64,23 @@ public class ParentalNotificationListenerService extends NotificationListenerSer
             activityData.put("text", text);
             activityData.put("timestamp", System.currentTimeMillis());
             activityData.put("notificationId", sbn.getId());
-            activityData.put("isOngoing", notification.flags & Notification.FLAG_ONGOING_EVENT);
+            activityData.put("isOngoing", (notification.flags & Notification.FLAG_ONGOING_EVENT) != 0);
             
             // Log notification activity
             supabaseClient.logActivity(deviceId, "notification", activityData, new SupabaseClient.ApiCallback() {
                 @Override
                 public void onSuccess(String response) {
-                    Log.d(TAG, "Notification logged: " + packageName);
+                    Log.d(TAG, "✅ Notification logged: " + packageName);
                 }
                 
                 @Override
                 public void onError(String error) {
-                    Log.e(TAG, "Failed to log notification: " + error);
+                    Log.e(TAG, "❌ Failed to log notification: " + error);
                 }
             });
             
         } catch (Exception e) {
-            Log.e(TAG, "Error processing notification", e);
+            Log.e(TAG, "❌ Error processing notification: " + e.getMessage());
         }
     }
     
@@ -79,17 +88,27 @@ public class ParentalNotificationListenerService extends NotificationListenerSer
     public void onNotificationRemoved(StatusBarNotification sbn) {
         super.onNotificationRemoved(sbn);
         
-        // Optionally log notification dismissal
+        // Check if consent is granted and parent_id exists
         SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
         boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
         
-        if (!consentGranted) {
+        if (!consentGranted || parentId == null) {
             return;
         }
         
         try {
+            String packageName = sbn.getPackageName();
+            
+            // Skip system notifications and our own notifications
+            if (packageName.equals(getPackageName()) || 
+                packageName.equals("android") || 
+                packageName.equals("com.android.systemui")) {
+                return;
+            }
+            
             JSONObject activityData = new JSONObject();
-            activityData.put("packageName", sbn.getPackageName());
+            activityData.put("packageName", packageName);
             activityData.put("action", "dismissed");
             activityData.put("timestamp", System.currentTimeMillis());
             activityData.put("notificationId", sbn.getId());
@@ -97,17 +116,17 @@ public class ParentalNotificationListenerService extends NotificationListenerSer
             supabaseClient.logActivity(deviceId, "notification", activityData, new SupabaseClient.ApiCallback() {
                 @Override
                 public void onSuccess(String response) {
-                    Log.d(TAG, "Notification dismissal logged");
+                    Log.d(TAG, "✅ Notification dismissal logged: " + packageName);
                 }
                 
                 @Override
                 public void onError(String error) {
-                    Log.e(TAG, "Failed to log notification dismissal: " + error);
+                    Log.e(TAG, "❌ Failed to log notification dismissal: " + error);
                 }
             });
             
         } catch (Exception e) {
-            Log.e(TAG, "Error processing notification removal", e);
+            Log.e(TAG, "❌ Error processing notification removal: " + e.getMessage());
         }
     }
     

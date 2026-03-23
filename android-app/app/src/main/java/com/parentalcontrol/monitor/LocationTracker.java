@@ -37,18 +37,19 @@ public class LocationTracker implements LocationListener {
     }
     
     public void startTracking() {
-        // Check if consent is granted
+        // Check if consent is granted and parent_id exists
         SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
         boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
         
-        if (!consentGranted) {
-            Log.w(TAG, "Consent not granted for location tracking");
+        if (!consentGranted || parentId == null) {
+            Log.w(TAG, "Cannot start location tracking - consent not granted or no parent_id");
             return;
         }
         
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) 
             != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "Location permission not granted");
+            Log.w(TAG, "Location permission not granted - cannot track location");
             return;
         }
         
@@ -61,7 +62,7 @@ public class LocationTracker implements LocationListener {
                     MIN_DISTANCE_CHANGE,
                     this
                 );
-                Log.i(TAG, "GPS location tracking started");
+                Log.d(TAG, "GPS location tracking enabled");
             }
             
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
@@ -71,7 +72,7 @@ public class LocationTracker implements LocationListener {
                     MIN_DISTANCE_CHANGE,
                     this
                 );
-                Log.i(TAG, "Network location tracking started");
+                Log.d(TAG, "Network location tracking enabled");
             }
             
             isTracking = true;
@@ -80,10 +81,15 @@ public class LocationTracker implements LocationListener {
             Location lastKnownLocation = getLastKnownLocation();
             if (lastKnownLocation != null) {
                 onLocationChanged(lastKnownLocation);
+                Log.d(TAG, "Initial location logged");
             }
             
+            Log.i(TAG, "✅ Location tracking started successfully");
+            
         } catch (SecurityException e) {
-            Log.e(TAG, "Security exception starting location tracking", e);
+            Log.e(TAG, "❌ Security exception starting location tracking: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Failed to start location tracking: " + e.getMessage());
         }
     }
     

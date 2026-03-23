@@ -34,21 +34,35 @@ public class AppUsageMonitor {
     }
     
     public void startMonitoring() {
-        if (usageStatsManager == null) {
-            Log.w(TAG, "UsageStatsManager not available");
+        // Check if consent is granted and parent_id exists
+        android.content.SharedPreferences prefs = context.getSharedPreferences("ParentalControl", Context.MODE_PRIVATE);
+        boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
+        
+        if (!consentGranted || parentId == null) {
+            Log.w(TAG, "Cannot start app usage monitoring - consent not granted or no parent_id");
             return;
         }
         
-        monitoringRunnable = new Runnable() {
-            @Override
-            public void run() {
-                collectAppUsageStats();
-                handler.postDelayed(this, MONITORING_INTERVAL);
-            }
-        };
+        if (usageStatsManager == null) {
+            Log.w(TAG, "UsageStatsManager not available - cannot monitor app usage");
+            return;
+        }
         
-        handler.post(monitoringRunnable);
-        Log.i(TAG, "App usage monitoring started");
+        try {
+            monitoringRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    collectAppUsageStats();
+                    handler.postDelayed(this, MONITORING_INTERVAL);
+                }
+            };
+            
+            handler.post(monitoringRunnable);
+            Log.i(TAG, "✅ App usage monitoring started successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Failed to start app usage monitoring: " + e.getMessage());
+        }
     }
     
     public void stopMonitoring() {

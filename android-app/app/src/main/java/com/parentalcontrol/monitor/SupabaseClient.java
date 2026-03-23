@@ -1029,41 +1029,43 @@ public class SupabaseClient {
     }
     
     /**
-     * Bind device to parent account (for account binding system)
+     * Bind device to parent account with device merging support
+     * If a device with similar hardware fingerprint exists, merge with it
      */
     public void bindDeviceToParent(String deviceId, String parentId, String deviceName, 
                                    String deviceBrand, String androidVersion, ApiCallback callback) {
         executor.execute(() -> {
             try {
-                URL url = new URL(SUPABASE_URL + "/rest/v1/rpc/bind_device_to_parent");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                // First, check if there's an existing device for this parent with similar hardware
+                URL checkUrl = new URL(SUPABASE_URL + "/rest/v1/rpc/find_and_merge_device");
+                HttpURLConnection checkConn = (HttpURLConnection) checkUrl.openConnection();
                 
-                conn.setConnectTimeout(10000);
-                conn.setReadTimeout(15000);
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
-                conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
-                conn.setRequestProperty("Prefer", "return=representation");
-                conn.setDoOutput(true);
+                checkConn.setConnectTimeout(10000);
+                checkConn.setReadTimeout(15000);
+                checkConn.setRequestMethod("POST");
+                checkConn.setRequestProperty("Content-Type", "application/json");
+                checkConn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                checkConn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                checkConn.setRequestProperty("Prefer", "return=representation");
+                checkConn.setDoOutput(true);
                 
-                // Create binding payload
-                JSONObject payload = new JSONObject();
-                payload.put("device_id_input", deviceId);
-                payload.put("parent_user_id", parentId);
-                payload.put("device_name_input", deviceName);
-                payload.put("device_brand_input", deviceBrand);
-                payload.put("android_version_input", androidVersion);
+                // Create payload for device merging check
+                JSONObject mergePayload = new JSONObject();
+                mergePayload.put("new_device_id", deviceId);
+                mergePayload.put("parent_user_id", parentId);
+                mergePayload.put("device_name_input", deviceName);
+                mergePayload.put("device_brand_input", deviceBrand);
+                mergePayload.put("android_version_input", androidVersion);
                 
-                OutputStream os = conn.getOutputStream();
-                os.write(payload.toString().getBytes("UTF-8"));
+                OutputStream os = checkConn.getOutputStream();
+                os.write(mergePayload.toString().getBytes("UTF-8"));
                 os.flush();
                 os.close();
                 
-                int responseCode = conn.getResponseCode();
+                int responseCode = checkConn.getResponseCode();
                 
                 if (responseCode >= 200 && responseCode < 300) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    BufferedReader br = new BufferedReader(new InputStreamReader(checkConn.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
                     while ((line = br.readLine()) != null) {
@@ -1071,33 +1073,95 @@ public class SupabaseClient {
                     }
                     br.close();
                     
+                    Log.i(TAG, "Device merge check successful: " + response.toString());
+                    
                     if (callback != null) {
                         callback.onSuccess(response.toString());
                     }
                 } else {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(
-                        conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
-                    StringBuilder errorResponse = new StringBuilder();
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        errorResponse.append(line);
-                    }
-                    br.close();
-                    
-                    if (callback != null) {
-                        callback.onError("Device binding failed (HTTP " + responseCode + "): " + errorResponse.toString());
-                    }
+                    // If merge function fails, fall back to regular binding
+                    Log.w(TAG, "Device merge failed, falling back to regular binding");
+                    bindDeviceToParentFallback(deviceId, parentId, deviceName, deviceBrand, androidVersion, callback);
                 }
                 
-                conn.disconnect();
+                checkConn.disconnect();
                 
             } catch (Exception e) {
-                Log.e(TAG, "Error binding device to parent", e);
-                if (callback != null) {
-                    callback.onError("Network error: " + e.getMessage());
-                }
+                Log.e(TAG, "Error in device merge check, falling back to regular binding", e);
+                // Fall back to regular binding if merge fails
+                bindDeviceToParentFallback(deviceId, parentId, deviceName, deviceBrand, androidVersion, callback);
             }
         });
+    }
+    
+    /**
+     * Fallback method for regular device binding (original implementation)
+     */
+    private void bindDeviceToParentFallback(String deviceId, String parentId, String deviceName, 
+                                           String deviceBrand, String androidVersion, ApiCallback callback) {
+        try {
+            URL url = new URL(SUPABASE_URL + "/rest/v1/rpc/bind_device_to_parent");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(15000);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+            conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+            conn.setRequestProperty("Prefer", "return=representation");
+            conn.setDoOutput(true);
+            
+            // Create binding payload
+            JSONObject payload = new JSONObject();
+            payload.put("device_id_input", deviceId);
+            payload.put("parent_user_id", parentId);
+            payload.put("device_name_input", deviceName);
+            payload.put("device_brand_input", deviceBrand);
+            payload.put("android_version_input", androidVersion);
+            
+            OutputStream os = conn.getOutputStream();
+            os.write(payload.toString().getBytes("UTF-8"));
+            os.flush();
+            os.close();
+            
+            int responseCode = conn.getResponseCode();
+            
+            if (responseCode >= 200 && responseCode < 300) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    response.append(line);
+                }
+                br.close();
+                
+                if (callback != null) {
+                    callback.onSuccess(response.toString());
+                }
+            } else {
+                BufferedReader br = new BufferedReader(new InputStreamReader(
+                    conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                StringBuilder errorResponse = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    errorResponse.append(line);
+                }
+                br.close();
+                
+                if (callback != null) {
+                    callback.onError("Device binding failed (HTTP " + responseCode + "): " + errorResponse.toString());
+                }
+            }
+            
+            conn.disconnect();
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error in fallback device binding", e);
+            if (callback != null) {
+                callback.onError("Network error: " + e.getMessage());
+            }
+        }
     }
     
     public void shutdown() {
