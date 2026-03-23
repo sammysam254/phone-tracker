@@ -44,9 +44,28 @@ public class MonitoringService extends Service {
         super.onCreate();
         createNotificationChannel();
         
-        // Check consent before starting monitoring
+        // Check consent and parent_id before starting monitoring
         SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
         boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        boolean devicePaired = prefs.getBoolean("device_paired", false);
+        String parentId = prefs.getString("parent_id", null);
+        
+        Log.i(TAG, "MonitoringService.onCreate() - Checking prerequisites:");
+        Log.i(TAG, "  - Device paired: " + devicePaired);
+        Log.i(TAG, "  - Consent granted: " + consentGranted);
+        Log.i(TAG, "  - Parent ID: " + (parentId != null ? "Present" : "Missing"));
+        
+        if (!devicePaired) {
+            Log.w(TAG, "Device not paired, stopping service");
+            stopSelf();
+            return;
+        }
+        
+        if (parentId == null || parentId.isEmpty()) {
+            Log.w(TAG, "No parent_id found, stopping service");
+            stopSelf();
+            return;
+        }
         
         if (!consentGranted) {
             Log.w(TAG, "Consent not granted, stopping service");
@@ -54,8 +73,9 @@ public class MonitoringService extends Service {
             return;
         }
         
+        Log.i(TAG, "All prerequisites met, initializing monitors");
         initializeMonitors();
-        Log.i(TAG, "Monitoring service created");
+        Log.i(TAG, "Monitoring service created successfully");
     }
     
     @Override

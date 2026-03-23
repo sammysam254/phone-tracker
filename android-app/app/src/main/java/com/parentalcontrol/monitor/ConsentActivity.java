@@ -62,17 +62,47 @@ public class ConsentActivity extends AppCompatActivity {
     
     private void setupClickListeners() {
         acceptButton.setOnClickListener(v -> {
+            android.util.Log.i("ConsentActivity", "Accept button clicked");
+            
+            // Save consent first
             saveConsent(true);
+            android.util.Log.i("ConsentActivity", "Consent saved to SharedPreferences");
+            
+            // Update Supabase
             updateSupabaseConsent(true);
             
+            // Verify prerequisites before starting service
+            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+            boolean devicePaired = prefs.getBoolean("device_paired", false);
+            String parentId = prefs.getString("parent_id", null);
+            boolean consentGranted = prefs.getBoolean("consent_granted", false);
+            
+            android.util.Log.i("ConsentActivity", "Prerequisites check:");
+            android.util.Log.i("ConsentActivity", "  - Device paired: " + devicePaired);
+            android.util.Log.i("ConsentActivity", "  - Parent ID: " + (parentId != null ? parentId : "null"));
+            android.util.Log.i("ConsentActivity", "  - Consent granted: " + consentGranted);
+            
+            if (!devicePaired || parentId == null || parentId.isEmpty()) {
+                Toast.makeText(this, "⚠️ Device not properly bound. Please login again.", Toast.LENGTH_LONG).show();
+                android.util.Log.e("ConsentActivity", "Cannot start monitoring - device not properly bound");
+                return;
+            }
+            
             // Start monitoring services immediately after consent
-            Intent monitoringIntent = new Intent(this, MonitoringService.class);
-            startForegroundService(monitoringIntent);
-            
-            Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
-            startForegroundService(remoteControlIntent);
-            
-            Toast.makeText(this, "Consent granted - Monitoring started", Toast.LENGTH_SHORT).show();
+            try {
+                Intent monitoringIntent = new Intent(this, MonitoringService.class);
+                startForegroundService(monitoringIntent);
+                android.util.Log.i("ConsentActivity", "MonitoringService started");
+                
+                Intent remoteControlIntent = new Intent(this, RemoteControlService.class);
+                startForegroundService(remoteControlIntent);
+                android.util.Log.i("ConsentActivity", "RemoteControlService started");
+                
+                Toast.makeText(this, "✅ Consent granted - Monitoring started", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                android.util.Log.e("ConsentActivity", "Error starting services", e);
+                Toast.makeText(this, "⚠️ Error starting monitoring: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
             
             // Go back to main activity
             Intent intent = new Intent(this, MainActivity.class);
