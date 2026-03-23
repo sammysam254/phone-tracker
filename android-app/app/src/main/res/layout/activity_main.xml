@@ -159,11 +159,23 @@
             android:id="@+id/rePairDeviceButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="8dp"
             android:text="🔄 Re-Pair Device"
             android:textColor="#ffffff"
             android:textSize="14sp"
             android:background="@drawable/button_danger"
+            android:minHeight="48dp" />
+
+        <!-- Diagnostic Button -->
+        <Button
+            android:id="@+id/diagnosticButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:text="🔧 Run Diagnostics"
+            android:textColor="#ffffff"
+            android:textSize="14sp"
+            android:background="@drawable/button_primary"
             android:minHeight="48dp" />
 
         <!-- Monitored Activities -->

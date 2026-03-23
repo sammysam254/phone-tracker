@@ -80,12 +80,34 @@ public class MonitoringService extends Service {
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, "🚀 MonitoringService.onStartCommand() called");
+        
         startForeground(NOTIFICATION_ID, createNotification());
+        
+        // Verify prerequisites again
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        boolean devicePaired = prefs.getBoolean("device_paired", false);
+        boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
+        String deviceId = prefs.getString("device_id", null);
+        
+        Log.i(TAG, "📊 Service Prerequisites Check:");
+        Log.i(TAG, "  - Device Paired: " + devicePaired);
+        Log.i(TAG, "  - Consent Granted: " + consentGranted);
+        Log.i(TAG, "  - Parent ID: " + (parentId != null ? parentId : "NULL"));
+        Log.i(TAG, "  - Device ID: " + (deviceId != null ? deviceId : "NULL"));
+        
+        if (!devicePaired || !consentGranted || parentId == null || deviceId == null) {
+            Log.e(TAG, "❌ Prerequisites not met - stopping service");
+            Log.e(TAG, "   Required: device_paired=true, consent_granted=true, parent_id!=null, device_id!=null");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         
         // Start monitoring components
         startAllMonitors();
         
-        Log.i(TAG, "Monitoring service started");
+        Log.i(TAG, "✅ Monitoring service started successfully");
         return START_STICKY; // Restart if killed by system
     }
     
@@ -272,8 +294,43 @@ public class MonitoringService extends Service {
             Log.i(TAG, "🔗 Parent ID: " + parentId);
             Log.i(TAG, "📱 Device ID: " + DeviceUtils.getDeviceId(this));
             
+            // Test database connection by logging a test activity
+            testDatabaseConnection();
+            
         } catch (Exception e) {
             Log.e(TAG, "❌ Critical error starting monitors", e);
+        }
+    }
+    
+    private void testDatabaseConnection() {
+        try {
+            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+            String parentId = prefs.getString("parent_id", null);
+            String deviceId = DeviceUtils.getDeviceId(this);
+            
+            if (parentId != null && deviceId != null) {
+                Log.i(TAG, "🧪 Testing database connection...");
+                
+                SupabaseClient testClient = new SupabaseClient(this);
+                org.json.JSONObject testData = new org.json.JSONObject();
+                testData.put("test", "monitoring_service_started");
+                testData.put("timestamp", System.currentTimeMillis());
+                testData.put("service_version", "2.0.2");
+                
+                testClient.logActivity(deviceId, "app_usage", testData, new SupabaseClient.ApiCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        Log.i(TAG, "✅ Database connection test SUCCESSFUL");
+                    }
+                    
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "❌ Database connection test FAILED: " + error);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Database connection test error: " + e.getMessage());
         }
     }
     

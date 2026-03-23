@@ -1,6 +1,7 @@
 package com.parentalcontrol.monitor;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -125,6 +126,12 @@ public class MainActivity extends AppCompatActivity {
                     .setNegativeButton("Cancel", null)
                     .show();
             });
+        }
+        
+        // Add diagnostic button
+        Button diagnosticButton = findViewById(R.id.diagnosticButton);
+        if (diagnosticButton != null) {
+            diagnosticButton.setOnClickListener(v -> runDiagnostics());
         }
         
         startButton.setOnClickListener(v -> {
@@ -423,6 +430,135 @@ public class MainActivity extends AppCompatActivity {
             editor.apply();
             
             Log.i("MainActivity", "Old pairing data cleared - user must re-pair and grant permissions");
+        }
+    }
+    
+    private void runDiagnostics() {
+        Log.i("MainActivity", "🔧 Running comprehensive diagnostics...");
+        
+        StringBuilder diagnostics = new StringBuilder();
+        diagnostics.append("🔧 MONITORING DIAGNOSTICS\n\n");
+        
+        // Check SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+        boolean devicePaired = prefs.getBoolean("device_paired", false);
+        boolean consentGranted = prefs.getBoolean("consent_granted", false);
+        String parentId = prefs.getString("parent_id", null);
+        String deviceId = prefs.getString("device_id", null);
+        
+        diagnostics.append("📊 ACCOUNT BINDING STATUS:\n");
+        diagnostics.append("• Device Paired: ").append(devicePaired ? "✅" : "❌").append("\n");
+        diagnostics.append("• Consent Granted: ").append(consentGranted ? "✅" : "❌").append("\n");
+        diagnostics.append("• Parent ID: ").append(parentId != null ? "✅ Present" : "❌ Missing").append("\n");
+        diagnostics.append("• Device ID: ").append(deviceId != null ? "✅ Present" : "❌ Missing").append("\n\n");
+        
+        // Check Service Status
+        boolean serviceRunning = MonitoringService.isServiceRunning(this);
+        diagnostics.append("🚀 SERVICE STATUS:\n");
+        diagnostics.append("• Monitoring Service: ").append(serviceRunning ? "✅ Running" : "❌ Stopped").append("\n\n");
+        
+        // Check Permissions
+        diagnostics.append("🔒 PERMISSIONS:\n");
+        diagnostics.append("• SMS: ").append(hasPermission(android.Manifest.permission.READ_SMS) ? "✅" : "❌").append("\n");
+        diagnostics.append("• Phone: ").append(hasPermission(android.Manifest.permission.READ_PHONE_STATE) ? "✅" : "❌").append("\n");
+        diagnostics.append("• Location: ").append(hasPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) ? "✅" : "❌").append("\n");
+        diagnostics.append("• Camera: ").append(hasPermission(android.Manifest.permission.CAMERA) ? "✅" : "❌").append("\n");
+        diagnostics.append("• Microphone: ").append(hasPermission(android.Manifest.permission.RECORD_AUDIO) ? "✅" : "❌").append("\n");
+        diagnostics.append("• Usage Stats: ").append(hasUsageStatsPermission() ? "✅" : "❌").append("\n\n");
+        
+        // Check Special Permissions
+        diagnostics.append("🔧 SPECIAL PERMISSIONS:\n");
+        diagnostics.append("• Device Admin: ").append(deviceController.isDeviceAdminEnabled() ? "✅" : "❌").append("\n");
+        diagnostics.append("• Notification Access: ").append(isNotificationAccessEnabled() ? "✅" : "❌").append("\n");
+        diagnostics.append("• Accessibility: ").append(isAccessibilityEnabled() ? "✅" : "❌").append("\n\n");
+        
+        // Test Database Connection
+        diagnostics.append("🗄️ DATABASE TEST:\n");
+        if (parentId != null && deviceId != null) {
+            diagnostics.append("• Testing connection...\n");
+            testDatabaseConnection(diagnostics);
+        } else {
+            diagnostics.append("• ❌ Cannot test - missing parent_id or device_id\n");
+        }
+        
+        // Show diagnostics in dialog
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("🔧 Monitoring Diagnostics")
+            .setMessage(diagnostics.toString())
+            .setPositiveButton("Copy to Clipboard", (dialog, which) -> {
+                android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                android.content.ClipData clip = android.content.ClipData.newPlainText("Diagnostics", diagnostics.toString());
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(this, "Diagnostics copied to clipboard", Toast.LENGTH_SHORT).show();
+            })
+            .setNegativeButton("Close", null)
+            .show();
+    }
+    
+    private boolean hasPermission(String permission) {
+        return androidx.core.content.ContextCompat.checkSelfPermission(this, permission) 
+            == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+    
+    private boolean hasUsageStatsPermission() {
+        try {
+            android.app.usage.UsageStatsManager usageStatsManager = 
+                (android.app.usage.UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+            long time = System.currentTimeMillis();
+            java.util.List<android.app.usage.UsageStats> stats = usageStatsManager.queryUsageStats(
+                android.app.usage.UsageStatsManager.INTERVAL_DAILY, time - 1000 * 60, time);
+            return stats != null && !stats.isEmpty();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    private boolean isNotificationAccessEnabled() {
+        try {
+            String enabledListeners = android.provider.Settings.Secure.getString(
+                getContentResolver(), "enabled_notification_listeners");
+            return enabledListeners != null && enabledListeners.contains(getPackageName());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    private boolean isAccessibilityEnabled() {
+        try {
+            String enabledServices = android.provider.Settings.Secure.getString(
+                getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            return enabledServices != null && enabledServices.contains(getPackageName());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    private void testDatabaseConnection(StringBuilder diagnostics) {
+        try {
+            SharedPreferences prefs = getSharedPreferences("ParentalControl", MODE_PRIVATE);
+            String parentId = prefs.getString("parent_id", null);
+            String deviceId = prefs.getString("device_id", null);
+            
+            SupabaseClient testClient = new SupabaseClient(this);
+            org.json.JSONObject testData = new org.json.JSONObject();
+            testData.put("test", "diagnostic_test");
+            testData.put("timestamp", System.currentTimeMillis());
+            
+            testClient.logActivity(deviceId, "app_usage", testData, new SupabaseClient.ApiCallback() {
+                @Override
+                public void onSuccess(String response) {
+                    Log.i("MainActivity", "✅ Database test successful");
+                }
+                
+                @Override
+                public void onError(String error) {
+                    Log.e("MainActivity", "❌ Database test failed: " + error);
+                }
+            });
+            
+            diagnostics.append("• ✅ Test activity logged\n");
+        } catch (Exception e) {
+            diagnostics.append("• ❌ Test failed: ").append(e.getMessage()).append("\n");
         }
     }
 }
