@@ -69,8 +69,8 @@ public class MainActivity extends AppCompatActivity {
             
             Intent intent;
             if (!devicePaired) {
-                // Not paired - go to permission setup first
-                intent = new Intent(this, PermissionSetupActivity.class);
+                // Not paired - go to login to bind device
+                intent = new Intent(this, LoginActivity.class);
             } else if (!consentGranted) {
                 // Paired but no consent - go to consent
                 intent = new Intent(this, ConsentActivity.class);
@@ -117,9 +117,9 @@ public class MainActivity extends AppCompatActivity {
         if (rePairDeviceButton != null) {
             rePairDeviceButton.setOnClickListener(v -> {
                 new android.app.AlertDialog.Builder(this)
-                    .setTitle("Re-Pair Device")
-                    .setMessage("This will:\n\n• Clear all local pairing data\n• Clear all server data (activities, pairing records)\n• Stop monitoring service\n• Allow you to scan a new QR code\n\nAre you sure you want to continue?")
-                    .setPositiveButton("Yes, Re-Pair", (dialog, which) -> {
+                    .setTitle("Unbind Device")
+                    .setMessage("This will:\n\n• Clear all local binding data\n• Clear all server data (activities, device records)\n• Stop monitoring service\n• Allow you to login with a different account\n\nAre you sure you want to continue?")
+                    .setPositiveButton("Yes, Unbind", (dialog, which) -> {
                         rePairDevice();
                     })
                     .setNegativeButton("Cancel", null)
@@ -169,9 +169,9 @@ public class MainActivity extends AppCompatActivity {
         StringBuilder statusBuilder = new StringBuilder();
         
         if (!devicePaired) {
-            statusBuilder.append("⚠️ Device not paired with parent. Tap 'Start Setup' to pair.");
+            statusBuilder.append("⚠️ Device not bound to parent account. Tap 'Login' to bind.");
             setupButton.setEnabled(true);
-            setupButton.setText("Start Setup & Pair");
+            setupButton.setText("Login & Bind Device");
             startButton.setEnabled(false);
         } else if (!consentGranted) {
             statusBuilder.append("⚠️ Consent required. Please review and accept consent.");
@@ -332,10 +332,10 @@ public class MainActivity extends AppCompatActivity {
                         clearLocalPairingData();
                         progressDialog.dismiss();
                         
-                        Toast.makeText(MainActivity.this, "✅ Pairing data cleared! Starting fresh setup...", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "✅ Device unbound! Login again to bind...", Toast.LENGTH_LONG).show();
                         
-                        // Navigate to QR scanner for fresh pairing
-                        Intent intent = new Intent(MainActivity.this, QRScannerActivity.class);
+                        // Navigate to login for fresh binding
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                         finish();
@@ -349,10 +349,10 @@ public class MainActivity extends AppCompatActivity {
                         clearLocalPairingData();
                         progressDialog.dismiss();
                         
-                        Toast.makeText(MainActivity.this, "⚠️ Server clear failed, but local data cleared. Starting fresh setup...", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "⚠️ Server clear failed, but local data cleared. Login again to bind...", Toast.LENGTH_LONG).show();
                         
-                        // Navigate to QR scanner anyway
-                        Intent intent = new Intent(MainActivity.this, QRScannerActivity.class);
+                        // Navigate to login anyway
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                         finish();
@@ -364,10 +364,10 @@ public class MainActivity extends AppCompatActivity {
             clearLocalPairingData();
             progressDialog.dismiss();
             
-            Toast.makeText(this, "✅ Local data cleared! Starting fresh setup...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "✅ Local data cleared! Login again to bind...", Toast.LENGTH_SHORT).show();
             
-            // Navigate to QR scanner
-            Intent intent = new Intent(this, QRScannerActivity.class);
+            // Navigate to login
+            Intent intent = new Intent(this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();

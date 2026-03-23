@@ -19,7 +19,7 @@ echo Step 1: Creating Production Keystore
 echo ========================================
 echo.
 echo You will be asked for:
-echo - Keystore password (REMEMBER THIS!)
+echo - Keyst(REMEMBER THIS!)
 echo - Key password (can be same as keystore)
 echo - Your name
 echo - Organization

@@ -6,6 +6,7 @@
 -- ============================================================================
 
 -- Drop existing function
+
 DROP FUNCTION IF EXISTS verify_qr_pairing(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);
 
 -- Create improved function that handles re-pairing correctly
@@ -294,7 +295,6 @@ BEGIN
     RAISE NOTICE 'Duplicate cleanup complete!';
 END $$;
 */
-
 -- Script 4: View current pairing status for all parents
 SELECT 
     au.email as parent_email,
@@ -310,9 +310,10 @@ SELECT
         ELSE 'Very Old'
     END as activity_status
 FROM device_pairing dp
-JOIN auth.users au ON au.id::TEXT = dp.parent_id
+JOIN auth.users au ON dp.parent_id = au.id::TEXT
 LEFT JOIN devices d ON d.device_id = dp.device_id
 WHERE dp.status IN ('active', 'paired')
+ORDER BY au.email, dp.paired_at DESC;')
 ORDER BY au.email, dp.paired_at DESC;
 
 -- ============================================================================

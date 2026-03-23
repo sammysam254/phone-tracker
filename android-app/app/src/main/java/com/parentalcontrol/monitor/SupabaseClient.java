@@ -953,6 +953,153 @@ public class SupabaseClient {
         });
     }
     
+    /**
+     * Login parent account (for account binding system)
+     */
+    public void loginParent(String email, String password, ApiCallback callback) {
+        executor.execute(() -> {
+            try {
+                URL url = new URL(SUPABASE_URL + "/auth/v1/token?grant_type=password");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                conn.setDoOutput(true);
+                
+                // Create login payload
+                JSONObject payload = new JSONObject();
+                payload.put("email", email);
+                payload.put("password", password);
+                
+                OutputStream os = conn.getOutputStream();
+                os.write(payload.toString().getBytes("UTF-8"));
+                os.flush();
+                os.close();
+                
+                int responseCode = conn.getResponseCode();
+                
+                if (responseCode >= 200 && responseCode < 300) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line);
+                    }
+                    br.close();
+                    
+                    // Parse response to get user info
+                    JSONObject result = new JSONObject(response.toString());
+                    JSONObject user = result.getJSONObject("user");
+                    
+                    JSONObject loginResult = new JSONObject();
+                    loginResult.put("parent_id", user.getString("id"));
+                    loginResult.put("email", user.getString("email"));
+                    loginResult.put("access_token", result.getString("access_token"));
+                    
+                    if (callback != null) {
+                        callback.onSuccess(loginResult.toString());
+                    }
+                } else {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                        conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                    br.close();
+                    
+                    if (callback != null) {
+                        callback.onError("Login failed (HTTP " + responseCode + "): " + errorResponse.toString());
+                    }
+                }
+                
+                conn.disconnect();
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error logging in parent", e);
+                if (callback != null) {
+                    callback.onError("Network error: " + e.getMessage());
+                }
+            }
+        });
+    }
+    
+    /**
+     * Bind device to parent account (for account binding system)
+     */
+    public void bindDeviceToParent(String deviceId, String parentId, String deviceName, 
+                                   String deviceBrand, String androidVersion, ApiCallback callback) {
+        executor.execute(() -> {
+            try {
+                URL url = new URL(SUPABASE_URL + "/rest/v1/rpc/bind_device_to_parent");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("apikey", SUPABASE_ANON_KEY);
+                conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+                conn.setRequestProperty("Prefer", "return=representation");
+                conn.setDoOutput(true);
+                
+                // Create binding payload
+                JSONObject payload = new JSONObject();
+                payload.put("device_id_input", deviceId);
+                payload.put("parent_user_id", parentId);
+                payload.put("device_name_input", deviceName);
+                payload.put("device_brand_input", deviceBrand);
+                payload.put("android_version_input", androidVersion);
+                
+                OutputStream os = conn.getOutputStream();
+                os.write(payload.toString().getBytes("UTF-8"));
+                os.flush();
+                os.close();
+                
+                int responseCode = conn.getResponseCode();
+                
+                if (responseCode >= 200 && responseCode < 300) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line);
+                    }
+                    br.close();
+                    
+                    if (callback != null) {
+                        callback.onSuccess(response.toString());
+                    }
+                } else {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                        conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream()));
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                    br.close();
+                    
+                    if (callback != null) {
+                        callback.onError("Device binding failed (HTTP " + responseCode + "): " + errorResponse.toString());
+                    }
+                }
+                
+                conn.disconnect();
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error binding device to parent", e);
+                if (callback != null) {
+                    callback.onError("Network error: " + e.getMessage());
+                }
+            }
+        });
+    }
+    
     public void shutdown() {
         if (executor != null && !executor.isShutdown()) {
             executor.shutdown();
