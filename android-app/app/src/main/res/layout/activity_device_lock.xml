@@ -83,7 +83,11 @@
                 android:gravity="center"
                 android:padding="16dp"
                 android:background="@android:color/transparent"
-                android:letterSpacing="0.3" />
+                android:letterSpacing="0.3"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:clickable="true"
+                android:cursorVisible="true" />
 
             <View
                 android:layout_width="match_parent"

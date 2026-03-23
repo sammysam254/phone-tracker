@@ -30,8 +30,8 @@ public class DeviceLockActivity extends Activity {
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
-            WindowManager.LayoutParams.FLAG_SECURE |
-            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            WindowManager.LayoutParams.FLAG_SECURE
+            // Removed FLAG_NOT_TOUCHABLE to allow input
         );
         
         // Prevent user from leaving this activity
@@ -76,6 +76,30 @@ public class DeviceLockActivity extends Activity {
     
     private void setupListeners() {
         unlockButton.setOnClickListener(v -> attemptUnlock());
+        
+        // Ensure EditText can receive focus and show keyboard
+        unlockCodeInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                // Force show keyboard
+                android.view.inputmethod.InputMethodManager imm = 
+                    (android.view.inputmethod.InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(unlockCodeInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                }
+            }
+        });
+        
+        // Auto-focus the input field
+        unlockCodeInput.requestFocus();
+        
+        // Force show keyboard immediately
+        unlockCodeInput.post(() -> {
+            android.view.inputmethod.InputMethodManager imm = 
+                (android.view.inputmethod.InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(unlockCodeInput, android.view.inputmethod.InputMethodManager.SHOW_FORCED);
+            }
+        });
     }
     
     private void displayLockInfo() {

@@ -734,22 +734,7 @@ async function loadDevices() {
     try {
         console.log('Loading devices from Supabase...');
         
-        // Try to get devices from device_pairing table first (more likely to exist)
-        // Only load ACTIVE devices (not replaced, inactive, or old pairings)
-        const { data: pairingDevices, error: pairingError } = await supabaseClient
-            .from('device_pairing')
-            .select('*')
-            .eq('parent_id', currentUser.id)
-            .eq('status', 'active')  // Only active devices
-            .order('paired_at', { ascending: false });
-        
-        if (!pairingError && pairingDevices && pairingDevices.length > 0) {
-            console.log('Loaded devices from device_pairing table:', pairingDevices);
-            populateDeviceSelect(pairingDevices);
-            return;
-        }
-        
-        // Fallback to devices table
+        // Load devices from the devices table (account binding system)
         const { data: devices, error } = await supabaseClient
             .from('devices')
             .select('*')
@@ -1587,7 +1572,12 @@ async function loadOverviewData() {
 }
 
 async function loadRecentActivities() {
-    if (!selectedDevice || !supabaseClient) return;
+    if (!selectedDevice || !supabaseClient) {
+        console.log('Cannot load activities - selectedDevice:', selectedDevice, 'supabaseClient:', !!supabaseClient);
+        return;
+    }
+    
+    console.log('Loading recent activities for device:', selectedDevice);
     
     try {
         const { data: activities, error } = await supabaseClient
@@ -1596,6 +1586,8 @@ async function loadRecentActivities() {
             .eq('device_id', selectedDevice)
             .order('timestamp', { ascending: false })
             .limit(20);
+        
+        console.log('Activities query result:', { activities, error, count: activities?.length });
         
         if (error) {
             console.error('Error loading activities:', error);
@@ -1618,7 +1610,7 @@ async function loadRecentActivities() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'recentActivities');
+        displayActivities(activities, 'recentActivities');
     } catch (error) {
         console.error('Error loading recent activities:', error);
         
@@ -1696,7 +1688,7 @@ async function loadCallData() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'callsList');
+        displayActivities(activities, 'callsList');
     } catch (error) {
         console.error('Error loading call data:', error);
     }
@@ -1719,7 +1711,7 @@ async function loadMessageData() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'messagesList');
+        displayActivities(activities, 'messagesList');
     } catch (error) {
         console.error('Error loading message data:', error);
     }
@@ -1742,7 +1734,7 @@ async function loadAppData() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'appsList');
+        displayActivities(activities, 'appsList');
     } catch (error) {
         console.error('Error loading app data:', error);
     }
@@ -1765,7 +1757,7 @@ async function loadWebData() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'webList');
+        displayActivities(activities, 'webList');
     } catch (error) {
         console.error('Error loading web data:', error);
     }
@@ -1788,7 +1780,7 @@ async function loadLocationData() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'locationList');
+        displayActivities(activities, 'locationList');
     } catch (error) {
         console.error('Error loading location data:', error);
     }
@@ -1811,7 +1803,7 @@ async function loadKeyboardData() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'keyboardList');
+        displayActivities(activities, 'keyboardList');
     } catch (error) {
         console.error('Error loading keyboard data:', error);
     }
@@ -1857,7 +1849,7 @@ async function loadNotificationData() {
             return;
         }
         
-        displayActivitiesEnhanced(activities, 'notificationsList');
+        displayActivities(activities, 'notificationsList');
     } catch (error) {
         console.error('Error loading notification data:', error);
     }
@@ -1920,17 +1912,30 @@ async function loadRemoteCommandHistory() {
 
 // Display functions
 function displayActivities(activities, containerId) {
+    console.log('displayActivities called:', { activities: activities?.length, containerId });
+    
     const container = document.getElementById(containerId);
     
+    if (!container) {
+        console.error('Container not found:', containerId);
+        return;
+    }
+    
     if (!activities || activities.length === 0) {
+        console.log('No activities to display for container:', containerId);
         container.innerHTML = `
             <div class="empty-state">
                 <div class="icon">📭</div>
                 <p>No activities found</p>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Activities will appear here once the child device starts monitoring
+                </p>
             </div>
         `;
         return;
     }
+    
+    console.log('Displaying', activities.length, 'activities in container:', containerId);
     
     container.innerHTML = activities.map(activity => {
         const icon = ACTIVITY_ICONS[activity.activity_type] || '📱';
@@ -2591,27 +2596,15 @@ async function checkForNewDevicePairings() {
         // Fallback to Supabase if backend failed
         if (newDevices.length === 0 && supabaseClient) {
             try {
-                // Check device_pairing table - only active devices
-                const { data: pairingDevices, error: pairingError } = await supabaseClient
-                    .from('device_pairing')
+                // Load devices from devices table (account binding system)
+                const { data: devices, error } = await supabaseClient
+                    .from('devices')
                     .select('*')
-                    .eq('parent_id', currentUser.id)
-                    .eq('status', 'active');  // Only active devices
+                    .eq('parent_id', currentUser.id);
                 
-                if (!pairingError && pairingDevices) {
-                    newDevices = pairingDevices;
-                    console.log('Fetched devices from Supabase device_pairing:', newDevices.length);
-                } else {
-                    // Fallback to devices table
-                    const { data: devices, error } = await supabaseClient
-                        .from('devices')
-                        .select('*')
-                        .eq('parent_id', currentUser.id);
-                    
-                    if (!error && devices) {
-                        newDevices = devices;
-                        console.log('Fetched devices from Supabase devices:', newDevices.length);
-                    }
+                if (!error && devices) {
+                    newDevices = devices;
+                    console.log('Fetched devices from Supabase devices:', newDevices.length);
                 }
             } catch (error) {
                 console.log('Supabase device check failed:', error.message);
