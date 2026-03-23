@@ -1,0 +1,65 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                  FIX MONITORING - QUICK START                            ║
+║                  Account Binding v2.0.0                                  ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM:
+  ❌ Monitoring not working after account binding
+  ❌ Dashboard shows 401 errors
+  ❌ Activities not being logged
+
+ROOT CAUSE:
+  RLS policies blocking anonymous access from child app
+
+THE FIX (2 MINUTES):
+  
+  1. Open Supabase Dashboard → SQL Editor
+  
+  2. Copy ALL of: supabase/fix-all-rls-for-account-binding.sql
+  
+  3. Paste and Run
+  
+  4. Wait for "Success"
+  
+  5. Test: Make call on child device → Check dashboard
+
+WHAT IT FIXES:
+  ✅ Activities table - allows anonymous inserts
+  ✅ Remote commands - allows anonymous access
+  ✅ Devices table - allows binding updates
+  ✅ Monitoring works fully
+  ✅ Dashboard shows data
+
+VERIFY IT WORKED:
+  
+  Run this in SQL Editor:
+  
+  SELECT tablename, COUNT(*) as policy_count
+  FROM pg_policies 
+  WHERE tablename IN ('activities', 'remote_commands', 'devices')
+  GROUP BY tablename;
+  
+  Should show:
+  - activities: 2 policies
+  - remote_commands: 5 policies
+  - devices: 4 policies
+
+TEST IT:
+  1. Open child app
+  2. Make a phone call
+  3. Send an SMS
+  4. Open dashboard
+  5. Activities should appear within 30 seconds
+
+STILL NOT WORKING?
+  - Check Android logs: Filter "MonitoringService"
+  - Check Supabase logs: Look for RLS violations
+  - See: FIX_MONITORING_ACTIVITIES.md for detailed troubleshooting
+
+FILES:
+  📄 supabase/fix-all-rls-for-account-binding.sql - THE FIX
+  📄 DEPLOY_RLS_FIX_NOW.md - Detailed guide
+  📄 FIX_MONITORING_ACTIVITIES.md - Full explanation
+  📄 ACCOUNT_BINDING_V2.0.0_FINAL_STATUS.md - Complete status
+
+═══════════════════════════════════════════════════════════════════════════
